@@ -1164,6 +1164,32 @@
     <!-- Supabase Client -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
+    <!-- Monthly Completions Modal -->
+    <div class="completion-modal" id="monthlyCompletionsModal">
+        <div class="completion-modal-content" style="max-width: 900px; width: 90%;">
+            <h2 id="monthlyCompletionsTitle">Monthly Completions</h2>
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                    <thead>
+                        <tr style="background: #34495e; color: white;">
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Customer</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Inspection</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Completion Date</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Notes</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyCompletionsBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="button" class="btn btn-secondary" onclick="closeMonthlyCompletionsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Supabase Configuration
         const SUPABASE_URL = 'https://itsxxdxyigsyqxkeonqr.supabase.co';
@@ -1581,6 +1607,11 @@
             completingInspection = null;
         }
 
+        // Close monthly completions modal
+        function closeMonthlyCompletionsModal() {
+            document.getElementById('monthlyCompletionsModal').style.display = 'none';
+        }
+
         // Handle completion form submission
         document.getElementById('completionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -1965,7 +1996,7 @@
                 const lateWidth = stat.total > 0 ? (stat.late / stat.total) * 100 : 0;
                 
                 return `
-                    <div class="chart-bar">
+                    <div class="chart-bar" onclick="showMonthlyCompletions('${stat.month}', ${stat.year})" style="cursor: pointer;" title="Click to see customers completed in ${stat.month}">
                         <div class="chart-label">${stat.month}</div>
                         <div class="chart-bar-container">
                             <div class="chart-bar-fill on-time" style="width: ${onTimeWidth}%"></div>
@@ -1975,6 +2006,92 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        // Show monthly completions modal
+        function showMonthlyCompletions(monthName, year) {
+            const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthName);
+            if (monthIndex === -1) return;
+            
+            // Get current NSI filter
+            const nsiFilter = document.getElementById('nsiFilter').value;
+            
+            // Filter customers based on NSI status if needed
+            let filteredCustomers = customers;
+            if (nsiFilter) {
+                filteredCustomers = customers.filter(customer => {
+                    const nsiStatus = customer.nsi_status || 'NSI';
+                    return nsiStatus === nsiFilter;
+                });
+            }
+            
+            const completedCustomers = [];
+            
+            filteredCustomers.forEach(customer => {
+                const inspection1History = customer.inspection_history?.inspection1 || [];
+                const inspection2History = customer.inspection_history?.inspection2 || [];
+                
+                // Check inspection 1 completions
+                inspection1History.forEach(completion => {
+                    const completionDate = new Date(completion.date);
+                    if (completionDate.getMonth() === monthIndex && completionDate.getFullYear() === year) {
+                        const dueDate = new Date(year, customer.first_inspection_month - 1, 1);
+                        const isOnTime = completionDate >= new Date(dueDate.getFullYear(), dueDate.getMonth() - 1, 1) && 
+                                        completionDate <= new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0);
+                        
+                        completedCustomers.push({
+                            customer: customer,
+                            completionDate: completion.date,
+                            inspectionType: 'Inspection 1',
+                            isOnTime: isOnTime,
+                            notes: completion.notes || ''
+                        });
+                    }
+                });
+                
+                // Check inspection 2 completions if applicable
+                if (customer.inspections_per_year === 2) {
+                    inspection2History.forEach(completion => {
+                        const completionDate = new Date(completion.date);
+                        if (completionDate.getMonth() === monthIndex && completionDate.getFullYear() === year) {
+                            const dueDate = new Date(year, customer.second_inspection_month - 1, 1);
+                            const isOnTime = completionDate >= new Date(dueDate.getFullYear(), dueDate.getMonth() - 1, 1) && 
+                                            completionDate <= new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0);
+                            
+                            completedCustomers.push({
+                                customer: customer,
+                                completionDate: completion.date,
+                                inspectionType: 'Inspection 2',
+                                isOnTime: isOnTime,
+                                notes: completion.notes || ''
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // Sort by completion date
+            completedCustomers.sort((a, b) => new Date(a.completionDate) - new Date(b.completionDate));
+            
+            // Show modal
+            document.getElementById('monthlyCompletionsTitle').textContent = `Completions for ${monthName} ${year}`;
+            const tbody = document.getElementById('monthlyCompletionsBody');
+            tbody.innerHTML = completedCustomers.map(item => `
+                <tr>
+                    <td><strong>${item.customer.name}</strong></td>
+                    <td>${item.inspectionType}</td>
+                    <td>${new Date(item.completionDate).toLocaleDateString()}</td>
+                    <td><span class="${item.isOnTime ? 'status-badge current' : 'status-badge overdue'}">${item.isOnTime ? 'On Time' : 'Late'}</span></td>
+                    <td>${item.notes}</td>
+                    <td><button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px;">View</button></td>
+                </tr>
+            `).join('');
+            
+            if (completedCustomers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No completions found for this month</td></tr>';
+            }
+            
+            document.getElementById('monthlyCompletionsModal').style.display = 'block';
         }
 
         // Update statistics
@@ -2198,12 +2315,16 @@
         window.onclick = function(event) {
             const customerModal = document.getElementById('customerModal');
             const completionModal = document.getElementById('completionModal');
+            const monthlyCompletionsModal = document.getElementById('monthlyCompletionsModal');
             
             if (event.target === customerModal) {
                 closeModal();
             }
             if (event.target === completionModal) {
                 closeCompletionModal();
+            }
+            if (event.target === monthlyCompletionsModal) {
+                closeMonthlyCompletionsModal();
             }
         };
     </script>
