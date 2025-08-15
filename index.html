@@ -213,6 +213,52 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
+        /* Mobile card layout for customers */
+        .mobile-customer-cards {
+            display: none;
+            padding: 0 20px 30px;
+        }
+
+        .customer-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .customer-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .customer-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .customer-details {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            line-height: 1.4;
+        }
+
+        .customer-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .customer-actions .btn {
+            padding: 8px 12px;
+            font-size: 12px;
+            min-height: auto;
+        }
+
         .customer-table th {
             background: #34495e;
             color: white;
@@ -541,6 +587,15 @@
                 flex-direction: column;
             }
 
+            /* Hide table on mobile, show cards instead */
+            .table-container {
+                display: none;
+            }
+
+            .mobile-customer-cards {
+                display: block;
+            }
+
             .customer-table {
                 font-size: 12px;
             }
@@ -776,6 +831,11 @@
                 <p>Add your first customer to get started with tracking maintenance schedules.</p>
                 <button class="btn btn-primary" onclick="openAddModal()" style="margin-top: 20px;">Add First Customer</button>
             </div>
+        </div>
+
+        <!-- Mobile Customer Cards -->
+        <div class="mobile-customer-cards" id="mobileCustomerCards">
+            <!-- Mobile cards will be generated here -->
         </div>
     </div>
 
@@ -1276,9 +1336,11 @@
         function renderCustomers() {
             const tbody = document.getElementById('customerTableBody');
             const emptyState = document.getElementById('emptyState');
+            const mobileCards = document.getElementById('mobileCustomerCards');
             
             if (customers.length === 0) {
                 tbody.innerHTML = '';
+                mobileCards.innerHTML = '';
                 emptyState.style.display = 'block';
                 document.getElementById('customerTable').style.display = 'none';
                 return;
@@ -1287,6 +1349,7 @@
             emptyState.style.display = 'none';
             document.getElementById('customerTable').style.display = 'table';
 
+            // Render desktop table
             tbody.innerHTML = customers.map(customer => {
                 const inspection1Status = getInspectionStatus(customer, 'inspection1');
                 const inspection2Status = customer.inspections_per_year === 2 ? 
@@ -1353,6 +1416,80 @@
                             <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 6px 12px;">Delete</button>
                         </td>
                     </tr>
+                `;
+            }).join('');
+
+            // Render mobile cards
+            mobileCards.innerHTML = customers.map(customer => {
+                const inspection1Status = getInspectionStatus(customer, 'inspection1');
+                const inspection2Status = customer.inspections_per_year === 2 ? 
+                    getInspectionStatus(customer, 'inspection2') : null;
+                
+                const inspection1History = customer.inspection_history?.inspection1 || [];
+                const inspection2History = customer.inspection_history?.inspection2 || [];
+                
+                const inspection1Html = `
+                    <div class="inspection-card">
+                        <div class="inspection-title">Inspection 1 (${getMonthName(customer.first_inspection_month)})</div>
+                        <div>${getStatusBadge(inspection1Status)}</div>
+                        <button class="btn btn-success" onclick="recordCompletion(${customer.id}, 'inspection1')" style="margin-top: 5px; padding: 8px 12px; font-size: 14px;">Record Completion</button>
+                        ${inspection1History.length > 0 ? `
+                            <div class="completion-history">
+                                <strong>Last 5 completions:</strong>
+                                ${inspection1History.slice(-5).map(h => `
+                                    <div class="completion-item">
+                                        <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        <span>${h.notes ? '📝' : ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                const inspection2Html = customer.inspections_per_year === 2 ? `
+                    <div class="inspection-card">
+                        <div class="inspection-title">Inspection 2 (${getMonthName(customer.second_inspection_month)})</div>
+                        <div>${getStatusBadge(inspection2Status)}</div>
+                        <button class="btn btn-success" onclick="recordCompletion(${customer.id}, 'inspection2')" style="margin-top: 5px; padding: 8px 12px; font-size: 14px;">Record Completion</button>
+                        ${inspection2History.length > 0 ? `
+                            <div class="completion-history">
+                                <strong>Last 5 completions:</strong>
+                                ${inspection2History.slice(-5).map(h => `
+                                    <div class="completion-item">
+                                        <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        <span>${h.notes ? '📝' : ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="customer-card">
+                        <div class="customer-card-header">
+                            <div>
+                                <div class="customer-name">${customer.name}</div>
+                                <div class="customer-details">
+                                    ${customer.address}<br>
+                                    ${customer.postcode}<br>
+                                    <strong>${customer.system_type}</strong>
+                                </div>
+                            </div>
+                            <div>
+                                ${getOverallStatus(customer)}
+                            </div>
+                        </div>
+                        <div class="inspection-grid">
+                            ${inspection1Html}
+                            ${inspection2Html}
+                        </div>
+                        <div class="customer-actions">
+                            <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})">Delete</button>
+                        </div>
+                    </div>
                 `;
             }).join('');
         }
@@ -1539,7 +1676,9 @@
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const statusFilter = document.getElementById('statusFilter').value;
             const rows = document.querySelectorAll('#customerTableBody tr');
+            const mobileCards = document.querySelectorAll('.customer-card');
 
+            // Filter desktop table
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 const customerId = parseInt(row.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
@@ -1555,6 +1694,24 @@
                 const matchesStatus = !statusFilter || status === statusFilter;
                 
                 row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+            });
+
+            // Filter mobile cards
+            mobileCards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                const customerId = parseInt(card.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
+                const customer = customers.find(c => c.id === customerId);
+                
+                if (!customer) return;
+                
+                const overallStatus = getOverallStatus(customer);
+                const status = overallStatus.includes('Overdue') ? 'overdue' : 
+                             overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                
+                const matchesSearch = text.includes(searchTerm);
+                const matchesStatus = !statusFilter || status === statusFilter;
+                
+                card.style.display = matchesSearch && matchesStatus ? '' : 'none';
             });
         }
 
