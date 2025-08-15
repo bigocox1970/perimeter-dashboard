@@ -1888,6 +1888,18 @@
             const today = new Date();
             const monthlyStats = [];
             
+            // Get current NSI filter
+            const nsiFilter = document.getElementById('nsiFilter').value;
+            
+            // Filter customers based on NSI status if needed
+            let filteredCustomers = customers;
+            if (nsiFilter) {
+                filteredCustomers = customers.filter(customer => {
+                    const nsiStatus = customer.nsi_status || 'NSI';
+                    return nsiStatus === nsiFilter;
+                });
+            }
+            
             // Get last 5 months
             for (let i = 4; i >= 0; i--) {
                 const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -1898,7 +1910,7 @@
                 let lateCompletions = 0;
                 let totalDue = 0;
                 
-                customers.forEach(customer => {
+                filteredCustomers.forEach(customer => {
                     // Check Inspection 1
                     if (customer.inspection_history?.inspection1) {
                         customer.inspection_history.inspection1.forEach(completion => {
@@ -1948,7 +1960,9 @@
                 const onTimeRate = totalDue > 0 ? Math.round((onTimeCompletions / totalDue) * 100) : 0;
                 
                 monthlyStats.push({
-                    month: monthName,
+                    month: monthDate.toLocaleDateString('en-GB', { month: 'short' }),
+                    year: monthDate.getFullYear(),
+                    fullMonthName: monthName,
                     monthKey: monthKey,
                     onTime: onTimeCompletions,
                     late: lateCompletions,
@@ -1968,7 +1982,7 @@
             
             // Render monthly cards
             monthlyGrid.innerHTML = monthlyStats.map(stat => `
-                <div class="monthly-card">
+                <div class="monthly-card" onclick="showCustomersDueInMonth('${stat.month}', ${stat.year})" style="cursor: pointer;" title="Click to see customers due in ${stat.month}">
                     <h4>${stat.month}</h4>
                     <div class="monthly-numbers">
                         <div class="monthly-stat">
@@ -1996,7 +2010,7 @@
                 const lateWidth = stat.total > 0 ? (stat.late / stat.total) * 100 : 0;
                 
                 return `
-                    <div class="chart-bar" onclick="showMonthlyCompletions('${stat.month}', ${stat.year})" style="cursor: pointer;" title="Click to see customers completed in ${stat.month}">
+                    <div class="chart-bar" title="Completion statistics for ${stat.month}">
                         <div class="chart-label">${stat.month}</div>
                         <div class="chart-bar-container">
                             <div class="chart-bar-fill on-time" style="width: ${onTimeWidth}%"></div>
@@ -2090,7 +2104,119 @@
             document.getElementById('monthlyCompletionsModal').style.display = 'block';
         }
 
-        // Show customers due in a specific month
+        // Show completions that happened in a specific month (for monthly cards)
+        function showCustomersDueInMonth(monthName, year) {
+            const monthKey = `${year}-${String(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthName) + 1).padStart(2, '0')}`;
+            const monthDate = new Date(year, ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthName), 1);
+            
+            const completions = [];
+            
+            // Get current NSI filter to match the monthly card calculation
+            const nsiFilter = document.getElementById('nsiFilter').value;
+            
+            // Filter customers based on NSI status if needed - SAME AS calculateMonthlyStats
+            let filteredCustomers = customers;
+            if (nsiFilter) {
+                filteredCustomers = customers.filter(customer => {
+                    const nsiStatus = customer.nsi_status || 'NSI';
+                    return nsiStatus === nsiFilter;
+                });
+            }
+            
+            filteredCustomers.forEach(customer => {
+                // Check Inspection 1 completions in this month
+                if (customer.inspection_history?.inspection1) {
+                    customer.inspection_history.inspection1.forEach(completion => {
+                        const completionDate = new Date(completion.date);
+                        const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        if (completionMonth === monthKey) {
+                            // Check if completion was on time (within flexible window) - EXACT SAME LOGIC
+                            const dueMonth = customer.first_inspection_month;
+                            const dueYear = monthDate.getFullYear();
+                            const monthBefore = new Date(dueYear, dueMonth - 2, 1);
+                            const monthAfter = new Date(dueYear, dueMonth, 1);
+                            const isOnTime = completionDate >= monthBefore && completionDate < monthAfter;
+                            
+                            completions.push({
+                                customer: customer,
+                                inspectionType: 'Inspection 1',
+                                completionDate: completion.date,
+                                notes: completion.notes || '',
+                                status: isOnTime ? 'On Time' : 'Late'
+                            });
+                        }
+                    });
+                }
+                
+                // Check Inspection 2 completions in this month
+                if (customer.inspections_per_year === 2 && customer.inspection_history?.inspection2) {
+                    customer.inspection_history.inspection2.forEach(completion => {
+                        const completionDate = new Date(completion.date);
+                        const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+                        
+                        if (completionMonth === monthKey) {
+                            // Check if completion was on time (within flexible window) - EXACT SAME LOGIC
+                            const dueMonth = customer.second_inspection_month;
+                            const dueYear = monthDate.getFullYear();
+                            const monthBefore = new Date(dueYear, dueMonth - 2, 1);
+                            const monthAfter = new Date(dueYear, dueMonth, 1);
+                            const isOnTime = completionDate >= monthBefore && completionDate < monthAfter;
+                            
+                            completions.push({
+                                customer: customer,
+                                inspectionType: 'Inspection 2',
+                                completionDate: completion.date,
+                                notes: completion.notes || '',
+                                status: isOnTime ? 'On Time' : 'Late'
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // Sort by completion date
+            completions.sort((a, b) => new Date(a.completionDate) - new Date(b.completionDate));
+            
+            const onTimeCount = completions.filter(c => c.status === 'On Time').length;
+            const lateCount = completions.filter(c => c.status === 'Late').length;
+            
+            // Show modal
+            document.getElementById('monthlyCompletionsTitle').textContent = `Completions in ${monthName} ${year} - ${onTimeCount} On Time, ${lateCount} Late (${completions.length} total)`;
+            const tbody = document.getElementById('monthlyCompletionsBody');
+            
+            // Update table headers for completions view
+            const table = document.querySelector('#monthlyCompletionsModal table');
+            table.querySelector('thead tr').innerHTML = `
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Customer</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Inspection Type</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Completion Date</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Notes</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Action</th>
+            `;
+            
+            tbody.innerHTML = completions.map(item => `
+                <tr>
+                    <td><strong>${item.customer.name}</strong></td>
+                    <td>${item.inspectionType}</td>
+                    <td>${new Date(item.completionDate).toLocaleDateString()}</td>
+                    <td><span class="status-badge ${item.status === 'On Time' ? 'on-time' : 'late'}">${item.status}</span></td>
+                    <td>${item.notes}</td>
+                    <td>
+                        <button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px;">Edit Customer</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            if (completions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No completions recorded in this month</td></tr>';
+            }
+            
+            document.getElementById('monthlyCompletionsModal').style.display = 'block';
+        }
+
+        // Show customers due in a specific month (for chart bars - shows completions)
         function showMonthlyCompletions(monthName, year) {
             const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthName);
             if (monthIndex === -1) return;
