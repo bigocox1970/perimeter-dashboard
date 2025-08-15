@@ -740,13 +740,122 @@
                 display: none;
             }
         }
+
+        /* Login Screen Styles */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .login-header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .login-header p {
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+
+        .login-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .login-form .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .login-form .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .login-form .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .login-form .btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .login-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 1.8rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>🔧 Perimeter Maintenance</h1>
+                <p>Please enter password to access the dashboard</p>
+            </div>
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="passwordInput">Password</label>
+                    <input type="password" id="passwordInput" placeholder="Enter password" required>
+                </div>
+                <button class="btn btn-primary" onclick="checkPassword()">Login</button>
+                <div class="login-error" id="loginError" style="display: none;">
+                    Incorrect password. Please try again.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (initially hidden) -->
+    <div class="container" id="mainDashboard" style="display: none;">
         <div class="header">
             <h1>🔧 Perimeter Maintenance Dashboard</h1>
             <p>Track customer inspections with flexible scheduling windows</p>
+            <button class="btn btn-secondary" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #95a5a6; color: white;">Logout</button>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -964,6 +1073,62 @@
         let editingCustomerId = null;
         let completingInspection = null;
 
+        // Password protection
+        const CORRECT_PASSWORD = 'Perimeter2999';
+        
+        // Check if user is already logged in
+        function checkLoginStatus() {
+            const isLoggedIn = sessionStorage.getItem('perimLoggedIn');
+            if (isLoggedIn === 'true') {
+                showDashboard();
+            } else {
+                showLoginScreen();
+            }
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('mainDashboard').style.display = 'none';
+            document.getElementById('passwordInput').focus();
+        }
+
+        // Show dashboard
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('mainDashboard').style.display = 'block';
+            loadCustomerData();
+        }
+
+        // Check password
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const errorElement = document.getElementById('loginError');
+            
+            if (password === CORRECT_PASSWORD) {
+                sessionStorage.setItem('perimLoggedIn', 'true');
+                showDashboard();
+                errorElement.style.display = 'none';
+            } else {
+                errorElement.style.display = 'block';
+                document.getElementById('passwordInput').value = '';
+                document.getElementById('passwordInput').focus();
+            }
+        }
+
+        // Logout function
+        function logout() {
+            sessionStorage.removeItem('perimLoggedIn');
+            showLoginScreen();
+        }
+
+        // Handle Enter key in password field
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('loginScreen').style.display === 'flex') {
+                checkPassword();
+            }
+        });
+
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
             // Register Service Worker for PWA
@@ -985,7 +1150,9 @@
                 showInstallPrompt();
             });
 
-            loadCustomerData();
+            // Check login status first
+            checkLoginStatus();
+            
             // Set default completion date to today
             document.getElementById('completionDate').value = new Date().toISOString().split('T')[0];
         });
