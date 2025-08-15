@@ -500,11 +500,37 @@
             min-height: 80px;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
+                 .form-row {
+             display: grid;
+             grid-template-columns: 1fr 1fr;
+             gap: 15px;
+         }
+         
+         .battery-grid {
+             display: grid;
+             grid-template-columns: 1fr 1fr 1fr;
+             gap: 15px;
+             margin-top: 10px;
+         }
+         
+         .battery-item {
+             display: flex;
+             flex-direction: column;
+         }
+         
+         .battery-item label {
+             font-size: 0.9rem;
+             margin-bottom: 5px;
+             color: #2c3e50;
+             font-weight: 500;
+         }
+         
+         .battery-item input {
+             padding: 8px;
+             border: 2px solid #ddd;
+             border-radius: 6px;
+             font-size: 14px;
+         }
 
         .form-actions {
             display: flex;
@@ -609,9 +635,14 @@
                 grid-template-columns: 1fr;
             }
 
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+                         .form-row {
+                 grid-template-columns: 1fr;
+             }
+             
+             .battery-grid {
+                 grid-template-columns: 1fr;
+                 gap: 10px;
+             }
 
             /* Mobile-specific improvements */
             .btn {
@@ -1020,10 +1051,28 @@
                         <option value="12">December</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="customerNotes">Notes</label>
-                    <textarea id="customerNotes" placeholder="Additional notes about the customer or system..."></textarea>
-                </div>
+                                 <div class="form-group">
+                     <label for="customerNotes">Notes</label>
+                     <textarea id="customerNotes" placeholder="Additional notes about the customer or system..."></textarea>
+                 </div>
+                 
+                 <div class="form-group">
+                     <label>Battery Replacement Tracking</label>
+                     <div class="battery-grid">
+                         <div class="battery-item">
+                             <label for="controlPanelBattery">Control Panel Battery</label>
+                             <input type="date" id="controlPanelBattery" placeholder="Last replaced">
+                         </div>
+                         <div class="battery-item">
+                             <label for="sirenBattery">Siren Battery</label>
+                             <input type="date" id="sirenBattery" placeholder="Last replaced">
+                         </div>
+                         <div class="battery-item">
+                             <label for="detectorBatteries">Detector Batteries</label>
+                             <input type="date" id="detectorBatteries" placeholder="Last replaced">
+                         </div>
+                     </div>
+                 </div>
                 <div class="form-actions">
                     <button type="button" class="btn" onclick="closeModal()" style="background: #95a5a6; color: white;">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Customer</button>
@@ -1287,8 +1336,14 @@
             document.getElementById('dateInstalled').value = customer.date_installed;
             document.getElementById('inspectionsPerYear').value = customer.inspections_per_year || 1;
             document.getElementById('firstInspectionMonth').value = customer.first_inspection_month || 1;
-            document.getElementById('secondInspectionMonth').value = customer.second_inspection_month || 6;
-            document.getElementById('customerNotes').value = customer.notes || '';
+                         document.getElementById('secondInspectionMonth').value = customer.second_inspection_month || 6;
+             document.getElementById('customerNotes').value = customer.notes || '';
+             
+             // Populate battery replacement dates
+             const batteryData = customer.battery_replacement || {};
+             document.getElementById('controlPanelBattery').value = batteryData.control_panel || '';
+             document.getElementById('sirenBattery').value = batteryData.siren || '';
+             document.getElementById('detectorBatteries').value = batteryData.detectors || '';
             
             updateInspectionFields();
             document.getElementById('customerModal').style.display = 'block';
@@ -1305,17 +1360,22 @@
             e.preventDefault();
             
             const inspectionsPerYear = parseInt(document.getElementById('inspectionsPerYear').value);
-            const formData = {
-                name: document.getElementById('customerName').value,
-                address: document.getElementById('customerAddress').value,
-                postcode: document.getElementById('customerPostcode').value,
-                system_type: document.getElementById('systemType').value,
-                date_installed: document.getElementById('dateInstalled').value,
-                inspections_per_year: inspectionsPerYear,
-                first_inspection_month: parseInt(document.getElementById('firstInspectionMonth').value),
-                second_inspection_month: inspectionsPerYear === 2 ? parseInt(document.getElementById('secondInspectionMonth').value) : null,
-                notes: document.getElementById('customerNotes').value
-            };
+                         const formData = {
+                 name: document.getElementById('customerName').value,
+                 address: document.getElementById('customerAddress').value,
+                 postcode: document.getElementById('customerPostcode').value,
+                 system_type: document.getElementById('systemType').value,
+                 date_installed: document.getElementById('dateInstalled').value,
+                 inspections_per_year: inspectionsPerYear,
+                 first_inspection_month: parseInt(document.getElementById('firstInspectionMonth').value),
+                 second_inspection_month: inspectionsPerYear === 2 ? parseInt(document.getElementById('secondInspectionMonth').value) : null,
+                 notes: document.getElementById('customerNotes').value,
+                 battery_replacement: {
+                     control_panel: document.getElementById('controlPanelBattery').value || null,
+                     siren: document.getElementById('sirenBattery').value || null,
+                     detectors: document.getElementById('detectorBatteries').value || null
+                 }
+             };
 
             try {
                 if (editingCustomerId) {
@@ -1519,6 +1579,7 @@
                 
                 const inspection1History = customer.inspection_history?.inspection1 || [];
                 const inspection2History = customer.inspection_history?.inspection2 || [];
+                const batteryData = customer.battery_replacement || {};
                 
                 const inspection1Html = `
                     <div class="inspection-card">
@@ -1558,6 +1619,15 @@
                     </div>
                 ` : '';
 
+                const batteryHtml = `
+                    <div class="battery-info" style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <strong>Batteries:</strong><br>
+                        ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
+                        ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
+                        ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                    </div>
+                `;
+                
                 return `
                     <tr>
                         <td><strong>${customer.name}</strong></td>
@@ -1569,6 +1639,7 @@
                                 ${inspection1Html}
                                 ${inspection2Html}
                             </div>
+                            ${batteryHtml}
                         </td>
                         <td>
                             ${getOverallStatus(customer)}
@@ -1589,6 +1660,7 @@
                 
                 const inspection1History = customer.inspection_history?.inspection1 || [];
                 const inspection2History = customer.inspection_history?.inspection2 || [];
+                const batteryData = customer.battery_replacement || {};
                 
                 const inspection1Html = `
                     <div class="inspection-card">
@@ -1643,11 +1715,17 @@
                                 ${getOverallStatus(customer)}
                             </div>
                         </div>
-                        <div class="inspection-grid">
-                            ${inspection1Html}
-                            ${inspection2Html}
-                        </div>
-                        <div class="customer-actions">
+                                                 <div class="inspection-grid">
+                             ${inspection1Html}
+                             ${inspection2Html}
+                         </div>
+                         <div class="battery-info" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px;">
+                             <strong>🔋 Battery Replacement:</strong><br>
+                             ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
+                             ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
+                             ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                         </div>
+                         <div class="customer-actions">
                             <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})">Delete</button>
                         </div>
