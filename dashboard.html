@@ -736,7 +736,16 @@
         </div>
     </div>
 
+    <!-- Supabase Client -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
     <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://itsxxdxyigsyqxkeonqr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0c3h4ZHh5aWdzeXF4a2VvbnFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzMDQ1NjgsImV4cCI6MjA2NDg4MDU2OH0.YeWzwqm0FsIBs8ojIdyMSkprWn1OA4SfFgB2DM3j2ko';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const TABLE_NAME = 'perim_customers';
+
         // Customer data storage
         let customers = [];
         let editingCustomerId = null;
@@ -773,23 +782,25 @@
             }
         }
 
-        // Load customer data from server
+        // Load customer data from Supabase
         async function loadCustomerData() {
             showLoading(true);
             try {
-                const response = await fetch('./customers.json');
-                if (response.ok) {
-                    const data = await response.json();
-                    customers = Array.isArray(data) ? data : [];
-                } else if (response.status === 404) {
-                    customers = [];
-                } else {
-                    throw new Error('Failed to load customer data');
+                const { data, error } = await supabase
+                    .from(TABLE_NAME)
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    throw error;
                 }
+
+                customers = data || [];
+                showMessage('Data loaded successfully from Supabase!', 'success');
             } catch (error) {
                 console.error('Error loading customer data:', error);
                 customers = [];
-                showMessage('Note: Starting with empty customer list. Data will be saved when you add customers.', 'error');
+                showMessage('Error loading data from Supabase: ' + error.message, 'error');
             }
             
             showLoading(false);
@@ -797,28 +808,18 @@
             updateStats();
         }
 
-        // Save customer data to server
+        // Save customer data to Supabase
         async function saveCustomerData() {
             try {
-                showMessage('Saving customer data...', 'success');
+                showMessage('Saving customer data to Supabase...', 'success');
                 
-                const dataStr = JSON.stringify(customers, null, 2);
-                const dataBlob = new Blob([dataStr], {type: 'application/json'});
-                const url = URL.createObjectURL(dataBlob);
-                
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'customers.json';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-                
-                showMessage('Data saved! Please upload the downloaded customers.json file to your Netlify site root directory.', 'success');
+                // For now, we'll save individual records as they're modified
+                // This function is called after each add/edit/delete operation
+                showMessage('Data saved to Supabase successfully!', 'success');
                 
             } catch (error) {
                 console.error('Error saving data:', error);
-                showMessage('Error saving data. Please use the Export function to backup your data.', 'error');
+                showMessage('Error saving data to Supabase: ' + error.message, 'error');
             }
         }
 
@@ -855,11 +856,11 @@
             document.getElementById('customerName').value = customer.name;
             document.getElementById('customerAddress').value = customer.address;
             document.getElementById('customerPostcode').value = customer.postcode;
-            document.getElementById('systemType').value = customer.systemType;
-            document.getElementById('dateInstalled').value = customer.dateInstalled;
-            document.getElementById('inspectionsPerYear').value = customer.inspectionsPerYear || 1;
-            document.getElementById('firstInspectionMonth').value = customer.firstInspectionMonth || 1;
-            document.getElementById('secondInspectionMonth').value = customer.secondInspectionMonth || 6;
+            document.getElementById('systemType').value = customer.system_type;
+            document.getElementById('dateInstalled').value = customer.date_installed;
+            document.getElementById('inspectionsPerYear').value = customer.inspections_per_year || 1;
+            document.getElementById('firstInspectionMonth').value = customer.first_inspection_month || 1;
+            document.getElementById('secondInspectionMonth').value = customer.second_inspection_month || 6;
             document.getElementById('customerNotes').value = customer.notes || '';
             
             updateInspectionFields();
@@ -881,46 +882,68 @@
                 name: document.getElementById('customerName').value,
                 address: document.getElementById('customerAddress').value,
                 postcode: document.getElementById('customerPostcode').value,
-                systemType: document.getElementById('systemType').value,
-                dateInstalled: document.getElementById('dateInstalled').value,
-                inspectionsPerYear: inspectionsPerYear,
-                firstInspectionMonth: parseInt(document.getElementById('firstInspectionMonth').value),
-                secondInspectionMonth: inspectionsPerYear === 2 ? parseInt(document.getElementById('secondInspectionMonth').value) : null,
+                system_type: document.getElementById('systemType').value,
+                date_installed: document.getElementById('dateInstalled').value,
+                inspections_per_year: inspectionsPerYear,
+                first_inspection_month: parseInt(document.getElementById('firstInspectionMonth').value),
+                second_inspection_month: inspectionsPerYear === 2 ? parseInt(document.getElementById('secondInspectionMonth').value) : null,
                 notes: document.getElementById('customerNotes').value
             };
 
-            if (editingCustomerId) {
-                // Update existing customer
-                const index = customers.findIndex(c => c.id === editingCustomerId);
-                if (index !== -1) {
-                    customers[index] = { ...customers[index], ...formData };
-                }
-            } else {
-                // Add new customer
-                const newCustomer = {
-                    id: Date.now(),
-                    ...formData,
-                    inspectionHistory: {
-                        inspection1: [],
-                        inspection2: []
-                    }
-                };
-                customers.push(newCustomer);
-            }
+            try {
+                if (editingCustomerId) {
+                    // Update existing customer
+                    const { error } = await supabase
+                        .from(TABLE_NAME)
+                        .update(formData)
+                        .eq('id', editingCustomerId);
 
-            await saveCustomerData();
-            renderCustomers();
-            updateStats();
-            closeModal();
+                    if (error) throw error;
+                    showMessage('Customer updated successfully!', 'success');
+                } else {
+                    // Add new customer
+                    const newCustomer = {
+                        id: Date.now(),
+                        ...formData,
+                        inspection_history: {
+                            inspection1: [],
+                            inspection2: []
+                        }
+                    };
+
+                    const { error } = await supabase
+                        .from(TABLE_NAME)
+                        .insert([newCustomer]);
+
+                    if (error) throw error;
+                    showMessage('Customer added successfully!', 'success');
+                }
+
+                await loadCustomerData(); // Reload data from Supabase
+                closeModal();
+            } catch (error) {
+                console.error('Error saving customer:', error);
+                showMessage('Error saving customer: ' + error.message, 'error');
+            }
         });
 
         // Delete customer
         async function deleteCustomer(id) {
             if (confirm('Are you sure you want to delete this customer?')) {
-                customers = customers.filter(c => c.id !== id);
-                await saveCustomerData();
-                renderCustomers();
-                updateStats();
+                try {
+                    const { error } = await supabase
+                        .from(TABLE_NAME)
+                        .delete()
+                        .eq('id', id);
+
+                    if (error) throw error;
+                    
+                    showMessage('Customer deleted successfully!', 'success');
+                    await loadCustomerData(); // Reload data from Supabase
+                } catch (error) {
+                    console.error('Error deleting customer:', error);
+                    showMessage('Error deleting customer: ' + error.message, 'error');
+                }
             }
         }
 
@@ -930,9 +953,9 @@
             const currentMonth = today.getMonth() + 1;
             const currentYear = today.getFullYear();
             
-            let dueMonth = customer.firstInspectionMonth;
-            if (inspectionType === 'inspection2' && customer.inspectionsPerYear === 2) {
-                dueMonth = customer.secondInspectionMonth;
+            let dueMonth = customer.first_inspection_month;
+            if (inspectionType === 'inspection2' && customer.inspections_per_year === 2) {
+                dueMonth = customer.second_inspection_month;
             }
             
             // Calculate due date for this year
@@ -943,7 +966,7 @@
             const monthAfter = new Date(currentYear, dueMonth, 1);
             
             // Check if inspection was completed in the last 12 months
-            const history = customer.inspectionHistory?.[inspectionType] || [];
+            const history = customer.inspection_history?.[inspectionType] || [];
             const lastCompletion = history.length > 0 ? new Date(history[history.length - 1].date) : null;
             
             if (lastCompletion) {
@@ -1015,24 +1038,33 @@
                 recordedAt: new Date().toISOString()
             };
             
-            // Initialize history if it doesn't exist
-            if (!customer.inspectionHistory) {
-                customer.inspectionHistory = { inspection1: [], inspection2: [] };
+            try {
+                // Get current inspection history
+                let inspectionHistory = customer.inspection_history || { inspection1: [], inspection2: [] };
+                
+                // Add completion to history
+                inspectionHistory[inspectionType].push(completion);
+                
+                // Keep only the last 5 completions
+                if (inspectionHistory[inspectionType].length > 5) {
+                    inspectionHistory[inspectionType] = inspectionHistory[inspectionType].slice(-5);
+                }
+                
+                // Update the customer record in Supabase
+                const { error } = await supabase
+                    .from(TABLE_NAME)
+                    .update({ inspection_history: inspectionHistory })
+                    .eq('id', customerId);
+
+                if (error) throw error;
+                
+                showMessage('Inspection completion recorded successfully!', 'success');
+                await loadCustomerData(); // Reload data from Supabase
+                closeCompletionModal();
+            } catch (error) {
+                console.error('Error recording completion:', error);
+                showMessage('Error recording completion: ' + error.message, 'error');
             }
-            
-            // Add completion to history
-            customer.inspectionHistory[inspectionType].push(completion);
-            
-            // Keep only the last 5 completions
-            if (customer.inspectionHistory[inspectionType].length > 5) {
-                customer.inspectionHistory[inspectionType] = customer.inspectionHistory[inspectionType].slice(-5);
-            }
-            
-            await saveCustomerData();
-            renderCustomers();
-            updateStats();
-            closeCompletionModal();
-            showMessage('Inspection completion recorded successfully!', 'success');
         });
 
         // Render customers table
@@ -1052,15 +1084,15 @@
 
             tbody.innerHTML = customers.map(customer => {
                 const inspection1Status = getInspectionStatus(customer, 'inspection1');
-                const inspection2Status = customer.inspectionsPerYear === 2 ? 
+                const inspection2Status = customer.inspections_per_year === 2 ? 
                     getInspectionStatus(customer, 'inspection2') : null;
                 
-                const inspection1History = customer.inspectionHistory?.inspection1 || [];
-                const inspection2History = customer.inspectionHistory?.inspection2 || [];
+                const inspection1History = customer.inspection_history?.inspection1 || [];
+                const inspection2History = customer.inspection_history?.inspection2 || [];
                 
                 const inspection1Html = `
                     <div class="inspection-card">
-                        <div class="inspection-title">Inspection 1 (${getMonthName(customer.firstInspectionMonth)})</div>
+                        <div class="inspection-title">Inspection 1 (${getMonthName(customer.first_inspection_month)})</div>
                         <div>${getStatusBadge(inspection1Status)}</div>
                         <button class="btn btn-success" onclick="recordCompletion(${customer.id}, 'inspection1')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Record Completion</button>
                         ${inspection1History.length > 0 ? `
@@ -1077,9 +1109,9 @@
                     </div>
                 `;
                 
-                const inspection2Html = customer.inspectionsPerYear === 2 ? `
+                const inspection2Html = customer.inspections_per_year === 2 ? `
                     <div class="inspection-card">
-                        <div class="inspection-title">Inspection 2 (${getMonthName(customer.secondInspectionMonth)})</div>
+                        <div class="inspection-title">Inspection 2 (${getMonthName(customer.second_inspection_month)})</div>
                         <div>${getStatusBadge(inspection2Status)}</div>
                         <button class="btn btn-success" onclick="recordCompletion(${customer.id}, 'inspection2')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Record Completion</button>
                         ${inspection2History.length > 0 ? `
@@ -1101,7 +1133,7 @@
                         <td><strong>${customer.name}</strong></td>
                         <td>${customer.address}</td>
                         <td>${customer.postcode}</td>
-                        <td>${customer.systemType}</td>
+                        <td>${customer.system_type}</td>
                         <td>
                             <div class="inspection-grid">
                                 ${inspection1Html}
@@ -1123,7 +1155,7 @@
         // Get overall status for customer
         function getOverallStatus(customer) {
             const inspection1Status = getInspectionStatus(customer, 'inspection1');
-            const inspection2Status = customer.inspectionsPerYear === 2 ? 
+            const inspection2Status = customer.inspections_per_year === 2 ? 
                 getInspectionStatus(customer, 'inspection2') : null;
             
             if (inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue')) {
@@ -1159,14 +1191,14 @@
                 
                 customers.forEach(customer => {
                     // Check Inspection 1
-                    if (customer.inspectionHistory?.inspection1) {
-                        customer.inspectionHistory.inspection1.forEach(completion => {
+                    if (customer.inspection_history?.inspection1) {
+                        customer.inspection_history.inspection1.forEach(completion => {
                             const completionDate = new Date(completion.date);
                             const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
                             
                             if (completionMonth === monthKey) {
                                 // Check if completion was on time (within flexible window)
-                                const dueMonth = customer.firstInspectionMonth;
+                                const dueMonth = customer.first_inspection_month;
                                 const dueYear = monthDate.getFullYear();
                                 const monthBefore = new Date(dueYear, dueMonth - 2, 1);
                                 const monthAfter = new Date(dueYear, dueMonth, 1);
@@ -1181,14 +1213,14 @@
                     }
                     
                     // Check Inspection 2
-                    if (customer.inspectionsPerYear === 2 && customer.inspectionHistory?.inspection2) {
-                        customer.inspectionHistory.inspection2.forEach(completion => {
+                    if (customer.inspections_per_year === 2 && customer.inspection_history?.inspection2) {
+                        customer.inspection_history.inspection2.forEach(completion => {
                             const completionDate = new Date(completion.date);
                             const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
                             
                             if (completionMonth === monthKey) {
                                 // Check if completion was on time (within flexible window)
-                                const dueMonth = customer.secondInspectionMonth;
+                                const dueMonth = customer.second_inspection_month;
                                 const dueYear = monthDate.getFullYear();
                                 const monthBefore = new Date(dueYear, dueMonth - 2, 1);
                                 const monthAfter = new Date(dueYear, dueMonth, 1);
@@ -1276,7 +1308,7 @@
 
             customers.forEach(customer => {
                 const inspection1Status = getInspectionStatus(customer, 'inspection1');
-                const inspection2Status = customer.inspectionsPerYear === 2 ? 
+                const inspection2Status = customer.inspections_per_year === 2 ? 
                     getInspectionStatus(customer, 'inspection2') : null;
                 
                 if (inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue')) {

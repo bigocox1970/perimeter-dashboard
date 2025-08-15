@@ -1,5 +1,5 @@
 # Ignore customer data file to prevent data loss during deployments
-customers.json
+# customers.json
 
 # Common files to ignore
 .DS_Store
