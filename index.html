@@ -1017,6 +1017,26 @@
                          <option value="Non-NSI">Non-NSI</option>
                      </select>
                  </div>
+                 <div class="form-row">
+                     <div class="form-group">
+                         <label for="cloudId">Cloud ID</label>
+                         <input type="text" id="cloudId" placeholder="Enter cloud ID">
+                     </div>
+                     <div class="form-group">
+                         <label for="cloudRenewalDate">Cloud Renewal Date</label>
+                         <input type="date" id="cloudRenewalDate">
+                     </div>
+                 </div>
+                 <div class="form-row">
+                     <div class="form-group">
+                         <label for="arcNo">ARC No</label>
+                         <input type="text" id="arcNo" placeholder="Enter ARC number">
+                     </div>
+                     <div class="form-group">
+                         <label for="arcRenewalDate">ARC Renewal Date</label>
+                         <input type="date" id="arcRenewalDate">
+                     </div>
+                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="dateInstalled">Date Installed *</label>
@@ -1347,6 +1367,10 @@
             document.getElementById('customerPostcode').value = customer.postcode;
                          document.getElementById('systemType').value = customer.system_type;
              document.getElementById('nsiStatus').value = customer.nsi_status || 'NSI';
+             document.getElementById('cloudId').value = customer.cloud_id || '';
+             document.getElementById('cloudRenewalDate').value = customer.cloud_renewal_date || '';
+             document.getElementById('arcNo').value = customer.arc_no || '';
+             document.getElementById('arcRenewalDate').value = customer.arc_renewal_date || '';
              document.getElementById('dateInstalled').value = customer.date_installed;
             document.getElementById('inspectionsPerYear').value = customer.inspections_per_year || 1;
             document.getElementById('firstInspectionMonth').value = customer.first_inspection_month || 1;
@@ -1380,6 +1404,10 @@
                  postcode: document.getElementById('customerPostcode').value,
                  system_type: document.getElementById('systemType').value,
                  nsi_status: document.getElementById('nsiStatus').value,
+                 cloud_id: document.getElementById('cloudId').value || null,
+                 cloud_renewal_date: document.getElementById('cloudRenewalDate').value || null,
+                 arc_no: document.getElementById('arcNo').value || null,
+                 arc_renewal_date: document.getElementById('arcRenewalDate').value || null,
                  date_installed: document.getElementById('dateInstalled').value,
                  inspections_per_year: inspectionsPerYear,
                  first_inspection_month: parseInt(document.getElementById('firstInspectionMonth').value),
@@ -1634,14 +1662,24 @@
                     </div>
                 ` : '';
 
-                const batteryHtml = `
-                    <div class="battery-info" style="margin-top: 10px; font-size: 12px; color: #666;">
-                        <strong>Batteries:</strong><br>
-                        ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
-                        ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
-                        ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
-                    </div>
-                `;
+                                 const cloudArcHtml = `
+                     <div class="cloud-arc-info" style="margin-top: 10px; font-size: 12px; color: #666;">
+                         <strong>Cloud & ARC:</strong><br>
+                         ${customer.cloud_id ? `Cloud ID: ${customer.cloud_id}` : 'Cloud ID: Not set'}<br>
+                         ${customer.cloud_renewal_date ? `Cloud Renewal: ${new Date(customer.cloud_renewal_date).toLocaleDateString()}` : 'Cloud Renewal: Not set'}<br>
+                         ${customer.arc_no ? `ARC No: ${customer.arc_no}` : 'ARC No: Not set'}<br>
+                         ${customer.arc_renewal_date ? `ARC Renewal: ${new Date(customer.arc_renewal_date).toLocaleDateString()}` : 'ARC Renewal: Not set'}
+                     </div>
+                 `;
+                 
+                 const batteryHtml = `
+                     <div class="battery-info" style="margin-top: 10px; font-size: 12px; color: #666;">
+                         <strong>Batteries:</strong><br>
+                         ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
+                         ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
+                         ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                     </div>
+                 `;
                 
                                  return `
                      <tr>
@@ -1655,6 +1693,7 @@
                                  ${inspection1Html}
                                  ${inspection2Html}
                              </div>
+                             ${cloudArcHtml}
                              ${batteryHtml}
                          </td>
                          <td>
@@ -1735,6 +1774,13 @@
                                                  <div class="inspection-grid">
                              ${inspection1Html}
                              ${inspection2Html}
+                         </div>
+                         <div class="cloud-arc-info" style="margin: 15px 0; padding: 10px; background: #e8f4fd; border-radius: 6px; font-size: 14px;">
+                             <strong>☁️ Cloud & ARC:</strong><br>
+                             ${customer.cloud_id ? `Cloud ID: ${customer.cloud_id}` : 'Cloud ID: Not set'}<br>
+                             ${customer.cloud_renewal_date ? `Cloud Renewal: ${new Date(customer.cloud_renewal_date).toLocaleDateString()}` : 'Cloud Renewal: Not set'}<br>
+                             ${customer.arc_no ? `ARC No: ${customer.arc_no}` : 'ARC No: Not set'}<br>
+                             ${customer.arc_renewal_date ? `ARC Renewal: ${new Date(customer.arc_renewal_date).toLocaleDateString()}` : 'ARC Renewal: Not set'}
                          </div>
                          <div class="battery-info" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px;">
                              <strong>🔋 Battery Replacement:</strong><br>
