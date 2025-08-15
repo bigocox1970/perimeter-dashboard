@@ -270,6 +270,118 @@
             margin-bottom: 2px;
         }
 
+        .monthly-stats {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+        }
+
+        .monthly-stats h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .monthly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .monthly-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .monthly-card h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .monthly-numbers {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+        }
+
+        .monthly-stat {
+            text-align: center;
+        }
+
+        .monthly-stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .monthly-stat-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .on-time {
+            color: #27ae60;
+        }
+
+        .late {
+            color: #e74c3c;
+        }
+
+        .completion-chart {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .chart-label {
+            min-width: 80px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .chart-bar-container {
+            flex: 1;
+            background: #ecf0f1;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .chart-bar-fill.on-time {
+            background: #27ae60;
+        }
+
+        .chart-bar-fill.late {
+            background: #e74c3c;
+        }
+
+        .chart-percentage {
+            min-width: 60px;
+            text-align: right;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -457,6 +569,19 @@
             <div class="stat-card">
                 <div class="stat-number current" id="currentCount">0</div>
                 <div class="stat-label">Up to Date</div>
+            </div>
+        </div>
+
+        <div class="monthly-stats">
+            <h3>📊 Monthly Completion Statistics (Last 5 Months)</h3>
+            <div class="monthly-grid" id="monthlyGrid">
+                <!-- Monthly cards will be generated here -->
+            </div>
+            <div class="completion-chart">
+                <h4>Completion Rate Trends</h4>
+                <div id="completionChart">
+                    <!-- Chart bars will be generated here -->
+                </div>
             </div>
         </div>
 
@@ -1017,6 +1142,131 @@
             return months[monthNumber - 1];
         }
 
+        // Calculate monthly completion statistics
+        function calculateMonthlyStats() {
+            const today = new Date();
+            const monthlyStats = [];
+            
+            // Get last 5 months
+            for (let i = 4; i >= 0; i--) {
+                const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
+                const monthName = monthDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                
+                let onTimeCompletions = 0;
+                let lateCompletions = 0;
+                let totalDue = 0;
+                
+                customers.forEach(customer => {
+                    // Check Inspection 1
+                    if (customer.inspectionHistory?.inspection1) {
+                        customer.inspectionHistory.inspection1.forEach(completion => {
+                            const completionDate = new Date(completion.date);
+                            const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+                            
+                            if (completionMonth === monthKey) {
+                                // Check if completion was on time (within flexible window)
+                                const dueMonth = customer.firstInspectionMonth;
+                                const dueYear = monthDate.getFullYear();
+                                const monthBefore = new Date(dueYear, dueMonth - 2, 1);
+                                const monthAfter = new Date(dueYear, dueMonth, 1);
+                                
+                                if (completionDate >= monthBefore && completionDate < monthAfter) {
+                                    onTimeCompletions++;
+                                } else {
+                                    lateCompletions++;
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Check Inspection 2
+                    if (customer.inspectionsPerYear === 2 && customer.inspectionHistory?.inspection2) {
+                        customer.inspectionHistory.inspection2.forEach(completion => {
+                            const completionDate = new Date(completion.date);
+                            const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+                            
+                            if (completionMonth === monthKey) {
+                                // Check if completion was on time (within flexible window)
+                                const dueMonth = customer.secondInspectionMonth;
+                                const dueYear = monthDate.getFullYear();
+                                const monthBefore = new Date(dueYear, dueMonth - 2, 1);
+                                const monthAfter = new Date(dueYear, dueMonth, 1);
+                                
+                                if (completionDate >= monthBefore && completionDate < monthAfter) {
+                                    onTimeCompletions++;
+                                } else {
+                                    lateCompletions++;
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                totalDue = onTimeCompletions + lateCompletions;
+                const onTimeRate = totalDue > 0 ? Math.round((onTimeCompletions / totalDue) * 100) : 0;
+                
+                monthlyStats.push({
+                    month: monthName,
+                    monthKey: monthKey,
+                    onTime: onTimeCompletions,
+                    late: lateCompletions,
+                    total: totalDue,
+                    rate: onTimeRate
+                });
+            }
+            
+            return monthlyStats;
+        }
+
+        // Render monthly statistics
+        function renderMonthlyStats() {
+            const monthlyStats = calculateMonthlyStats();
+            const monthlyGrid = document.getElementById('monthlyGrid');
+            const completionChart = document.getElementById('completionChart');
+            
+            // Render monthly cards
+            monthlyGrid.innerHTML = monthlyStats.map(stat => `
+                <div class="monthly-card">
+                    <h4>${stat.month}</h4>
+                    <div class="monthly-numbers">
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-number on-time">${stat.onTime}</div>
+                            <div class="monthly-stat-label">On Time</div>
+                        </div>
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-number late">${stat.late}</div>
+                            <div class="monthly-stat-label">Late</div>
+                        </div>
+                        <div class="monthly-stat">
+                            <div class="monthly-stat-number">${stat.total}</div>
+                            <div class="monthly-stat-label">Total</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 1.2rem; font-weight: bold; color: ${stat.rate >= 80 ? '#27ae60' : stat.rate >= 60 ? '#f39c12' : '#e74c3c'};">
+                        ${stat.rate}% On Time
+                    </div>
+                </div>
+            `).join('');
+            
+            // Render completion chart
+            completionChart.innerHTML = monthlyStats.map(stat => {
+                const onTimeWidth = stat.total > 0 ? (stat.onTime / stat.total) * 100 : 0;
+                const lateWidth = stat.total > 0 ? (stat.late / stat.total) * 100 : 0;
+                
+                return `
+                    <div class="chart-bar">
+                        <div class="chart-label">${stat.month}</div>
+                        <div class="chart-bar-container">
+                            <div class="chart-bar-fill on-time" style="width: ${onTimeWidth}%"></div>
+                            <div class="chart-bar-fill late" style="width: ${lateWidth}%"></div>
+                        </div>
+                        <div class="chart-percentage">${stat.rate}%</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         // Update statistics
         function updateStats() {
             const total = customers.length;
@@ -1042,6 +1292,9 @@
             document.getElementById('overdueCount').textContent = overdue;
             document.getElementById('dueSoonCount').textContent = dueSoon;
             document.getElementById('currentCount').textContent = current;
+            
+            // Update monthly statistics
+            renderMonthlyStats();
         }
 
         // Filter table
