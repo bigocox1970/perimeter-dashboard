@@ -934,15 +934,20 @@
             <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(this)">
             <button class="btn btn-success" onclick="document.getElementById('importFile').click()">📤 Import Data</button>
             
-            <div class="search-filter">
-                <input type="text" class="search-input" id="searchInput" placeholder="Search customers..." onkeyup="filterTable()">
-                <select class="filter-select" id="statusFilter" onchange="filterTable()">
-                    <option value="">All Status</option>
-                    <option value="current">Up to Date</option>
-                    <option value="due-soon">Due This Month</option>
-                    <option value="overdue">Overdue</option>
-                </select>
-            </div>
+                         <div class="search-filter">
+                 <input type="text" class="search-input" id="searchInput" placeholder="Search customers..." onkeyup="filterTable()">
+                 <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                     <option value="">All Status</option>
+                     <option value="current">Up to Date</option>
+                     <option value="due-soon">Due This Month</option>
+                     <option value="overdue">Overdue</option>
+                 </select>
+                 <select class="filter-select" id="nsiFilter" onchange="filterTable()">
+                     <option value="">All NSI Status</option>
+                     <option value="NSI">NSI Only</option>
+                     <option value="Non-NSI">Non-NSI Only</option>
+                 </select>
+             </div>
         </div>
 
         <!-- Mobile Floating Action Button -->
@@ -953,15 +958,16 @@
         <div class="table-container">
             <table class="customer-table" id="customerTable">
                 <thead>
-                    <tr>
-                        <th>Customer Name</th>
-                        <th>Address</th>
-                        <th>Postcode</th>
-                        <th>System Type</th>
-                        <th>Inspections</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
+                                         <tr>
+                         <th>Customer Name</th>
+                         <th>Address</th>
+                         <th>Postcode</th>
+                         <th>System Type</th>
+                         <th>NSI Status</th>
+                         <th>Inspections</th>
+                         <th>Status</th>
+                         <th>Actions</th>
+                     </tr>
                 </thead>
                 <tbody id="customerTableBody">
                 </tbody>
@@ -996,14 +1002,21 @@
                     <label for="customerPostcode">Postcode *</label>
                     <input type="text" id="customerPostcode" required>
                 </div>
-                <div class="form-group">
-                    <label for="systemType">System Type *</label>
-                                         <select id="systemType" required>
+                                 <div class="form-group">
+                     <label for="systemType">System Type *</label>
+                     <select id="systemType" required>
                          <option value="">Select system type</option>
                          <option value="Intruder">Intruder</option>
                          <option value="CCTV">CCTV</option>
                      </select>
-                </div>
+                 </div>
+                 <div class="form-group">
+                     <label for="nsiStatus">NSI Status</label>
+                     <select id="nsiStatus" required>
+                         <option value="NSI">NSI</option>
+                         <option value="Non-NSI">Non-NSI</option>
+                     </select>
+                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="dateInstalled">Date Installed *</label>
@@ -1332,8 +1345,9 @@
             document.getElementById('customerName').value = customer.name;
             document.getElementById('customerAddress').value = customer.address;
             document.getElementById('customerPostcode').value = customer.postcode;
-            document.getElementById('systemType').value = customer.system_type;
-            document.getElementById('dateInstalled').value = customer.date_installed;
+                         document.getElementById('systemType').value = customer.system_type;
+             document.getElementById('nsiStatus').value = customer.nsi_status || 'NSI';
+             document.getElementById('dateInstalled').value = customer.date_installed;
             document.getElementById('inspectionsPerYear').value = customer.inspections_per_year || 1;
             document.getElementById('firstInspectionMonth').value = customer.first_inspection_month || 1;
                          document.getElementById('secondInspectionMonth').value = customer.second_inspection_month || 6;
@@ -1365,6 +1379,7 @@
                  address: document.getElementById('customerAddress').value,
                  postcode: document.getElementById('customerPostcode').value,
                  system_type: document.getElementById('systemType').value,
+                 nsi_status: document.getElementById('nsiStatus').value,
                  date_installed: document.getElementById('dateInstalled').value,
                  inspections_per_year: inspectionsPerYear,
                  first_inspection_month: parseInt(document.getElementById('firstInspectionMonth').value),
@@ -1628,28 +1643,29 @@
                     </div>
                 `;
                 
-                return `
-                    <tr>
-                        <td><strong>${customer.name}</strong></td>
-                        <td>${customer.address}</td>
-                        <td>${customer.postcode}</td>
-                        <td>${customer.system_type}</td>
-                        <td>
-                            <div class="inspection-grid">
-                                ${inspection1Html}
-                                ${inspection2Html}
-                            </div>
-                            ${batteryHtml}
-                        </td>
-                        <td>
-                            ${getOverallStatus(customer)}
-                        </td>
-                        <td>
-                            <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; margin-right: 5px; padding: 6px 12px;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 6px 12px;">Delete</button>
-                        </td>
-                    </tr>
-                `;
+                                 return `
+                     <tr>
+                         <td><strong>${customer.name}</strong></td>
+                         <td>${customer.address}</td>
+                         <td>${customer.postcode}</td>
+                         <td>${customer.system_type}</td>
+                         <td>${customer.nsi_status || 'NSI'}</td>
+                         <td>
+                             <div class="inspection-grid">
+                                 ${inspection1Html}
+                                 ${inspection2Html}
+                             </div>
+                             ${batteryHtml}
+                         </td>
+                         <td>
+                             ${getOverallStatus(customer)}
+                         </td>
+                         <td>
+                             <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; margin-right: 5px; padding: 6px 12px;">Edit</button>
+                             <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 6px 12px;">Delete</button>
+                         </td>
+                     </tr>
+                 `;
             }).join('');
 
             // Render mobile cards
@@ -1705,11 +1721,12 @@
                         <div class="customer-card-header">
                             <div>
                                 <div class="customer-name">${customer.name}</div>
-                                <div class="customer-details">
-                                    ${customer.address}<br>
-                                    ${customer.postcode}<br>
-                                    <strong>${customer.system_type}</strong>
-                                </div>
+                                                                 <div class="customer-details">
+                                     ${customer.address}<br>
+                                     ${customer.postcode}<br>
+                                     <strong>${customer.system_type}</strong><br>
+                                     <span style="color: #3498db; font-weight: 500;">${customer.nsi_status || 'NSI'}</span>
+                                 </div>
                             </div>
                             <div>
                                 ${getOverallStatus(customer)}
@@ -1911,49 +1928,54 @@
             renderMonthlyStats();
         }
 
-        // Filter table
-        function filterTable() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const statusFilter = document.getElementById('statusFilter').value;
-            const rows = document.querySelectorAll('#customerTableBody tr');
-            const mobileCards = document.querySelectorAll('.customer-card');
+                 // Filter table
+         function filterTable() {
+             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+             const statusFilter = document.getElementById('statusFilter').value;
+             const nsiFilter = document.getElementById('nsiFilter').value;
+             const rows = document.querySelectorAll('#customerTableBody tr');
+             const mobileCards = document.querySelectorAll('.customer-card');
 
-            // Filter desktop table
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                const customerId = parseInt(row.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
-                const customer = customers.find(c => c.id === customerId);
-                
-                if (!customer) return;
-                
-                const overallStatus = getOverallStatus(customer);
-                const status = overallStatus.includes('Overdue') ? 'overdue' : 
-                             overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
-                
-                const matchesSearch = text.includes(searchTerm);
-                const matchesStatus = !statusFilter || status === statusFilter;
-                
-                row.style.display = matchesSearch && matchesStatus ? '' : 'none';
-            });
+             // Filter desktop table
+             rows.forEach(row => {
+                 const text = row.textContent.toLowerCase();
+                 const customerId = parseInt(row.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
+                 const customer = customers.find(c => c.id === customerId);
+                 
+                 if (!customer) return;
+                 
+                 const overallStatus = getOverallStatus(customer);
+                 const status = overallStatus.includes('Overdue') ? 'overdue' : 
+                              overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                 const nsiStatus = customer.nsi_status || 'NSI';
+                 
+                 const matchesSearch = text.includes(searchTerm);
+                 const matchesStatus = !statusFilter || status === statusFilter;
+                 const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
+                 
+                 row.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
+             });
 
-            // Filter mobile cards
-            mobileCards.forEach(card => {
-                const text = card.textContent.toLowerCase();
-                const customerId = parseInt(card.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
-                const customer = customers.find(c => c.id === customerId);
-                
-                if (!customer) return;
-                
-                const overallStatus = getOverallStatus(customer);
-                const status = overallStatus.includes('Overdue') ? 'overdue' : 
-                             overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
-                
-                const matchesSearch = text.includes(searchTerm);
-                const matchesStatus = !statusFilter || status === statusFilter;
-                
-                card.style.display = matchesSearch && matchesStatus ? '' : 'none';
-            });
-        }
+             // Filter mobile cards
+             mobileCards.forEach(card => {
+                 const text = card.textContent.toLowerCase();
+                 const customerId = parseInt(card.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
+                 const customer = customers.find(c => c.id === customerId);
+                 
+                 if (!customer) return;
+                 
+                 const overallStatus = getOverallStatus(customer);
+                 const status = overallStatus.includes('Overdue') ? 'overdue' : 
+                              overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                 const nsiStatus = customer.nsi_status || 'NSI';
+                 
+                 const matchesSearch = text.includes(searchTerm);
+                 const matchesStatus = !statusFilter || status === statusFilter;
+                 const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
+                 
+                 card.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
+             });
+         }
 
         // Export data
         function exportData() {
