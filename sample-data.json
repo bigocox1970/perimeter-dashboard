@@ -1,0 +1,67 @@
+[
+  {
+    "id": 1703123456789,
+    "name": "ABC Manufacturing Ltd",
+    "address": "123 Industrial Estate, Manchester",
+    "postcode": "M1 1AA",
+    "systemType": "HVAC",
+    "dateInstalled": "2020-03-15",
+    "inspectionsPerYear": 2,
+    "firstInspectionMonth": 3,
+    "secondInspectionMonth": 9,
+    "notes": "Large industrial HVAC system",
+    "inspectionHistory": {
+      "inspection1": [
+        {
+          "date": "2024-03-15",
+          "notes": "Annual inspection completed - all systems operational",
+          "recordedAt": "2024-03-15T10:30:00.000Z"
+        },
+        {
+          "date": "2023-03-20",
+          "notes": "Routine maintenance - replaced filters",
+          "recordedAt": "2023-03-20T14:15:00.000Z"
+        }
+      ],
+      "inspection2": [
+        {
+          "date": "2024-09-10",
+          "notes": "Pre-winter inspection - system ready for cold weather",
+          "recordedAt": "2024-09-10T09:45:00.000Z"
+        },
+        {
+          "date": "2023-09-05",
+          "notes": "Summer maintenance completed",
+          "recordedAt": "2023-09-05T11:20:00.000Z"
+        }
+      ]
+    }
+  },
+  {
+    "id": 1703123456790,
+    "name": "XYZ Office Complex",
+    "address": "456 Business Park, London",
+    "postcode": "SW1A 1AA",
+    "systemType": "Air Conditioning",
+    "dateInstalled": "2021-06-10",
+    "inspectionsPerYear": 1,
+    "firstInspectionMonth": 6,
+    "secondInspectionMonth": null,
+    "notes": "Multi-zone AC system",
+    "inspectionHistory": {
+      "inspection1": [
+        {
+          "date": "2024-06-15",
+          "notes": "Annual service - cleaned condenser units",
+          "recordedAt": "2024-06-15T13:30:00.000Z"
+        },
+        {
+          "date": "2023-06-12",
+          "notes": "Routine inspection - minor adjustments made",
+          "recordedAt": "2023-06-12T10:45:00.000Z"
+        }
+      ],
+      "inspection2": []
+    }
+  }
+]

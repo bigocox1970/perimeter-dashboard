@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Maintenance Dashboard</title>
+    <title>Perimeter Maintenance Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
@@ -80,6 +80,10 @@
             color: #f39c12;
         }
 
+        .current {
+            color: #27ae60;
+        }
+
         .controls {
             padding: 30px;
             display: flex;
@@ -135,6 +139,15 @@
 
         .btn-danger:hover:not(:disabled) {
             background: #c0392b;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #e67e22;
         }
 
         .search-filter {
@@ -220,6 +233,43 @@
             color: #721c24;
         }
 
+        .status-completed {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .inspection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .inspection-card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .inspection-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .completion-history {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .completion-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
         .modal {
             display: none;
             position: fixed;
@@ -240,7 +290,7 @@
             padding: 30px;
             border-radius: 10px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -269,6 +319,12 @@
         .form-group textarea {
             resize: vertical;
             min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
         .form-actions {
@@ -314,6 +370,29 @@
             display: none;
         }
 
+        .completion-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .completion-modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+        }
+
         @media (max-width: 768px) {
             .header h1 {
                 font-size: 2rem;
@@ -337,14 +416,22 @@
             .customer-table td {
                 padding: 8px;
             }
+
+            .inspection-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔧 Maintenance Dashboard</h1>
-            <p>Track customer inspections and maintenance schedules</p>
+            <h1>🔧 Perimeter Maintenance Dashboard</h1>
+            <p>Track customer inspections with flexible scheduling windows</p>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -361,14 +448,14 @@
             </div>
             <div class="stat-card">
                 <div class="stat-number overdue" id="overdueCount">0</div>
-                <div class="stat-label">Overdue</div>
+                <div class="stat-label">Overdue Inspections</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number due-soon" id="dueSoonCount">0</div>
-                <div class="stat-label">Due in 30 Days</div>
+                <div class="stat-label">Due This Month</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number" id="currentCount">0</div>
+                <div class="stat-number current" id="currentCount">0</div>
                 <div class="stat-label">Up to Date</div>
             </div>
         </div>
@@ -384,7 +471,7 @@
                 <select class="filter-select" id="statusFilter" onchange="filterTable()">
                     <option value="">All Status</option>
                     <option value="current">Up to Date</option>
-                    <option value="due-soon">Due Soon</option>
+                    <option value="due-soon">Due This Month</option>
                     <option value="overdue">Overdue</option>
                 </select>
             </div>
@@ -394,12 +481,11 @@
             <table class="customer-table" id="customerTable">
                 <thead>
                     <tr>
-                        <th>Name</th>
+                        <th>Customer Name</th>
                         <th>Address</th>
                         <th>Postcode</th>
                         <th>System Type</th>
-                        <th>Date Installed</th>
-                        <th>Next Maintenance</th>
+                        <th>Inspections</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -445,13 +531,52 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="dateInstalled">Date Installed *</label>
-                    <input type="date" id="dateInstalled" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="dateInstalled">Date Installed *</label>
+                        <input type="date" id="dateInstalled" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inspectionsPerYear">Inspections Per Year *</label>
+                        <select id="inspectionsPerYear" required onchange="updateInspectionFields()">
+                            <option value="1">1 per year</option>
+                            <option value="2">2 per year</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="nextMaintenance">Next Maintenance Due *</label>
-                    <input type="date" id="nextMaintenance" required>
+                    <label for="firstInspectionMonth">First Inspection Month *</label>
+                    <select id="firstInspectionMonth" required>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="form-group" id="secondInspectionGroup" style="display: none;">
+                    <label for="secondInspectionMonth">Second Inspection Month</label>
+                    <select id="secondInspectionMonth">
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label for="customerNotes">Notes</label>
@@ -465,14 +590,38 @@
         </div>
     </div>
 
+    <!-- Completion Modal -->
+    <div class="completion-modal" id="completionModal">
+        <div class="completion-modal-content">
+            <h2 id="completionModalTitle">Record Inspection Completion</h2>
+            <form id="completionForm">
+                <div class="form-group">
+                    <label for="completionDate">Completion Date *</label>
+                    <input type="date" id="completionDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="completionNotes">Notes</label>
+                    <textarea id="completionNotes" placeholder="Any notes about this inspection..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeCompletionModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn btn-success">Record Completion</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Customer data storage
         let customers = [];
         let editingCustomerId = null;
+        let completingInspection = null;
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
             loadCustomerData();
+            // Set default completion date to today
+            document.getElementById('completionDate').value = new Date().toISOString().split('T')[0];
         });
 
         // Show/hide loading
@@ -485,7 +634,6 @@
             const successEl = document.getElementById('successMessage');
             const errorEl = document.getElementById('errorMessage');
             
-            // Hide both first
             successEl.style.display = 'none';
             errorEl.style.display = 'none';
             
@@ -509,7 +657,6 @@
                     const data = await response.json();
                     customers = Array.isArray(data) ? data : [];
                 } else if (response.status === 404) {
-                    // File doesn't exist yet - start with empty array
                     customers = [];
                 } else {
                     throw new Error('Failed to load customer data');
@@ -525,19 +672,15 @@
             updateStats();
         }
 
-        // Save customer data to server (Note: This won't work in static hosting)
+        // Save customer data to server
         async function saveCustomerData() {
             try {
                 showMessage('Saving customer data...', 'success');
                 
-                // For static hosting, we'll provide the JSON for manual upload
                 const dataStr = JSON.stringify(customers, null, 2);
-                
-                // Create download link for the data
                 const dataBlob = new Blob([dataStr], {type: 'application/json'});
                 const url = URL.createObjectURL(dataBlob);
                 
-                // Auto-download the file
                 const link = document.createElement('a');
                 link.href = url;
                 link.download = 'customers.json';
@@ -554,11 +697,26 @@
             }
         }
 
+        // Update inspection fields based on inspections per year
+        function updateInspectionFields() {
+            const inspectionsPerYear = document.getElementById('inspectionsPerYear').value;
+            const secondInspectionGroup = document.getElementById('secondInspectionGroup');
+            
+            if (inspectionsPerYear === '2') {
+                secondInspectionGroup.style.display = 'block';
+                document.getElementById('secondInspectionMonth').required = true;
+            } else {
+                secondInspectionGroup.style.display = 'none';
+                document.getElementById('secondInspectionMonth').required = false;
+            }
+        }
+
         // Open add customer modal
         function openAddModal() {
             editingCustomerId = null;
             document.getElementById('modalTitle').textContent = 'Add Customer';
             document.getElementById('customerForm').reset();
+            updateInspectionFields();
             document.getElementById('customerModal').style.display = 'block';
         }
 
@@ -574,9 +732,12 @@
             document.getElementById('customerPostcode').value = customer.postcode;
             document.getElementById('systemType').value = customer.systemType;
             document.getElementById('dateInstalled').value = customer.dateInstalled;
-            document.getElementById('nextMaintenance').value = customer.nextMaintenance;
+            document.getElementById('inspectionsPerYear').value = customer.inspectionsPerYear || 1;
+            document.getElementById('firstInspectionMonth').value = customer.firstInspectionMonth || 1;
+            document.getElementById('secondInspectionMonth').value = customer.secondInspectionMonth || 6;
             document.getElementById('customerNotes').value = customer.notes || '';
             
+            updateInspectionFields();
             document.getElementById('customerModal').style.display = 'block';
         }
 
@@ -590,13 +751,16 @@
         document.getElementById('customerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const inspectionsPerYear = parseInt(document.getElementById('inspectionsPerYear').value);
             const formData = {
                 name: document.getElementById('customerName').value,
                 address: document.getElementById('customerAddress').value,
                 postcode: document.getElementById('customerPostcode').value,
                 systemType: document.getElementById('systemType').value,
                 dateInstalled: document.getElementById('dateInstalled').value,
-                nextMaintenance: document.getElementById('nextMaintenance').value,
+                inspectionsPerYear: inspectionsPerYear,
+                firstInspectionMonth: parseInt(document.getElementById('firstInspectionMonth').value),
+                secondInspectionMonth: inspectionsPerYear === 2 ? parseInt(document.getElementById('secondInspectionMonth').value) : null,
                 notes: document.getElementById('customerNotes').value
             };
 
@@ -610,7 +774,11 @@
                 // Add new customer
                 const newCustomer = {
                     id: Date.now(),
-                    ...formData
+                    ...formData,
+                    inspectionHistory: {
+                        inspection1: [],
+                        inspection2: []
+                    }
                 };
                 customers.push(newCustomer);
             }
@@ -631,15 +799,46 @@
             }
         }
 
-        // Get maintenance status
-        function getMaintenanceStatus(nextMaintenanceDate) {
+        // Get inspection status
+        function getInspectionStatus(customer, inspectionType) {
             const today = new Date();
-            const maintenanceDate = new Date(nextMaintenanceDate);
-            const diffTime = maintenanceDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) return 'overdue';
-            if (diffDays <= 30) return 'due-soon';
+            const currentMonth = today.getMonth() + 1;
+            const currentYear = today.getFullYear();
+            
+            let dueMonth = customer.firstInspectionMonth;
+            if (inspectionType === 'inspection2' && customer.inspectionsPerYear === 2) {
+                dueMonth = customer.secondInspectionMonth;
+            }
+            
+            // Calculate due date for this year
+            const dueDate = new Date(currentYear, dueMonth - 1, 1);
+            
+            // Check if we're in the flexible window (month before, due month, month after)
+            const monthBefore = new Date(currentYear, dueMonth - 2, 1);
+            const monthAfter = new Date(currentYear, dueMonth, 1);
+            
+            // Check if inspection was completed in the last 12 months
+            const history = customer.inspectionHistory?.[inspectionType] || [];
+            const lastCompletion = history.length > 0 ? new Date(history[history.length - 1].date) : null;
+            
+            if (lastCompletion) {
+                const monthsSinceCompletion = (currentYear - lastCompletion.getFullYear()) * 12 + 
+                                            (currentMonth - lastCompletion.getMonth() - 1);
+                if (monthsSinceCompletion < 12) {
+                    return 'completed';
+                }
+            }
+            
+            // Check if we're in the flexible window
+            if (today >= monthBefore && today < monthAfter) {
+                return 'due-soon';
+            }
+            
+            // Check if overdue
+            if (today >= monthAfter) {
+                return 'overdue';
+            }
+            
             return 'current';
         }
 
@@ -647,13 +846,69 @@
         function getStatusBadge(status) {
             const statusMap = {
                 'current': { class: 'status-current', text: 'Up to Date' },
-                'due-soon': { class: 'status-due-soon', text: 'Due Soon' },
-                'overdue': { class: 'status-overdue', text: 'Overdue' }
+                'due-soon': { class: 'status-due-soon', text: 'Due This Month' },
+                'overdue': { class: 'status-overdue', text: 'Overdue' },
+                'completed': { class: 'status-completed', text: 'Completed' }
             };
             
             const statusInfo = statusMap[status];
             return `<span class="status-badge ${statusInfo.class}">${statusInfo.text}</span>`;
         }
+
+        // Open completion modal
+        function recordCompletion(customerId, inspectionType) {
+            completingInspection = { customerId, inspectionType };
+            const customer = customers.find(c => c.id === customerId);
+            const inspectionName = inspectionType === 'inspection1' ? 'Inspection 1' : 'Inspection 2';
+            
+            document.getElementById('completionModalTitle').textContent = `Record ${inspectionName} Completion - ${customer.name}`;
+            document.getElementById('completionDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('completionNotes').value = '';
+            document.getElementById('completionModal').style.display = 'block';
+        }
+
+        // Close completion modal
+        function closeCompletionModal() {
+            document.getElementById('completionModal').style.display = 'none';
+            completingInspection = null;
+        }
+
+        // Handle completion form submission
+        document.getElementById('completionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!completingInspection) return;
+            
+            const { customerId, inspectionType } = completingInspection;
+            const customer = customers.find(c => c.id === customerId);
+            
+            if (!customer) return;
+            
+            const completion = {
+                date: document.getElementById('completionDate').value,
+                notes: document.getElementById('completionNotes').value,
+                recordedAt: new Date().toISOString()
+            };
+            
+            // Initialize history if it doesn't exist
+            if (!customer.inspectionHistory) {
+                customer.inspectionHistory = { inspection1: [], inspection2: [] };
+            }
+            
+            // Add completion to history
+            customer.inspectionHistory[inspectionType].push(completion);
+            
+            // Keep only the last 5 completions
+            if (customer.inspectionHistory[inspectionType].length > 5) {
+                customer.inspectionHistory[inspectionType] = customer.inspectionHistory[inspectionType].slice(-5);
+            }
+            
+            await saveCustomerData();
+            renderCustomers();
+            updateStats();
+            closeCompletionModal();
+            showMessage('Inspection completion recorded successfully!', 'success');
+        });
 
         // Render customers table
         function renderCustomers() {
@@ -671,19 +926,66 @@
             document.getElementById('customerTable').style.display = 'table';
 
             tbody.innerHTML = customers.map(customer => {
-                const status = getMaintenanceStatus(customer.nextMaintenance);
-                const installDate = new Date(customer.dateInstalled).toLocaleDateString();
-                const maintenanceDate = new Date(customer.nextMaintenance).toLocaleDateString();
+                const inspection1Status = getInspectionStatus(customer, 'inspection1');
+                const inspection2Status = customer.inspectionsPerYear === 2 ? 
+                    getInspectionStatus(customer, 'inspection2') : null;
+                
+                const inspection1History = customer.inspectionHistory?.inspection1 || [];
+                const inspection2History = customer.inspectionHistory?.inspection2 || [];
+                
+                const inspection1Html = `
+                    <div class="inspection-card">
+                        <div class="inspection-title">Inspection 1 (${getMonthName(customer.firstInspectionMonth)})</div>
+                        <div>${getStatusBadge(inspection1Status)}</div>
+                        <button class="btn btn-success" onclick="recordCompletion(${customer.id}, 'inspection1')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Record Completion</button>
+                        ${inspection1History.length > 0 ? `
+                            <div class="completion-history">
+                                <strong>Last 5 completions:</strong>
+                                ${inspection1History.slice(-5).map(h => `
+                                    <div class="completion-item">
+                                        <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        <span>${h.notes ? '📝' : ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                const inspection2Html = customer.inspectionsPerYear === 2 ? `
+                    <div class="inspection-card">
+                        <div class="inspection-title">Inspection 2 (${getMonthName(customer.secondInspectionMonth)})</div>
+                        <div>${getStatusBadge(inspection2Status)}</div>
+                        <button class="btn btn-success" onclick="recordCompletion(${customer.id}, 'inspection2')" style="margin-top: 5px; padding: 4px 8px; font-size: 11px;">Record Completion</button>
+                        ${inspection2History.length > 0 ? `
+                            <div class="completion-history">
+                                <strong>Last 5 completions:</strong>
+                                ${inspection2History.slice(-5).map(h => `
+                                    <div class="completion-item">
+                                        <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        <span>${h.notes ? '📝' : ''}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : '';
 
                 return `
-                    <tr data-status="${status}">
+                    <tr>
                         <td><strong>${customer.name}</strong></td>
                         <td>${customer.address}</td>
                         <td>${customer.postcode}</td>
                         <td>${customer.systemType}</td>
-                        <td>${installDate}</td>
-                        <td>${maintenanceDate}</td>
-                        <td>${getStatusBadge(status)}</td>
+                        <td>
+                            <div class="inspection-grid">
+                                ${inspection1Html}
+                                ${inspection2Html}
+                            </div>
+                        </td>
+                        <td>
+                            ${getOverallStatus(customer)}
+                        </td>
                         <td>
                             <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; margin-right: 5px; padding: 6px 12px;">Edit</button>
                             <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 6px 12px;">Delete</button>
@@ -691,6 +993,28 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        // Get overall status for customer
+        function getOverallStatus(customer) {
+            const inspection1Status = getInspectionStatus(customer, 'inspection1');
+            const inspection2Status = customer.inspectionsPerYear === 2 ? 
+                getInspectionStatus(customer, 'inspection2') : null;
+            
+            if (inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue')) {
+                return getStatusBadge('overdue');
+            }
+            if (inspection1Status === 'due-soon' || (inspection2Status && inspection2Status === 'due-soon')) {
+                return getStatusBadge('due-soon');
+            }
+            return getStatusBadge('current');
+        }
+
+        // Get month name
+        function getMonthName(monthNumber) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return months[monthNumber - 1];
         }
 
         // Update statistics
@@ -701,10 +1025,17 @@
             let current = 0;
 
             customers.forEach(customer => {
-                const status = getMaintenanceStatus(customer.nextMaintenance);
-                if (status === 'overdue') overdue++;
-                else if (status === 'due-soon') dueSoon++;
-                else current++;
+                const inspection1Status = getInspectionStatus(customer, 'inspection1');
+                const inspection2Status = customer.inspectionsPerYear === 2 ? 
+                    getInspectionStatus(customer, 'inspection2') : null;
+                
+                if (inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue')) {
+                    overdue++;
+                } else if (inspection1Status === 'due-soon' || (inspection2Status && inspection2Status === 'due-soon')) {
+                    dueSoon++;
+                } else {
+                    current++;
+                }
             });
 
             document.getElementById('totalCustomers').textContent = total;
@@ -721,7 +1052,14 @@
 
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
-                const status = row.getAttribute('data-status');
+                const customerId = parseInt(row.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
+                const customer = customers.find(c => c.id === customerId);
+                
+                if (!customer) return;
+                
+                const overallStatus = getOverallStatus(customer);
+                const status = overallStatus.includes('Overdue') ? 'overdue' : 
+                             overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
                 
                 const matchesSearch = text.includes(searchTerm);
                 const matchesStatus = !statusFilter || status === statusFilter;
@@ -771,11 +1109,16 @@
             input.value = '';
         }
 
-        // Close modal when clicking outside
+        // Close modals when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('customerModal');
-            if (event.target === modal) {
+            const customerModal = document.getElementById('customerModal');
+            const completionModal = document.getElementById('completionModal');
+            
+            if (event.target === customerModal) {
                 closeModal();
+            }
+            if (event.target === completionModal) {
+                closeCompletionModal();
             }
         };
     </script>
