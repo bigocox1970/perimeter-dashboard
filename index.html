@@ -265,12 +265,38 @@
             padding: 15px;
             text-align: left;
             font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+
+        .customer-table th:hover {
+            background: #2c3e50;
+        }
+
+        .customer-table th.sortable::after {
+            content: '↕';
+            position: absolute;
+            right: 10px;
+            opacity: 0.5;
+        }
+
+        .customer-table th.sort-asc::after {
+            content: '↑';
+            opacity: 1;
+        }
+
+        .customer-table th.sort-desc::after {
+            content: '↓';
+            opacity: 1;
         }
 
         .customer-table td {
             padding: 15px;
             border-bottom: 1px solid #eee;
             vertical-align: middle;
+            word-wrap: break-word;
+            overflow: hidden;
         }
 
         .customer-table tr:hover {
@@ -928,7 +954,7 @@
             </div>
         </div>
 
-        <div class="controls">
+                <div class="controls">
             <button class="btn btn-primary" onclick="openAddModal()">➕ Add Customer</button>
             <button class="btn btn-success" onclick="exportData()">📥 Export Data</button>
             <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(this)">
@@ -942,13 +968,13 @@
                      <option value="due-soon">Due This Month</option>
                      <option value="overdue">Overdue</option>
                  </select>
-                 <select class="filter-select" id="nsiFilter" onchange="filterTable()">
-                     <option value="">All NSI Status</option>
+                 <select class="filter-select" id="nsiFilter" onchange="console.log('NSI filter changed:', this.value); filterTable(); updateStats();">
                      <option value="NSI">NSI Only</option>
+                     <option value="">All NSI Status</option>
                      <option value="Non-NSI">Non-NSI Only</option>
                  </select>
              </div>
-        </div>
+         </div>
 
         <!-- Mobile Floating Action Button -->
         <div class="mobile-fab" onclick="openAddModal()">
@@ -956,19 +982,19 @@
         </div>
 
         <div class="table-container">
-            <table class="customer-table" id="customerTable">
-                <thead>
-                                         <tr>
-                         <th>Customer Name</th>
-                         <th>Address</th>
-                         <th>Postcode</th>
-                         <th>System Type</th>
-                         <th>NSI Status</th>
-                         <th>Inspections</th>
-                         <th>Status</th>
-                         <th>Actions</th>
-                     </tr>
-                </thead>
+                         <table class="customer-table" id="customerTable">
+                 <thead>
+                                          <tr>
+                          <th class="sortable" onclick="sortTable('name')">Customer Name</th>
+                          <th class="sortable" onclick="sortTable('address')">Address</th>
+                          <th class="sortable" onclick="sortTable('postcode')">Postcode</th>
+                          <th class="sortable" onclick="sortTable('system_type')">System Type</th>
+                          <th class="sortable" onclick="sortTable('nsi_status')">NSI Status</th>
+                          <th>Inspections</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                      </tr>
+                 </thead>
                 <tbody id="customerTableBody">
                 </tbody>
             </table>
@@ -1145,10 +1171,11 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'perim_customers';
 
-        // Customer data storage
-        let customers = [];
-        let editingCustomerId = null;
-        let completingInspection = null;
+                 // Customer data storage
+         let customers = [];
+         let editingCustomerId = null;
+         let completingInspection = null;
+         let currentSort = { field: null, direction: 'asc' };
 
         // Password protection
         const CORRECT_PASSWORD = 'Perimeter2999';
@@ -1358,8 +1385,11 @@
         // Open edit customer modal
         function editCustomer(id) {
             editingCustomerId = id;
-            const customer = customers.find(c => c.id === id);
-            if (!customer) return;
+            const customer = customers.find(c => String(c.id) === String(id));
+            if (!customer) {
+                console.error('Customer not found with ID:', id);
+                return;
+            }
 
             document.getElementById('modalTitle').textContent = 'Edit Customer';
             document.getElementById('customerName').value = customer.name;
@@ -1536,7 +1566,7 @@
         // Open completion modal
         function recordCompletion(customerId, inspectionType) {
             completingInspection = { customerId, inspectionType };
-            const customer = customers.find(c => c.id === customerId);
+            const customer = customers.find(c => String(c.id) === String(customerId));
             const inspectionName = inspectionType === 'inspection1' ? 'Inspection 1' : 'Inspection 2';
             
             document.getElementById('completionModalTitle').textContent = `Record ${inspectionName} Completion - ${customer.name}`;
@@ -1558,7 +1588,7 @@
             if (!completingInspection) return;
             
             const { customerId, inspectionType } = completingInspection;
-            const customer = customers.find(c => c.id === customerId);
+            const customer = customers.find(c => String(c.id) === String(customerId));
             
             if (!customer) return;
             
@@ -1662,30 +1692,29 @@
                     </div>
                 ` : '';
 
-                                 const cloudArcHtml = `
-                     <div class="cloud-arc-info" style="margin-top: 10px; font-size: 12px; color: #666;">
-                         <strong>Cloud & ARC:</strong><br>
-                         ${customer.cloud_id ? `Cloud ID: ${customer.cloud_id}` : 'Cloud ID: Not set'}<br>
-                         ${customer.cloud_renewal_date ? `Cloud Renewal: ${new Date(customer.cloud_renewal_date).toLocaleDateString()}` : 'Cloud Renewal: Not set'}<br>
-                         ${customer.arc_no ? `ARC No: ${customer.arc_no}` : 'ARC No: Not set'}<br>
-                         ${customer.arc_renewal_date ? `ARC Renewal: ${new Date(customer.arc_renewal_date).toLocaleDateString()}` : 'ARC Renewal: Not set'}
-                     </div>
-                 `;
-                 
-                 const batteryHtml = `
-                     <div class="battery-info" style="margin-top: 10px; font-size: 12px; color: #666;">
-                         <strong>Batteries:</strong><br>
-                         ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
-                         ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
-                         ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                                 const cloudArcBatteryHtml = `
+                     <div style="margin-top: 10px; font-size: 12px; color: #666; display: flex; gap: 30px;">
+                         <div>
+                             <strong>Cloud & ARC:</strong><br>
+                             ${customer.cloud_id ? `Cloud ID: ${customer.cloud_id}` : 'Cloud ID: Not set'}<br>
+                             ${customer.cloud_renewal_date ? `Cloud Renewal: ${new Date(customer.cloud_renewal_date).toLocaleDateString()}` : 'Cloud Renewal: Not set'}<br>
+                             ${customer.arc_no ? `ARC No: ${customer.arc_no}` : 'ARC No: Not set'}<br>
+                             ${customer.arc_renewal_date ? `ARC Renewal: ${new Date(customer.arc_renewal_date).toLocaleDateString()}` : 'ARC Renewal: Not set'}
+                         </div>
+                         <div>
+                             <strong>Batteries:</strong><br>
+                             ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
+                             ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
+                             ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                         </div>
                      </div>
                  `;
                 
                                  return `
                      <tr>
                          <td><strong>${customer.name}</strong></td>
-                         <td>${customer.address}</td>
-                         <td>${customer.postcode}</td>
+                         <td>${customer.address && customer.address !== 'Address not provided' ? customer.address : ''}</td>
+                         <td>${customer.postcode && customer.postcode !== 'Postcode not provided' ? customer.postcode : ''}</td>
                          <td>${customer.system_type}</td>
                          <td>${customer.nsi_status || 'NSI'}</td>
                          <td>
@@ -1693,8 +1722,7 @@
                                  ${inspection1Html}
                                  ${inspection2Html}
                              </div>
-                             ${cloudArcHtml}
-                             ${batteryHtml}
+                             ${cloudArcBatteryHtml}
                          </td>
                          <td>
                              ${getOverallStatus(customer)}
@@ -1761,8 +1789,8 @@
                             <div>
                                 <div class="customer-name">${customer.name}</div>
                                                                  <div class="customer-details">
-                                     ${customer.address}<br>
-                                     ${customer.postcode}<br>
+                                     ${customer.address && customer.address !== 'Address not provided' ? customer.address + '<br>' : ''}
+                                     ${customer.postcode && customer.postcode !== 'Postcode not provided' ? customer.postcode + '<br>' : ''}
                                      <strong>${customer.system_type}</strong><br>
                                      <span style="color: #3498db; font-weight: 500;">${customer.nsi_status || 'NSI'}</span>
                                  </div>
@@ -1775,18 +1803,20 @@
                              ${inspection1Html}
                              ${inspection2Html}
                          </div>
-                         <div class="cloud-arc-info" style="margin: 15px 0; padding: 10px; background: #e8f4fd; border-radius: 6px; font-size: 14px;">
-                             <strong>☁️ Cloud & ARC:</strong><br>
-                             ${customer.cloud_id ? `Cloud ID: ${customer.cloud_id}` : 'Cloud ID: Not set'}<br>
-                             ${customer.cloud_renewal_date ? `Cloud Renewal: ${new Date(customer.cloud_renewal_date).toLocaleDateString()}` : 'Cloud Renewal: Not set'}<br>
-                             ${customer.arc_no ? `ARC No: ${customer.arc_no}` : 'ARC No: Not set'}<br>
-                             ${customer.arc_renewal_date ? `ARC Renewal: ${new Date(customer.arc_renewal_date).toLocaleDateString()}` : 'ARC Renewal: Not set'}
-                         </div>
-                         <div class="battery-info" style="margin: 15px 0; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px;">
-                             <strong>🔋 Battery Replacement:</strong><br>
-                             ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
-                             ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
-                             ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                         <div style="margin: 15px 0; display: flex; gap: 15px;">
+                             <div class="cloud-arc-info" style="flex: 1; padding: 10px; background: #e8f4fd; border-radius: 6px; font-size: 14px;">
+                                 <strong>☁️ Cloud & ARC:</strong><br>
+                                 ${customer.cloud_id ? `Cloud ID: ${customer.cloud_id}` : 'Cloud ID: Not set'}<br>
+                                 ${customer.cloud_renewal_date ? `Cloud Renewal: ${new Date(customer.cloud_renewal_date).toLocaleDateString()}` : 'Cloud Renewal: Not set'}<br>
+                                 ${customer.arc_no ? `ARC No: ${customer.arc_no}` : 'ARC No: Not set'}<br>
+                                 ${customer.arc_renewal_date ? `ARC Renewal: ${new Date(customer.arc_renewal_date).toLocaleDateString()}` : 'ARC Renewal: Not set'}
+                             </div>
+                             <div class="battery-info" style="flex: 1; padding: 10px; background: #f8f9fa; border-radius: 6px; font-size: 14px;">
+                                 <strong>🔋 Battery Replacement:</strong><br>
+                                 ${batteryData.control_panel ? `Control Panel: ${new Date(batteryData.control_panel).toLocaleDateString()}` : 'Control Panel: Not set'}<br>
+                                 ${batteryData.siren ? `Siren: ${new Date(batteryData.siren).toLocaleDateString()}` : 'Siren: Not set'}<br>
+                                 ${batteryData.detectors ? `Detectors: ${new Date(batteryData.detectors).toLocaleDateString()}` : 'Detectors: Not set'}
+                             </div>
                          </div>
                          <div class="customer-actions">
                             <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white;">Edit</button>
@@ -1795,6 +1825,9 @@
                     </div>
                 `;
             }).join('');
+            
+            // Apply current filters after rendering
+            filterTable();
         }
 
         // Get overall status for customer
@@ -1946,12 +1979,26 @@
 
         // Update statistics
         function updateStats() {
-            const total = customers.length;
+            // Get current NSI filter
+            const nsiFilter = document.getElementById('nsiFilter').value;
+            console.log('UpdateStats called with NSI filter:', nsiFilter);
+            
+            // Filter customers based on NSI status
+            let filteredCustomers = customers;
+            if (nsiFilter) {
+                filteredCustomers = customers.filter(customer => {
+                    const nsiStatus = customer.nsi_status || 'NSI';
+                    return nsiStatus === nsiFilter;
+                });
+            }
+            
+            const total = filteredCustomers.length;
+            console.log('Filtered customers count:', total, 'out of', customers.length);
             let overdue = 0;
             let dueSoon = 0;
             let current = 0;
 
-            customers.forEach(customer => {
+            filteredCustomers.forEach(customer => {
                 const inspection1Status = getInspectionStatus(customer, 'inspection1');
                 const inspection2Status = customer.inspections_per_year === 2 ? 
                     getInspectionStatus(customer, 'inspection2') : null;
@@ -1974,54 +2021,104 @@
             renderMonthlyStats();
         }
 
-                 // Filter table
-         function filterTable() {
-             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-             const statusFilter = document.getElementById('statusFilter').value;
-             const nsiFilter = document.getElementById('nsiFilter').value;
-             const rows = document.querySelectorAll('#customerTableBody tr');
-             const mobileCards = document.querySelectorAll('.customer-card');
-
-             // Filter desktop table
-             rows.forEach(row => {
-                 const text = row.textContent.toLowerCase();
-                 const customerId = parseInt(row.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
-                 const customer = customers.find(c => c.id === customerId);
-                 
-                 if (!customer) return;
-                 
-                 const overallStatus = getOverallStatus(customer);
-                 const status = overallStatus.includes('Overdue') ? 'overdue' : 
-                              overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
-                 const nsiStatus = customer.nsi_status || 'NSI';
-                 
-                 const matchesSearch = text.includes(searchTerm);
-                 const matchesStatus = !statusFilter || status === statusFilter;
-                 const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
-                 
-                 row.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
+                          // Sort table
+         function sortTable(field) {
+             const headers = document.querySelectorAll('.customer-table th.sortable');
+             
+             // Clear previous sort indicators
+             headers.forEach(header => {
+                 header.classList.remove('sort-asc', 'sort-desc');
+                 header.classList.add('sortable');
              });
-
-             // Filter mobile cards
-             mobileCards.forEach(card => {
-                 const text = card.textContent.toLowerCase();
-                 const customerId = parseInt(card.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick').match(/\d+/)[0]);
-                 const customer = customers.find(c => c.id === customerId);
+             
+             // Determine sort direction
+             if (currentSort.field === field) {
+                 currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+             } else {
+                 currentSort.field = field;
+                 currentSort.direction = 'asc';
+             }
+             
+             // Add sort indicator to current header
+             const currentHeader = document.querySelector(`th[onclick="sortTable('${field}')"]`);
+             currentHeader.classList.remove('sortable');
+             currentHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+             
+             // Sort customers array
+             customers.sort((a, b) => {
+                 let aVal = a[field] || '';
+                 let bVal = b[field] || '';
                  
-                 if (!customer) return;
+                 // Convert to lowercase for string comparison
+                 if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+                 if (typeof bVal === 'string') bVal = bVal.toLowerCase();
                  
-                 const overallStatus = getOverallStatus(customer);
-                 const status = overallStatus.includes('Overdue') ? 'overdue' : 
-                              overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
-                 const nsiStatus = customer.nsi_status || 'NSI';
-                 
-                 const matchesSearch = text.includes(searchTerm);
-                 const matchesStatus = !statusFilter || status === statusFilter;
-                 const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
-                 
-                 card.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
+                 if (currentSort.direction === 'asc') {
+                     return aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+                 } else {
+                     return aVal < bVal ? 1 : aVal > bVal ? -1 : 0;
+                 }
              });
+             
+             // Re-render the table
+             renderCustomers();
          }
+
+         // Filter table
+          function filterTable() {
+              const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+              const statusFilter = document.getElementById('statusFilter').value;
+              const nsiFilter = document.getElementById('nsiFilter').value;
+              const rows = document.querySelectorAll('#customerTableBody tr');
+              const mobileCards = document.querySelectorAll('.customer-card');
+
+              // Filter desktop table
+              rows.forEach(row => {
+                  const text = row.textContent.toLowerCase();
+                  const onclickAttr = row.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick');
+                  const customerId = onclickAttr.match(/editCustomer\(([^)]+)\)/)[1].replace(/['"]/g, '');
+                  const customer = customers.find(c => String(c.id) === String(customerId));
+                  
+                  if (!customer) return;
+                  
+                  const overallStatus = getOverallStatus(customer);
+                  const status = overallStatus.includes('Overdue') ? 'overdue' : 
+                               overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                  const nsiStatus = customer.nsi_status || 'NSI';
+                  
+                  const matchesSearch = text.includes(searchTerm);
+                  const matchesStatus = !statusFilter || status === statusFilter;
+                  const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
+                  
+                  // Debug logging for NSI filter issues
+                  if (nsiFilter && !matchesNsi) {
+                      console.log(`Filtering out: ${customer.name}, NSI Status: "${nsiStatus}", Filter: "${nsiFilter}"`);
+                  }
+                  
+                  row.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
+              });
+
+              // Filter mobile cards
+              mobileCards.forEach(card => {
+                  const text = card.textContent.toLowerCase();
+                  const onclickAttr = card.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick');
+                  const customerId = onclickAttr.match(/editCustomer\(([^)]+)\)/)[1].replace(/['"]/g, '');
+                  const customer = customers.find(c => String(c.id) === String(customerId));
+                  
+                  if (!customer) return;
+                  
+                  const overallStatus = getOverallStatus(customer);
+                  const status = overallStatus.includes('Overdue') ? 'overdue' : 
+                               overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                  const nsiStatus = customer.nsi_status || 'NSI';
+                  
+                  const matchesSearch = text.includes(searchTerm);
+                  const matchesStatus = !statusFilter || status === statusFilter;
+                  const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
+                  
+                  card.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
+              });
+          }
 
         // Export data
         function exportData() {
@@ -2046,12 +2143,45 @@
                 try {
                     const importedData = JSON.parse(e.target.result);
                     if (Array.isArray(importedData)) {
-                        if (confirm('This will replace all existing data. Continue?')) {
-                            customers = importedData;
-                            await saveCustomerData();
-                            renderCustomers();
-                            updateStats();
-                            showMessage('Data imported successfully!', 'success');
+                        if (confirm('This will REPLACE all existing data with fresh data. Continue?')) {
+                            showLoading(true);
+                            
+                                                         try {
+                                 // First, delete all existing data
+                                 const { error: deleteError } = await supabase
+                                     .from(TABLE_NAME)
+                                     .delete()
+                                     .not('id', 'is', null);
+                                 
+                                 if (deleteError) {
+                                     console.error('Delete error:', deleteError);
+                                     const { error: deleteAllError } = await supabase
+                                         .from(TABLE_NAME)
+                                         .delete();
+                                     if (deleteAllError) throw deleteAllError;
+                                 }
+                                 
+                                 // Then insert the new data with generated IDs
+                                 const dataWithIds = importedData.map((customer, index) => ({
+                                     ...customer,
+                                     id: Date.now() + index // Generate unique IDs
+                                 }));
+                                 
+                                 const { error: insertError } = await supabase
+                                     .from(TABLE_NAME)
+                                     .insert(dataWithIds);
+                                 
+                                 if (insertError) throw insertError;
+                                
+                                // Reload data from Supabase
+                                await loadCustomerData();
+                                showMessage('Data imported successfully!', 'success');
+                            } catch (error) {
+                                console.error('Error importing data:', error);
+                                showMessage('Error importing data: ' + error.message, 'error');
+                            } finally {
+                                showLoading(false);
+                            }
                         }
                     } else {
                         showMessage('Invalid file format. Please select a valid JSON file.', 'error');

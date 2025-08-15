@@ -1,0 +1,877 @@
+[
+  {
+    "name": "Walton St Gregory Homes",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ABXMUQ2Y",
+    "cloud_renewal_date": "2025-07-09",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2019-04-10",
+    "inspections_per_year": 1,
+    "first_inspection_month": 7,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Pat I shea",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AAVAKRCW",
+    "cloud_renewal_date": "2025-07-20",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2023-07-20",
+    "inspections_per_year": 1,
+    "first_inspection_month": 7,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Marcia Slater",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AJCXOQZY",
+    "cloud_renewal_date": "2025-08-18",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2021-08-18",
+    "inspections_per_year": 1,
+    "first_inspection_month": 8,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Christina Rogers",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ANBFUQ32",
+    "cloud_renewal_date": "2025-08-26",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-08-26",
+    "inspections_per_year": 1,
+    "first_inspection_month": 8,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Peter White New",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AB6H6QSG",
+    "cloud_renewal_date": "2025-08-28",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2024-08-28",
+    "inspections_per_year": 1,
+    "first_inspection_month": 8,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Evenly Hall",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AZ5OAED4",
+    "cloud_renewal_date": "2025-09-01",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2018-06-12",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Dave Falcon",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AIZKQQ4U",
+    "cloud_renewal_date": "2025-09-01",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2021-08-11",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "First Choice Yard",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "5563WUI2",
+    "cloud_renewal_date": "2025-09-03",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2021-09-03",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Izzy",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "56OLUUGO",
+    "cloud_renewal_date": "2025-09-08",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-09-08",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Ancil Manor",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AMAACA5C",
+    "cloud_renewal_date": "2025-09-10",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2017-03-30",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Anne Kenyon",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ALNE2A2Q",
+    "cloud_renewal_date": "2025-09-13",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2017-05-23",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Ducker new yard",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "55XMWUNQ",
+    "cloud_renewal_date": "2025-09-18",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2021-08-06",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Paul Dobson",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ANTS4IHS",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2018-04-11",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Sarah and Martin Boden",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "52ZEOUOM",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2020-08-19",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Talboys",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "526JWUKA",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2020-08-14",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Harvey Marston",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AGD32Q6Y",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2020-08-18",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Mark Ashe",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AOS5WBA2",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2018-08-22",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Jack Fulford",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "BBQDWEZI",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2020-08-19",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Whispering Cottages Georgia",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "5YILUUCW",
+    "cloud_renewal_date": "2025-09-24",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2019-07-30",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "JG Restorations home",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AAWNYRAC",
+    "cloud_renewal_date": "2025-09-28",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2023-09-28",
+    "inspections_per_year": 1,
+    "first_inspection_month": 9,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Scott Macrae",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ANI3CQ5Y",
+    "cloud_renewal_date": "2025-10-08",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-09-21",
+    "inspections_per_year": 1,
+    "first_inspection_month": 10,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Ricki Smith",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AAA5WRA6",
+    "cloud_renewal_date": "2025-11-12",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-11-12",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Paul Chesson",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ANLVMQ6I",
+    "cloud_renewal_date": "2025-11-15",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-10-26",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Secura Solar Project",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AYPSSEOM",
+    "cloud_renewal_date": "2025-11-16",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2017-07-21",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Mike Rothery",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "56GG4UB4",
+    "cloud_renewal_date": "2025-11-16",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2021-10-21",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Chris Jackson",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ALOQ2AVW",
+    "cloud_renewal_date": "2025-11-23",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2017-11-09",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Littlegate street",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AD75UQ2M",
+    "cloud_renewal_date": "2025-11-23",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2019-11-20",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Ray Kill",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ALNTQQ6I",
+    "cloud_renewal_date": "2025-11-23",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-11-23",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Judith Stansfield",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "ACG3WRCE",
+    "cloud_renewal_date": "2025-11-28",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2024-11-28",
+    "inspections_per_year": 1,
+    "first_inspection_month": 11,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Mark Ashe new",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AAZKOQSS",
+    "cloud_renewal_date": "2025-12-03",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2024-12-03",
+    "inspections_per_year": 1,
+    "first_inspection_month": 12,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "351 Banbury Rd",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AAILYRH6",
+    "cloud_renewal_date": "2025-12-13",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2022-11-28",
+    "inspections_per_year": 1,
+    "first_inspection_month": 12,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Brian Francis",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "6DYXQUGK",
+    "cloud_renewal_date": "2025-12-20",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2024-12-20",
+    "inspections_per_year": 1,
+    "first_inspection_month": 12,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Dean Cox Farm",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "56ULGUOU",
+    "cloud_renewal_date": "2025-12-21",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2021-12-21",
+    "inspections_per_year": 1,
+    "first_inspection_month": 12,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Louisa Lane fox",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AHTIGQ2E",
+    "cloud_renewal_date": "2026-01-06",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2020-12-17",
+    "inspections_per_year": 1,
+    "first_inspection_month": 1,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  },
+  {
+    "name": "Marston Street",
+    "address": "Address not provided",
+    "postcode": "Postcode not provided",
+    "system_type": "Intruder",
+    "nsi_status": "NSI",
+    "cloud_id": "AMGJKBSY",
+    "cloud_renewal_date": "2026-01-06",
+    "arc_no": null,
+    "arc_renewal_date": null,
+    "date_installed": "2018-07-04",
+    "inspections_per_year": 1,
+    "first_inspection_month": 1,
+    "second_inspection_month": null,
+    "notes": "Imported from client list",
+    "battery_replacement": {
+      "control_panel": null,
+      "siren": null,
+      "detectors": null
+    },
+    "inspection_history": {
+      "inspection1": [],
+      "inspection2": []
+    }
+  }
+]
