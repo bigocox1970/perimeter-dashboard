@@ -923,19 +923,19 @@
         </div>
 
         <div class="stats">
-            <div class="stat-card">
+            <div class="stat-card" onclick="showCustomersByStatus('all')" style="cursor: pointer;" title="Click to see all customers">
                 <div class="stat-number" id="totalCustomers">0</div>
                 <div class="stat-label">Total Customers</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="showCustomersByStatus('overdue')" style="cursor: pointer;" title="Click to see overdue customers">
                 <div class="stat-number overdue" id="overdueCount">0</div>
                 <div class="stat-label">Overdue Inspections</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="showCustomersByStatus('due-soon')" style="cursor: pointer;" title="Click to see customers due this month">
                 <div class="stat-number due-soon" id="dueSoonCount">0</div>
                 <div class="stat-label">Due This Month</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card" onclick="showCustomersByStatus('current')" style="cursor: pointer;" title="Click to see up-to-date customers">
                 <div class="stat-number current" id="currentCount">0</div>
                 <div class="stat-label">Up to Date</div>
             </div>
@@ -2008,7 +2008,89 @@
             }).join('');
         }
 
-        // Show monthly completions modal
+        // Show customers by status modal
+        function showCustomersByStatus(statusType) {
+            // Get current NSI filter
+            const nsiFilter = document.getElementById('nsiFilter').value;
+            
+            // Filter customers based on NSI status if needed
+            let filteredCustomers = customers;
+            if (nsiFilter) {
+                filteredCustomers = customers.filter(customer => {
+                    const nsiStatus = customer.nsi_status || 'NSI';
+                    return nsiStatus === nsiFilter;
+                });
+            }
+            
+            let customersToShow = [];
+            let modalTitle = '';
+            
+            if (statusType === 'all') {
+                customersToShow = filteredCustomers;
+                modalTitle = 'All Customers';
+            } else {
+                // Filter by inspection status
+                customersToShow = filteredCustomers.filter(customer => {
+                    const inspection1Status = getInspectionStatus(customer, 'inspection1');
+                    const inspection2Status = customer.inspections_per_year === 2 ? 
+                        getInspectionStatus(customer, 'inspection2') : null;
+                    
+                    if (statusType === 'overdue') {
+                        return inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue');
+                    } else if (statusType === 'due-soon') {
+                        return (inspection1Status === 'due-soon' || (inspection2Status && inspection2Status === 'due-soon')) &&
+                               !(inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue'));
+                    } else if (statusType === 'current') {
+                        return inspection1Status === 'current' && (!inspection2Status || inspection2Status === 'current');
+                    }
+                    return false;
+                });
+                
+                modalTitle = statusType === 'overdue' ? 'Overdue Inspections' :
+                           statusType === 'due-soon' ? 'Due This Month' : 'Up to Date';
+            }
+            
+            // Show modal
+            document.getElementById('monthlyCompletionsTitle').textContent = modalTitle;
+            const tbody = document.getElementById('monthlyCompletionsBody');
+            tbody.innerHTML = customersToShow.map(customer => {
+                const inspection1Status = getInspectionStatus(customer, 'inspection1');
+                const inspection2Status = customer.inspections_per_year === 2 ? 
+                    getInspectionStatus(customer, 'inspection2') : null;
+                
+                const overallStatus = getOverallStatus(customer);
+                
+                return `
+                    <tr>
+                        <td><strong>${customer.name}</strong></td>
+                        <td>${customer.system_type}</td>
+                        <td>${customer.nsi_status || 'NSI'}</td>
+                        <td><span class="status-badge ${inspection1Status}">${inspection1Status.replace('-', ' ').toUpperCase()}</span></td>
+                        <td>${inspection2Status ? `<span class="status-badge ${inspection2Status}">${inspection2Status.replace('-', ' ').toUpperCase()}</span>` : 'N/A'}</td>
+                        <td><button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px;">Edit</button></td>
+                    </tr>
+                `;
+            }).join('');
+            
+            if (customersToShow.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No customers found</td></tr>';
+            }
+            
+            // Update table headers for customer status view
+            const table = document.querySelector('#monthlyCompletionsModal table');
+            table.querySelector('thead tr').innerHTML = `
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Customer</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">System Type</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">NSI Status</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Inspection 1</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Inspection 2</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Action</th>
+            `;
+            
+            document.getElementById('monthlyCompletionsModal').style.display = 'block';
+        }
+
+        // Show customers due in a specific month
         function showMonthlyCompletions(monthName, year) {
             const monthIndex = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(monthName);
             if (monthIndex === -1) return;
@@ -2025,70 +2107,73 @@
                 });
             }
             
-            const completedCustomers = [];
+            const dueCustomers = [];
             
             filteredCustomers.forEach(customer => {
-                const inspection1History = customer.inspection_history?.inspection1 || [];
-                const inspection2History = customer.inspection_history?.inspection2 || [];
+                // Check if inspection 1 is due in this month
+                if (customer.first_inspection_month === (monthIndex + 1)) {
+                    const inspection1History = customer.inspection_history?.inspection1 || [];
+                    const latestCompletion = inspection1History.length > 0 ? 
+                        inspection1History[inspection1History.length - 1] : null;
+                    
+                    dueCustomers.push({
+                        customer: customer,
+                        inspectionType: 'Inspection 1',
+                        dueMonth: monthName,
+                        completionDate: latestCompletion ? latestCompletion.date : null,
+                        status: getInspectionStatus(customer, 'inspection1'),
+                        notes: latestCompletion ? latestCompletion.notes || '' : ''
+                    });
+                }
                 
-                // Check inspection 1 completions
-                inspection1History.forEach(completion => {
-                    const completionDate = new Date(completion.date);
-                    if (completionDate.getMonth() === monthIndex && completionDate.getFullYear() === year) {
-                        const dueDate = new Date(year, customer.first_inspection_month - 1, 1);
-                        const isOnTime = completionDate >= new Date(dueDate.getFullYear(), dueDate.getMonth() - 1, 1) && 
-                                        completionDate <= new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0);
-                        
-                        completedCustomers.push({
-                            customer: customer,
-                            completionDate: completion.date,
-                            inspectionType: 'Inspection 1',
-                            isOnTime: isOnTime,
-                            notes: completion.notes || ''
-                        });
-                    }
-                });
-                
-                // Check inspection 2 completions if applicable
-                if (customer.inspections_per_year === 2) {
-                    inspection2History.forEach(completion => {
-                        const completionDate = new Date(completion.date);
-                        if (completionDate.getMonth() === monthIndex && completionDate.getFullYear() === year) {
-                            const dueDate = new Date(year, customer.second_inspection_month - 1, 1);
-                            const isOnTime = completionDate >= new Date(dueDate.getFullYear(), dueDate.getMonth() - 1, 1) && 
-                                            completionDate <= new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 0);
-                            
-                            completedCustomers.push({
-                                customer: customer,
-                                completionDate: completion.date,
-                                inspectionType: 'Inspection 2',
-                                isOnTime: isOnTime,
-                                notes: completion.notes || ''
-                            });
-                        }
+                // Check if inspection 2 is due in this month
+                if (customer.inspections_per_year === 2 && customer.second_inspection_month === (monthIndex + 1)) {
+                    const inspection2History = customer.inspection_history?.inspection2 || [];
+                    const latestCompletion = inspection2History.length > 0 ? 
+                        inspection2History[inspection2History.length - 1] : null;
+                    
+                    dueCustomers.push({
+                        customer: customer,
+                        inspectionType: 'Inspection 2',
+                        dueMonth: monthName,
+                        completionDate: latestCompletion ? latestCompletion.date : null,
+                        status: getInspectionStatus(customer, 'inspection2'),
+                        notes: latestCompletion ? latestCompletion.notes || '' : ''
                     });
                 }
             });
             
-            // Sort by completion date
-            completedCustomers.sort((a, b) => new Date(a.completionDate) - new Date(b.completionDate));
+            // Sort by customer name
+            dueCustomers.sort((a, b) => a.customer.name.localeCompare(b.customer.name));
             
             // Show modal
-            document.getElementById('monthlyCompletionsTitle').textContent = `Completions for ${monthName} ${year}`;
+            document.getElementById('monthlyCompletionsTitle').textContent = `Customers Due in ${monthName} ${year}`;
             const tbody = document.getElementById('monthlyCompletionsBody');
-            tbody.innerHTML = completedCustomers.map(item => `
+            
+            // Update table headers for monthly due view
+            const table = document.querySelector('#monthlyCompletionsModal table');
+            table.querySelector('thead tr').innerHTML = `
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Customer</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Inspection</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Status</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Last Completion</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Notes</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Action</th>
+            `;
+            
+            tbody.innerHTML = dueCustomers.map(item => `
                 <tr>
                     <td><strong>${item.customer.name}</strong></td>
                     <td>${item.inspectionType}</td>
-                    <td>${new Date(item.completionDate).toLocaleDateString()}</td>
-                    <td><span class="${item.isOnTime ? 'status-badge current' : 'status-badge overdue'}">${item.isOnTime ? 'On Time' : 'Late'}</span></td>
+                    <td><span class="status-badge ${item.status}">${item.status.replace('-', ' ').toUpperCase()}</span></td>
+                    <td>${item.completionDate ? new Date(item.completionDate).toLocaleDateString() : 'Never'}</td>
                     <td>${item.notes}</td>
-                    <td><button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px;">View</button></td>
+                    <td><button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px;">Edit</button></td>
                 </tr>
             `).join('');
             
-            if (completedCustomers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No completions found for this month</td></tr>';
+            if (dueCustomers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No customers due in this month</td></tr>';
             }
             
             document.getElementById('monthlyCompletionsModal').style.display = 'block';
