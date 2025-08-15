@@ -622,6 +622,32 @@
             border-radius: 10px;
             width: 90%;
             max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: #f0f0f0;
+            color: #333;
         }
 
         @media (max-width: 768px) {
@@ -690,6 +716,9 @@
                 max-width: none;
                 margin: 10px;
                 padding: 20px;
+                max-height: 85vh;
+                top: 50%;
+                transform: translate(-50%, -50%);
             }
 
             .form-group input,
@@ -1143,6 +1172,7 @@
     <!-- Completion Modal -->
     <div class="completion-modal" id="completionModal">
         <div class="completion-modal-content">
+            <button class="modal-close" onclick="closeCompletionModal()" title="Close">×</button>
             <h2 id="completionModalTitle">Record Inspection Completion</h2>
             <form id="completionForm">
                 <div class="form-group">
@@ -1167,8 +1197,9 @@
     <!-- Monthly Completions Modal -->
     <div class="completion-modal" id="monthlyCompletionsModal">
         <div class="completion-modal-content" style="max-width: 900px; width: 90%;">
+            <button class="modal-close" onclick="closeMonthlyCompletionsModal()" title="Close">×</button>
             <h2 id="monthlyCompletionsTitle">Monthly Completions</h2>
-            <div style="overflow-x: auto;">
+            <div style="overflow-x: auto; max-height: 60vh; overflow-y: auto;">
                 <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
                     <thead>
                         <tr style="background: #34495e; color: white;">
