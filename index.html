@@ -34,7 +34,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: transparent;
             min-height: 100vh;
             padding: 20px;
         }
@@ -49,10 +49,53 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            background: #f8f9fa;
             color: white;
             padding: 30px;
             text-align: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-content {
+            text-align: center;
+        }
+
+        .header-main-logo {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px;
+            margin-bottom: 15px;
+        }
+
+        .header-subtitle {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .logout-icon-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #95a5a6;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+
+        .logout-icon-btn:hover {
+            background: #7f8c8d;
         }
 
         .header h1 {
@@ -326,6 +369,16 @@
             color: #721c24;
         }
 
+        .status-can-be-done {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-due-last-month {
+            background: #f5c6cb;
+            color: #721c24;
+        }
+
         .status-completed {
             background: #d1ecf1;
             color: #0c5460;
@@ -363,16 +416,30 @@
             margin-bottom: 2px;
         }
 
-        .monthly-stats {
+        .monthly-stats-container {
             padding: 30px;
             background: #f8f9fa;
             border-bottom: 1px solid #eee;
         }
 
-        .monthly-stats h3 {
+        .monthly-stats-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
+        }
+
+        .monthly-stats-header h3 {
+            margin: 0;
             color: #2c3e50;
-            text-align: center;
+        }
+
+        .monthly-stats {
+            transition: all 0.3s ease;
+        }
+
+        .monthly-stats.hidden {
+            display: none;
         }
 
         .monthly-grid {
@@ -651,8 +718,44 @@
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
+            .header {
+                padding: 20px;
+            }
+
+            .header-main-logo {
+                max-height: 60px;
+                margin-bottom: 10px;
+            }
+
+            .header-subtitle {
+                font-size: 1rem;
+            }
+
+            .logout-icon-btn {
+                width: 35px;
+                height: 35px;
+                top: 10px;
+                right: 10px;
+            }
+
+            .logout-icon-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+
+            /* Hide monthly stats by default on mobile */
+            .monthly-stats {
+                display: none;
+            }
+
+            .monthly-stats-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .monthly-stats-header h3 {
+                font-size: 1.3rem;
             }
 
             .controls {
@@ -920,7 +1023,7 @@
     <div class="login-screen" id="loginScreen">
         <div class="login-container">
             <div class="login-header">
-                <h1>🔧 Perimeter Maintenance</h1>
+                <h1>Perimeter Security</h1>
                 <p>Please enter password to access the dashboard</p>
             </div>
             <div class="login-form">
@@ -939,9 +1042,17 @@
     <!-- Main Dashboard (initially hidden) -->
     <div class="container" id="mainDashboard" style="display: none;">
         <div class="header">
-            <h1>🔧 Perimeter Maintenance Dashboard</h1>
-            <p>Track customer inspections with flexible scheduling windows</p>
-            <button class="btn btn-secondary" onclick="logout()" style="position: absolute; top: 20px; right: 20px; background: #95a5a6; color: white;">Logout</button>
+            <div class="header-content">
+                <img src="perimeter-logo-hi-res-trans.PNG" alt="Perimeter Security" class="header-main-logo">
+                <h2 class="header-subtitle">Maintenance Dashboard</h2>
+            </div>
+            <button class="logout-icon-btn" onclick="logout()" title="Logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16,17 21,12 16,7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
@@ -960,9 +1071,9 @@
                 <div class="stat-number overdue" id="overdueCount">0</div>
                 <div class="stat-label">Overdue Inspections</div>
             </div>
-            <div class="stat-card" onclick="showCustomersByStatus('due-soon')" style="cursor: pointer;" title="Click to see customers due this month">
+            <div class="stat-card" onclick="showCustomersByStatus('due-soon')" style="cursor: pointer;" title="Click to see customers due this month or last month">
                 <div class="stat-number due-soon" id="dueSoonCount">0</div>
-                <div class="stat-label">Due This Month</div>
+                <div class="stat-label">Due Soon</div>
             </div>
             <div class="stat-card" onclick="showCustomersByStatus('current')" style="cursor: pointer;" title="Click to see up-to-date customers">
                 <div class="stat-number current" id="currentCount">0</div>
@@ -970,15 +1081,22 @@
             </div>
         </div>
 
-        <div class="monthly-stats">
-            <h3>📊 Monthly Completion Statistics (Last 5 Months)</h3>
-            <div class="monthly-grid" id="monthlyGrid">
-                <!-- Monthly cards will be generated here -->
+        <div class="monthly-stats-container">
+            <div class="monthly-stats-header">
+                <h3>📊 Monthly Completion Statistics (Last 5 Months)</h3>
+                <button class="btn btn-secondary" id="statsToggleBtn" onclick="toggleMonthlyStats()" style="background: #6c757d; color: white; padding: 6px 12px; font-size: 12px;">
+                    <span id="statsToggleText">Hide</span>
+                </button>
             </div>
-            <div class="completion-chart">
-                <h4>Completion Rate Trends</h4>
-                <div id="completionChart">
-                    <!-- Chart bars will be generated here -->
+            <div class="monthly-stats" id="monthlyStatsContent">
+                <div class="monthly-grid" id="monthlyGrid">
+                    <!-- Monthly cards will be generated here -->
+                </div>
+                <div class="completion-chart">
+                    <h4>Completion Rate Trends</h4>
+                    <div id="completionChart">
+                        <!-- Chart bars will be generated here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -994,7 +1112,7 @@
                  <select class="filter-select" id="statusFilter" onchange="filterTable()">
                      <option value="">All Status</option>
                      <option value="current">Up to Date</option>
-                     <option value="due-soon">Due This Month</option>
+                     <option value="due-soon">Due Soon</option>
                      <option value="overdue">Overdue</option>
                  </select>
                  <select class="filter-select" id="nsiFilter" onchange="console.log('NSI filter changed:', this.value); filterTable(); updateStats();">
@@ -1259,6 +1377,8 @@
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('mainDashboard').style.display = 'block';
             loadCustomerData();
+            // Initialize statistics visibility based on screen size
+            initializeStatsVisibility();
         }
 
         // Check password
@@ -1316,6 +1436,13 @@
             
             // Set default completion date to today
             document.getElementById('completionDate').value = new Date().toISOString().split('T')[0];
+        });
+
+        // Handle window resize to adjust statistics visibility
+        window.addEventListener('resize', function() {
+            if (document.getElementById('mainDashboard').style.display !== 'none') {
+                initializeStatsVisibility();
+            }
         });
 
         // Show install prompt for PWA
@@ -1575,12 +1702,11 @@
                 dueMonth = customer.second_inspection_month;
             }
             
-            // Calculate due date for this year
+            // Calculate key dates for this year
             const dueDate = new Date(currentYear, dueMonth - 1, 1);
-            
-            // Check if we're in the flexible window (month before, due month, month after)
             const monthBefore = new Date(currentYear, dueMonth - 2, 1);
             const monthAfter = new Date(currentYear, dueMonth, 1);
+            const twoMonthsAfter = new Date(currentYear, dueMonth + 1, 1);
             
             // Check if inspection was completed in the last 12 months
             const history = customer.inspection_history?.[inspectionType] || [];
@@ -1590,29 +1716,40 @@
                 const monthsSinceCompletion = (currentYear - lastCompletion.getFullYear()) * 12 + 
                                             (currentMonth - lastCompletion.getMonth() - 1);
                 if (monthsSinceCompletion < 12) {
-                    return 'completed';
+                    return 'up-to-date';
                 }
             }
             
-            // Check if we're in the flexible window
-            if (today >= monthBefore && today < monthAfter) {
-                return 'due-soon';
-            }
-            
-            // Check if overdue
-            if (today >= monthAfter) {
+            // Check current status based on timing
+            if (today >= monthBefore && today < dueDate) {
+                // Month before due month
+                return 'can-be-done';
+            } else if (today >= dueDate && today < monthAfter) {
+                // Due month
+                return 'due-this-month';
+            } else if (today >= monthAfter && today < twoMonthsAfter) {
+                // Month after due month
+                return 'due-last-month';
+            } else if (today >= twoMonthsAfter) {
+                // More than a month overdue
                 return 'overdue';
             }
             
-            return 'current';
+            // Before the month before due month
+            return 'up-to-date';
         }
 
         // Get status badge HTML
         function getStatusBadge(status) {
             const statusMap = {
+                'up-to-date': { class: 'status-current', text: 'Up to Date' },
+                'can-be-done': { class: 'status-can-be-done', text: 'Can be done' },
+                'due-this-month': { class: 'status-due-soon', text: 'Due this month' },
+                'due-last-month': { class: 'status-due-last-month', text: 'Due last month' },
+                'overdue': { class: 'status-overdue', text: 'Overdue' },
+                // Legacy status mappings for backwards compatibility
                 'current': { class: 'status-current', text: 'Up to Date' },
                 'due-soon': { class: 'status-due-soon', text: 'Due This Month' },
-                'overdue': { class: 'status-overdue', text: 'Overdue' },
                 'completed': { class: 'status-completed', text: 'Completed' }
             };
             
@@ -1898,13 +2035,20 @@
             const inspection2Status = customer.inspections_per_year === 2 ? 
                 getInspectionStatus(customer, 'inspection2') : null;
             
+            // Priority order: overdue > due-last-month > due-this-month > can-be-done > up-to-date
             if (inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue')) {
                 return getStatusBadge('overdue');
             }
-            if (inspection1Status === 'due-soon' || (inspection2Status && inspection2Status === 'due-soon')) {
-                return getStatusBadge('due-soon');
+            if (inspection1Status === 'due-last-month' || (inspection2Status && inspection2Status === 'due-last-month')) {
+                return getStatusBadge('due-last-month');
             }
-            return getStatusBadge('current');
+            if (inspection1Status === 'due-this-month' || (inspection2Status && inspection2Status === 'due-this-month')) {
+                return getStatusBadge('due-this-month');
+            }
+            if (inspection1Status === 'can-be-done' || (inspection2Status && inspection2Status === 'can-be-done')) {
+                return getStatusBadge('can-be-done');
+            }
+            return getStatusBadge('up-to-date');
         }
 
         // Get month name
@@ -2083,16 +2227,18 @@
                     if (statusType === 'overdue') {
                         return inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue');
                     } else if (statusType === 'due-soon') {
-                        return (inspection1Status === 'due-soon' || (inspection2Status && inspection2Status === 'due-soon')) &&
+                        return (inspection1Status === 'due-this-month' || (inspection2Status && inspection2Status === 'due-this-month') ||
+                               inspection1Status === 'due-last-month' || (inspection2Status && inspection2Status === 'due-last-month')) &&
                                !(inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue'));
                     } else if (statusType === 'current') {
-                        return inspection1Status === 'current' && (!inspection2Status || inspection2Status === 'current');
+                        return (inspection1Status === 'up-to-date' || inspection1Status === 'can-be-done') && 
+                               (!inspection2Status || inspection2Status === 'up-to-date' || inspection2Status === 'can-be-done');
                     }
                     return false;
                 });
                 
                 modalTitle = statusType === 'overdue' ? 'Overdue Inspections' :
-                           statusType === 'due-soon' ? 'Due This Month' : 'Up to Date';
+                           statusType === 'due-soon' ? 'Due Soon (This Month or Last Month)' : 'Up to Date';
             }
             
             // Show modal
@@ -2364,7 +2510,8 @@
                 
                 if (inspection1Status === 'overdue' || (inspection2Status && inspection2Status === 'overdue')) {
                     overdue++;
-                } else if (inspection1Status === 'due-soon' || (inspection2Status && inspection2Status === 'due-soon')) {
+                } else if (inspection1Status === 'due-this-month' || (inspection2Status && inspection2Status === 'due-this-month') ||
+                          inspection1Status === 'due-last-month' || (inspection2Status && inspection2Status === 'due-last-month')) {
                     dueSoon++;
                 } else {
                     current++;
@@ -2376,9 +2523,42 @@
             document.getElementById('dueSoonCount').textContent = dueSoon;
             document.getElementById('currentCount').textContent = current;
             
-            // Update monthly statistics
-            renderMonthlyStats();
+                    // Update monthly statistics
+        renderMonthlyStats();
+    }
+
+    // Toggle monthly statistics visibility
+    function toggleMonthlyStats() {
+        const statsContent = document.getElementById('monthlyStatsContent');
+        const toggleText = document.getElementById('statsToggleText');
+        
+        if (statsContent.classList.contains('hidden')) {
+            statsContent.classList.remove('hidden');
+            statsContent.style.display = 'block';
+            toggleText.textContent = 'Hide';
+        } else {
+            statsContent.classList.add('hidden');
+            statsContent.style.display = 'none';
+            toggleText.textContent = 'Show';
         }
+    }
+
+    // Initialize statistics visibility based on screen size
+    function initializeStatsVisibility() {
+        const statsContent = document.getElementById('monthlyStatsContent');
+        const toggleText = document.getElementById('statsToggleText');
+        
+        // Check if mobile (width < 768px)
+        if (window.innerWidth < 768) {
+            statsContent.classList.add('hidden');
+            statsContent.style.display = 'none';
+            toggleText.textContent = 'Show';
+        } else {
+            statsContent.classList.remove('hidden');
+            statsContent.style.display = 'block';
+            toggleText.textContent = 'Hide';
+        }
+    }
 
                           // Sort table
          function sortTable(field) {
@@ -2442,7 +2622,7 @@
                   
                   const overallStatus = getOverallStatus(customer);
                   const status = overallStatus.includes('Overdue') ? 'overdue' : 
-                               overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                               (overallStatus.includes('Due this month') || overallStatus.includes('Due last month')) ? 'due-soon' : 'current';
                   const nsiStatus = customer.nsi_status || 'NSI';
                   
                   const matchesSearch = text.includes(searchTerm);
@@ -2468,7 +2648,7 @@
                   
                   const overallStatus = getOverallStatus(customer);
                   const status = overallStatus.includes('Overdue') ? 'overdue' : 
-                               overallStatus.includes('Due This Month') ? 'due-soon' : 'current';
+                               (overallStatus.includes('Due this month') || overallStatus.includes('Due last month')) ? 'due-soon' : 'current';
                   const nsiStatus = customer.nsi_status || 'NSI';
                   
                   const matchesSearch = text.includes(searchTerm);
@@ -2571,4 +2751,5 @@
         };
     </script>
 </body>
+</html>
 </html>
