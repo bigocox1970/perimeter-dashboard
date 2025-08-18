@@ -785,6 +785,7 @@
             .search-filter {
                 min-width: auto;
                 flex-direction: column;
+                gap: 15px;
             }
 
             /* Hide table on mobile, show cards instead */
@@ -851,10 +852,62 @@
                 min-height: 44px;
             }
 
+            /* Mobile dropdown filter improvements */
+            .filter-select {
+                font-size: 16px;
+                padding: 15px 12px;
+                min-height: 44px;
+                min-width: auto;
+                width: 100%;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                background-color: white;
+                appearance: none;
+                background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+                background-repeat: no-repeat;
+                background-position: right 12px center;
+                background-size: 16px;
+                padding-right: 40px;
+                touch-action: manipulation;
+            }
+
+            .filter-select:focus {
+                outline: none;
+                border-color: #3498db;
+                box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            }
+
+            .search-input {
+                font-size: 16px;
+                padding: 15px 12px;
+                min-height: 44px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                touch-action: manipulation;
+            }
+
+            .search-input:focus {
+                outline: none;
+                border-color: #3498db;
+                box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            }
+
             .stats {
                 grid-template-columns: 1fr 1fr;
                 gap: 15px;
                 padding: 20px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 1.2rem;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
             }
 
             .monthly-grid {
