@@ -1583,6 +1583,14 @@
         }
 
         // Calculate scaffold costs
+        function calculateWeeklyCostBeforeVAT(extraSensors) {
+            return STANDARD_WEEKLY_COST + (extraSensors * EXTRA_SENSOR_WEEKLY_COST);
+        }
+
+        function calculateMonthlyCostBeforeVAT(extraSensors) {
+            return calculateWeeklyCostBeforeVAT(extraSensors) * 4;
+        }
+
         function calculateWeeklyCost(extraSensors) {
             const baseCost = STANDARD_WEEKLY_COST + (extraSensors * EXTRA_SENSOR_WEEKLY_COST);
             const withVAT = baseCost * (1 + VAT_RATE);
@@ -1644,8 +1652,8 @@
         // Update scaffold cost preview
         function updateScaffoldCostPreview() {
             const extraSensors = parseInt(document.getElementById('scaffExtraSensors').value) || 0;
-            const weeklyCost = calculateWeeklyCost(extraSensors);
-            const monthlyCost = calculateMonthlyCost(extraSensors);
+            const weeklyCost = calculateWeeklyCostBeforeVAT(extraSensors);
+            const monthlyCost = calculateMonthlyCostBeforeVAT(extraSensors);
             
             document.getElementById('scaffWeeklyCostPreview').textContent = `£${weeklyCost.toFixed(2)}`;
             document.getElementById('scaffMonthlyCostPreview').textContent = `£${monthlyCost.toFixed(2)}`;
@@ -1802,8 +1810,8 @@
                 const daysUntilInvoice = getDaysUntilInvoice(system.lastInvoiceDate);
                 const invoiceStatus = getInvoiceStatus(daysUntilInvoice);
                 const nextInvoiceDate = getNextInvoiceDate(system.lastInvoiceDate);
-                const weeklyCost = calculateWeeklyCost(system.extraSensors);
-                const monthlyCost = calculateMonthlyCost(system.extraSensors);
+                const weeklyCost = calculateWeeklyCostBeforeVAT(system.extraSensors);
+                const monthlyCost = calculateMonthlyCostBeforeVAT(system.extraSensors);
 
                 return `
                     <tr>
@@ -1838,8 +1846,7 @@
                             }
                         </td>
                         <td>
-                            <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; margin-right: 5px; padding: 6px 12px;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteScaffoldSystem(${system.id})" style="padding: 6px 12px;">Delete</button>
+                            <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 6px 12px;">Edit</button>
                         </td>
                     </tr>
                 `;
@@ -1851,8 +1858,8 @@
                     const daysUntilInvoice = getDaysUntilInvoice(system.lastInvoiceDate);
                     const invoiceStatus = getInvoiceStatus(daysUntilInvoice);
                     const nextInvoiceDate = getNextInvoiceDate(system.lastInvoiceDate);
-                    const weeklyCost = calculateWeeklyCost(system.extraSensors);
-                    const monthlyCost = calculateMonthlyCost(system.extraSensors);
+                    const weeklyCost = calculateWeeklyCostBeforeVAT(system.extraSensors);
+                    const monthlyCost = calculateMonthlyCostBeforeVAT(system.extraSensors);
 
                     return `
                         <div class="customer-card">
@@ -1905,7 +1912,6 @@
                             
                             <div class="customer-actions">
                                 <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white;">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteScaffoldSystem(${system.id})">Delete</button>
                             </div>
                         </div>
                     `;
@@ -1919,7 +1925,7 @@
         // Update scaffold statistics
         function updateScaffoldStats() {
             const totalActiveSystems = scaffSystems.length;
-            const totalWeeklyRevenue = scaffSystems.reduce((sum, sys) => sum + calculateWeeklyCost(sys.extraSensors), 0);
+            const totalWeeklyRevenue = scaffSystems.reduce((sum, sys) => sum + calculateWeeklyCostBeforeVAT(sys.extraSensors), 0);
             const overdueSystems = scaffSystems.filter(sys => getDaysUntilInvoice(sys.lastInvoiceDate) < 0).length;
 
             const elements = {
@@ -2052,12 +2058,12 @@
                         bVal = 4 + b.extraSensors;
                         break;
                     case 'weeklyCost':
-                        aVal = calculateWeeklyCost(a.extraSensors);
-                        bVal = calculateWeeklyCost(b.extraSensors);
+                        aVal = calculateWeeklyCostBeforeVAT(a.extraSensors);
+                        bVal = calculateWeeklyCostBeforeVAT(b.extraSensors);
                         break;
                     case 'monthlyCost':
-                        aVal = calculateMonthlyCost(a.extraSensors);
-                        bVal = calculateMonthlyCost(b.extraSensors);
+                        aVal = calculateMonthlyCostBeforeVAT(a.extraSensors);
+                        bVal = calculateMonthlyCostBeforeVAT(b.extraSensors);
                         break;
                     case 'nextInvoice':
                         aVal = getNextInvoiceDate(a.lastInvoiceDate);

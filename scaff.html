@@ -6,6 +6,7 @@ const ScaffoldAlarmDashboard = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingSystem, setEditingSystem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
 
   // VAT rate
   const VAT_RATE = 0.2;
@@ -53,8 +54,16 @@ const ScaffoldAlarmDashboard = () => {
     return withVAT;
   };
 
+  const calculateWeeklyCostBeforeVAT = (extraSensors) => {
+    return STANDARD_WEEKLY_COST + (extraSensors * EXTRA_SENSOR_WEEKLY_COST);
+  };
+
   const calculateMonthlyCost = (extraSensors) => {
-    return calculateWeeklyCost(extraSensors) * 4;
+    return calculateWeeklyCostBeforeVAT(extraSensors) * 4;
+  };
+
+  const calculateMonthlyCostBeforeVAT = (extraSensors) => {
+    return calculateWeeklyCostBeforeVAT(extraSensors) * 4;
   };
 
   const getNextInvoiceDate = (lastInvoiceDate) => {
@@ -83,6 +92,21 @@ const ScaffoldAlarmDashboard = () => {
     system.appContact.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortedSystems = [...filteredSystems].sort((a, b) => {
+    const dateA = getNextInvoiceDate(a.lastInvoiceDate);
+    const dateB = getNextInvoiceDate(b.lastInvoiceDate);
+    
+    if (sortOrder === 'asc') {
+      return dateA - dateB;
+    } else {
+      return dateB - dateA;
+    }
+  });
+
+  const handleSortByInvoiceDate = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+
   const handleSubmit = (formData) => {
     if (editingSystem) {
       setSystems(systems.map(sys => 
@@ -99,8 +123,24 @@ const ScaffoldAlarmDashboard = () => {
   };
 
   const totalActiveSystems = systems.length;
-  const totalWeeklyRevenue = systems.reduce((sum, sys) => sum + calculateWeeklyCost(sys.extraSensors), 0);
+  const totalWeeklyRevenue = systems.reduce((sum, sys) => sum + calculateWeeklyCostBeforeVAT(sys.extraSensors), 0);
   const overdueSystems = systems.filter(sys => getDaysUntilInvoice(sys.lastInvoiceDate) < 0).length;
+
+  // Format numbers for mobile display
+  const formatNumberForMobile = (number, isMobile = false) => {
+    if (!isMobile || number < 1000) return number.toFixed(2);
+    if (number >= 1000000) return (number / 1000000).toFixed(1) + 'M';
+    return (number / 1000).toFixed(1) + 'k';
+  };
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
@@ -123,41 +163,41 @@ const ScaffoldAlarmDashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '16px' }}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Active Systems</p>
-                <p className="text-2xl font-bold text-gray-900">{totalActiveSystems}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 truncate" style={{ fontSize: isMobile ? '10px' : '14px' }}>Active Systems</p>
+                <p className="font-bold text-gray-900" style={{ fontSize: isMobile ? '14px' : '24px' }}>{totalActiveSystems}</p>
               </div>
-              <Shield className="text-blue-500" size={24} />
+              <Shield className="text-blue-500 flex-shrink-0" style={{ marginLeft: isMobile ? '4px' : '8px' }} size={isMobile ? 14 : 20} />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '16px' }}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Weekly Revenue</p>
-                <p className="text-2xl font-bold text-green-600">£{totalWeeklyRevenue.toFixed(2)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 truncate" style={{ fontSize: isMobile ? '10px' : '14px' }}>Weekly Revenue (ex VAT)</p>
+                <p className="font-bold text-green-600" style={{ fontSize: isMobile ? '14px' : '24px' }}>£{formatNumberForMobile(totalWeeklyRevenue, isMobile)}</p>
               </div>
-              <DollarSign className="text-green-500" size={24} />
+              <DollarSign className="text-green-500 flex-shrink-0" style={{ marginLeft: isMobile ? '4px' : '8px' }} size={isMobile ? 14 : 20} />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '16px' }}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Monthly Revenue</p>
-                <p className="text-2xl font-bold text-green-600">£{(totalWeeklyRevenue * 4).toFixed(2)}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 truncate" style={{ fontSize: isMobile ? '10px' : '14px' }}>Monthly Revenue (ex VAT)</p>
+                <p className="font-bold text-green-600" style={{ fontSize: isMobile ? '14px' : '24px' }}>£{formatNumberForMobile(totalWeeklyRevenue * 4, isMobile)}</p>
               </div>
-              <DollarSign className="text-green-500" size={24} />
+              <DollarSign className="text-green-500 flex-shrink-0" style={{ marginLeft: isMobile ? '4px' : '8px' }} size={isMobile ? 14 : 20} />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="bg-white rounded-lg shadow-md" style={{ padding: isMobile ? '8px' : '16px' }}>
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Overdue Invoices</p>
-                <p className="text-2xl font-bold text-red-600">{overdueSystems}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-gray-600 truncate" style={{ fontSize: isMobile ? '10px' : '14px' }}>Overdue Invoices</p>
+                <p className="font-bold text-red-600" style={{ fontSize: isMobile ? '14px' : '24px' }}>{overdueSystems}</p>
               </div>
-              <Mail className="text-red-500" size={24} />
+              <Mail className="text-red-500 flex-shrink-0" style={{ marginLeft: isMobile ? '4px' : '8px' }} size={isMobile ? 14 : 20} />
             </div>
           </div>
         </div>
@@ -181,9 +221,14 @@ const ScaffoldAlarmDashboard = () => {
                 <tr>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">P Number</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sensors</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Weekly Cost</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Monthly Cost</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Next Invoice</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Weekly Cost (ex VAT)</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Monthly Cost (ex VAT)</th>
+                  <th 
+                    className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer hover:bg-gray-100 select-none"
+                    onClick={handleSortByInvoiceDate}
+                  >
+                    Next Invoice {sortOrder === 'asc' ? '↑' : '↓'}
+                  </th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Site Contact</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">App Contact</th>
                   <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">ARC</th>
@@ -191,7 +236,7 @@ const ScaffoldAlarmDashboard = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredSystems.map((system) => {
+                {sortedSystems.map((system) => {
                   const daysUntilInvoice = getDaysUntilInvoice(system.lastInvoiceDate);
                   const invoiceStatus = getInvoiceStatus(daysUntilInvoice);
                   const nextInvoiceDate = getNextInvoiceDate(system.lastInvoiceDate);
@@ -200,8 +245,8 @@ const ScaffoldAlarmDashboard = () => {
                     <tr key={system.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-900">{system.pNumber}</td>
                       <td className="px-4 py-3 text-gray-700">4 + {system.extraSensors}</td>
-                      <td className="px-4 py-3 text-gray-700">£{calculateWeeklyCost(system.extraSensors).toFixed(2)}</td>
-                      <td className="px-4 py-3 text-gray-700">£{calculateMonthlyCost(system.extraSensors).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-gray-700">£{calculateWeeklyCostBeforeVAT(system.extraSensors).toFixed(2)}</td>
+                      <td className="px-4 py-3 text-gray-700">£{calculateMonthlyCostBeforeVAT(system.extraSensors).toFixed(2)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
                           <span className="text-sm text-gray-700">{nextInvoiceDate.toDateString()}</span>
@@ -292,6 +337,10 @@ const SystemForm = ({ system, onSubmit, onCancel }) => {
   const EXTRA_SENSOR_WEEKLY_COST = 15;
   const VAT_RATE = 0.2;
 
+  const calculateWeeklyCostBeforeVAT = (extraSensors) => {
+    return STANDARD_WEEKLY_COST + (extraSensors * EXTRA_SENSOR_WEEKLY_COST);
+  };
+
   const calculateWeeklyCost = (extraSensors) => {
     const baseCost = STANDARD_WEEKLY_COST + (extraSensors * EXTRA_SENSOR_WEEKLY_COST);
     return baseCost * (1 + VAT_RATE);
@@ -327,7 +376,7 @@ const SystemForm = ({ system, onSubmit, onCancel }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-500 mt-1">
-                Weekly cost: £{calculateWeeklyCost(formData.extraSensors).toFixed(2)} (inc. VAT)
+                Weekly cost: £{calculateWeeklyCostBeforeVAT(formData.extraSensors).toFixed(2)} (ex VAT)
               </p>
             </div>
 
