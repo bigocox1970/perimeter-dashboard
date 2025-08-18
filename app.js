@@ -1395,11 +1395,6 @@
                   const matchesStatus = !statusFilter || status === statusFilter;
                   const matchesNsi = !nsiFilter || nsiStatus === nsiFilter;
                   
-                  // Debug logging for NSI filter issues
-                  if (nsiFilter && !matchesNsi) {
-                      console.log(`Filtering out: ${customer.name}, NSI Status: "${nsiStatus}", Filter: "${nsiFilter}"`);
-                  }
-                  
                   row.style.display = matchesSearch && matchesStatus && matchesNsi ? '' : 'none';
               });
 
