@@ -1514,7 +1514,6 @@
                     <div class="chart-label">Rolling 12 Months + Current Potential</div>
                     <div class="chart-bar-container">
                         <div class="chart-bar-fill on-time" style="width: ${totalInspectionsInPeriod > 0 ? (potentialOnTime / totalInspectionsInPeriod) * 100 : 0}%"></div>
-                        <div class="chart-bar-fill late" style="width: ${totalInspectionsInPeriod > 0 ? (totalLate / totalInspectionsInPeriod) * 100 : 0}%"></div>
                     </div>
                     <div class="chart-percentage">${rollingPercentage}%</div>
                 </div>
