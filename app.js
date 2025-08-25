@@ -2347,13 +2347,27 @@
             }
         }
 
-        // Load complaint data
+        // Load complaint data with race condition prevention
+        let isLoadingComplaints = false;
         async function loadComplaintData() {
+            // Prevent multiple simultaneous loading attempts
+            if (isLoadingComplaints) {
+                console.log('Complaint loading already in progress, skipping...');
+                return;
+            }
+            
+            isLoadingComplaints = true;
+            
             try {
                 // Add loading indicator
                 const loadingElement = document.getElementById('loading');
                 if (loadingElement) {
                     loadingElement.style.display = 'block';
+                }
+
+                // Add small delay on mobile to prevent race conditions
+                if (isMobileDevice()) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
                 }
 
                 const { data, error } = await supabase
@@ -2368,17 +2382,22 @@
                 }
 
                 nsiComplaints = data || [];
-                renderComplaintTable();
+                
+                // Ensure DOM is ready before rendering
+                setTimeout(() => {
+                    renderComplaintTable();
+                }, 10);
                 
             } catch (error) {
                 console.error('Error loading complaints:', error);
-                showNsiMessage('Error loading complaints: ' + error.message, 'error');
+                showNsiMessage('Error loading complaints: ' + (error.message || 'Unknown error'), 'error');
             } finally {
                 // Hide loading indicator
                 const loadingElement = document.getElementById('loading');
                 if (loadingElement) {
                     loadingElement.style.display = 'none';
                 }
+                isLoadingComplaints = false;
             }
         }
 
@@ -3476,25 +3495,37 @@
 
         // ===== UTILITY FUNCTIONS =====
 
-        // Show NSI messages
+        // Show NSI messages with better error handling
         function showNsiMessage(message, type) {
-            const errorElement = document.getElementById('nsiErrorMessage');
-            const successElement = document.getElementById('nsiSuccessMessage');
-            
-            if (type === 'error') {
-                errorElement.textContent = message;
-                errorElement.style.display = 'block';
-                successElement.style.display = 'none';
-                setTimeout(() => {
-                    errorElement.style.display = 'none';
-                }, 5000);
-            } else {
-                successElement.textContent = message;
-                successElement.style.display = 'block';
-                errorElement.style.display = 'none';
-                setTimeout(() => {
-                    successElement.style.display = 'none';
-                }, 3000);
+            try {
+                const errorElement = document.getElementById('nsiErrorMessage');
+                const successElement = document.getElementById('nsiSuccessMessage');
+                
+                // Fallback if elements don't exist
+                if (!errorElement || !successElement) {
+                    console.warn('NSI message elements not found, falling back to console');
+                    console.log(`NSI ${type}: ${message}`);
+                    return;
+                }
+                
+                if (type === 'error') {
+                    errorElement.textContent = message;
+                    errorElement.style.display = 'block';
+                    if (successElement) successElement.style.display = 'none';
+                    setTimeout(() => {
+                        if (errorElement) errorElement.style.display = 'none';
+                    }, 5000);
+                } else {
+                    successElement.textContent = message;
+                    successElement.style.display = 'block';
+                    if (errorElement) errorElement.style.display = 'none';
+                    setTimeout(() => {
+                        if (successElement) successElement.style.display = 'none';
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('Error showing NSI message:', error);
+                console.log(`Original message - ${type}: ${message}`);
             }
         }
 
