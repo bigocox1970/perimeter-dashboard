@@ -39,20 +39,32 @@
             #complaintTable, #idBadgeTable, #testEquipTable, #firstAidTable {
                 display: none !important;
             }
-            /* Force NSI mobile cards to show on mobile/portrait */
-            #mobileComplaintCards, #mobileIdBadgeCards, #mobileTestEquipCards, #mobileFirstAidCards {
+            /* Show NSI mobile cards only when their parent sub-content is active */
+            .nsi-sub-content.active #mobileComplaintCards,
+            .nsi-sub-content.active #mobileIdBadgeCards, 
+            .nsi-sub-content.active #mobileTestEquipCards, 
+            .nsi-sub-content.active #mobileFirstAidCards {
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
             }
-            /* Ensure NSI sub-content is visible */
+            
+            /* Hide NSI mobile cards when their parent sub-content is not active */
+            .nsi-sub-content:not(.active) #mobileComplaintCards,
+            .nsi-sub-content:not(.active) #mobileIdBadgeCards,
+            .nsi-sub-content:not(.active) #mobileTestEquipCards,
+            .nsi-sub-content:not(.active) #mobileFirstAidCards {
+                display: none !important;
+            }
+            /* Only show active NSI sub-content */
             .nsi-sub-content {
-                display: block !important;
-                min-height: 300px !important;
-                width: 100% !important;
+                display: none !important;
             }
             .nsi-sub-content.active {
                 display: block !important;
+                min-height: 300px !important;
+                width: 100% !important;
+                visibility: visible !important;
             }
         }
     </style>

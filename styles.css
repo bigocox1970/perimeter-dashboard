@@ -1040,24 +1040,35 @@
                 display: block !important;
             }
             
-            /* Fix NSI content visibility in portrait mode */
+            /* Fix NSI content visibility in portrait mode - only show active sub-content */
             .nsi-sub-content {
-                width: 100% !important;
-                min-height: 300px !important;
-                display: block !important;
+                display: none !important;
             }
             
             .nsi-sub-content.active {
                 display: block !important;
+                width: 100% !important;
+                min-height: 300px !important;
                 visibility: visible !important;
             }
             
-            /* Ensure NSI mobile cards are visible */
-            #mobileComplaintCards, #mobileIdBadgeCards, #mobileTestEquipCards, #mobileFirstAidCards {
+            /* Show NSI mobile cards only when their parent sub-content is active */
+            .nsi-sub-content.active #mobileComplaintCards,
+            .nsi-sub-content.active #mobileIdBadgeCards,
+            .nsi-sub-content.active #mobileTestEquipCards,
+            .nsi-sub-content.active #mobileFirstAidCards {
                 display: block !important;
                 visibility: visible !important;
                 width: 100% !important;
                 padding: 0 20px 30px !important;
+            }
+            
+            /* Hide NSI mobile cards when their parent sub-content is not active */
+            .nsi-sub-content:not(.active) #mobileComplaintCards,
+            .nsi-sub-content:not(.active) #mobileIdBadgeCards,
+            .nsi-sub-content:not(.active) #mobileTestEquipCards,
+            .nsi-sub-content:not(.active) #mobileFirstAidCards {
+                display: none !important;
             }
             
             /* NSI sub-navigation mobile styles */
