@@ -78,42 +78,42 @@
         /* Tab Navigation Styles */
         .tab-navigation {
             display: flex;
-            background: #e9ecef;
-            border-bottom: 2px solid #dee2e6;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
             margin: 0;
-            padding: 0;
-            gap: 2px;
+            padding: 10px;
+            gap: 5px;
         }
 
         .tab-button {
             flex: 1;
             padding: 15px 20px;
-            background: transparent;
-            border: 1px solid #dee2e6;
-            border-bottom: 3px solid transparent;
-            border-radius: 8px 8px 0 0;
+            background: #e9ecef;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
             color: #6c757d;
             transition: all 0.3s ease;
-            margin-bottom: -1px;
             position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .tab-button:hover {
             background: #f8f9fa;
             color: #495057;
             border-color: #adb5bd;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
         .tab-button.active {
-            background: white;
-            color: #2c3e50;
-            border-bottom-color: #3498db;
-            border-top-color: #3498db;
-            border-left-color: #3498db;
-            border-right-color: #3498db;
+            background: #34495e;
+            color: white;
+            border-color: #34495e;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(52, 73, 94, 0.3);
             z-index: 1;
         }
 
@@ -1013,9 +1013,16 @@
             .nsi-sub-button {
                 flex: 1;
                 min-width: calc(50% - 4px);
-                padding: 10px 8px;
+                padding: 12px 8px;
                 font-size: 13px;
                 text-align: center;
+                min-height: 44px;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .nsi-sub-button:active {
+                transform: scale(0.95);
             }
 
             .header-main-logo {

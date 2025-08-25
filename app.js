@@ -26,6 +26,22 @@
             }
         }
 
+        // Initialize mobile-specific features
+        function initializeMobileFeatures() {
+            if (isMobileDevice()) {
+                console.log('Mobile device detected, applying mobile optimizations');
+                
+                // Add mobile-specific event listeners
+                document.addEventListener('touchstart', function() {}, { passive: true });
+                
+                // Ensure viewport is properly set
+                const viewport = document.querySelector('meta[name="viewport"]');
+                if (viewport) {
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+                }
+            }
+        }
+
         // Show login screen
         function showLoginScreen() {
             document.getElementById('loginScreen').style.display = 'flex';
@@ -97,7 +113,10 @@
             
             // Load NSI data when nsi tab is selected (complaints by default)
             if (tabName === 'nsi') {
-                loadComplaintData();
+                // Add delay for mobile devices to ensure DOM is ready
+                setTimeout(function() {
+                    loadComplaintData();
+                }, isMobileDevice() ? 200 : 0);
             }
         }
 
@@ -2203,44 +2222,57 @@
 
         // NSI sub-page navigation
         function showNsiSubPage(subPageName) {
-            // Hide all sub-content
-            const subContents = document.querySelectorAll('.nsi-sub-content');
-            subContents.forEach(content => {
-                content.classList.remove('active');
-            });
-            
-            // Remove active class from all sub-buttons
-            const subButtons = document.querySelectorAll('.nsi-sub-button');
-            subButtons.forEach(button => {
-                button.classList.remove('active');
-            });
-            
-            // Show selected sub-content
-            const selectedContent = document.getElementById(subPageName + 'SubPage');
-            if (selectedContent) {
-                selectedContent.classList.add('active');
-            }
-            
-            // Add active class to clicked button
-            const selectedButton = document.querySelector(`[onclick="showNsiSubPage('${subPageName}')"]`);
-            if (selectedButton) {
-                selectedButton.classList.add('active');
-            }
+            try {
+                // Hide all sub-content
+                const subContents = document.querySelectorAll('.nsi-sub-content');
+                subContents.forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Remove active class from all sub-buttons
+                const subButtons = document.querySelectorAll('.nsi-sub-button');
+                subButtons.forEach(button => {
+                    button.classList.remove('active');
+                });
+                
+                // Show selected sub-content
+                const selectedContent = document.getElementById(subPageName + 'SubPage');
+                if (selectedContent) {
+                    selectedContent.classList.add('active');
+                } else {
+                    console.error('Sub-page not found:', subPageName + 'SubPage');
+                    return;
+                }
+                
+                // Add active class to clicked button
+                const selectedButton = document.querySelector(`[onclick="showNsiSubPage('${subPageName}')"]`);
+                if (selectedButton) {
+                    selectedButton.classList.add('active');
+                }
 
-            // Load data for the selected sub-page
-            switch(subPageName) {
-                case 'complaints':
-                    loadComplaintData();
-                    break;
-                case 'id-badge':
-                    loadIdBadgeData();
-                    break;
-                case 'test-equip':
-                    loadTestEquipmentData();
-                    break;
-                case 'first-aid':
-                    loadFirstAidData();
-                    break;
+                // Load data for the selected sub-page with delay on mobile
+                const loadDelay = isMobileDevice() ? 150 : 0;
+                setTimeout(function() {
+                    switch(subPageName) {
+                        case 'complaints':
+                            loadComplaintData();
+                            break;
+                        case 'id-badge':
+                            loadIdBadgeData();
+                            break;
+                        case 'test-equip':
+                            loadTestEquipmentData();
+                            break;
+                        case 'first-aid':
+                            loadFirstAidData();
+                            break;
+                        default:
+                            console.error('Unknown sub-page:', subPageName);
+                    }
+                }, loadDelay);
+            } catch (error) {
+                console.error('Error in showNsiSubPage:', error);
+                showNsiMessage('Error loading page: ' + error.message, 'error');
             }
         }
 
@@ -2280,6 +2312,12 @@
         // Load complaint data
         async function loadComplaintData() {
             try {
+                // Add loading indicator
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'block';
+                }
+
                 const { data, error } = await supabase
                     .from(NSI_COMPLAINTS_TABLE)
                     .select('*')
@@ -2297,6 +2335,12 @@
             } catch (error) {
                 console.error('Error loading complaints:', error);
                 showNsiMessage('Error loading complaints: ' + error.message, 'error');
+            } finally {
+                // Hide loading indicator
+                const loadingElement = document.getElementById('loading');
+                if (loadingElement) {
+                    loadingElement.style.display = 'none';
+                }
             }
         }
 
@@ -3064,43 +3108,51 @@
 
         // Initialize image upload functionality
         function initializeImageUpload() {
-            const imageInputs = [
-                { input: 'complaintImages', preview: 'complaintImagePreview', type: 'complaint' },
-                { input: 'badgeImages', preview: 'badgeImagePreview', type: 'badge' },
-                { input: 'equipmentImages', preview: 'equipmentImagePreview', type: 'equipment' },
-                { input: 'firstAidImages', preview: 'firstAidImagePreview', type: 'firstAid' }
-            ];
+            // Add delay to ensure DOM is ready on mobile
+            setTimeout(function() {
+                const imageInputs = [
+                    { input: 'complaintImages', preview: 'complaintImagePreview', type: 'complaint' },
+                    { input: 'badgeImages', preview: 'badgeImagePreview', type: 'badge' },
+                    { input: 'equipmentImages', preview: 'equipmentImagePreview', type: 'equipment' },
+                    { input: 'firstAidImages', preview: 'firstAidImagePreview', type: 'firstAid' }
+                ];
 
-            imageInputs.forEach(config => {
-                const input = document.getElementById(config.input);
-                const preview = document.getElementById(config.preview);
-                
-                if (input && preview) {
-                    input.addEventListener('change', function(e) {
-                        handleImageSelection(e.target.files, config.type, preview);
-                    });
-
-                    // Add drag and drop functionality
-                    const uploadArea = input.parentElement.querySelector('.image-upload-area');
-                    if (uploadArea) {
-                        uploadArea.addEventListener('dragover', function(e) {
-                            e.preventDefault();
-                            uploadArea.classList.add('dragover');
+                imageInputs.forEach(config => {
+                    const input = document.getElementById(config.input);
+                    const preview = document.getElementById(config.preview);
+                    
+                    if (input && preview) {
+                        input.addEventListener('change', function(e) {
+                            handleImageSelection(e.target.files, config.type, preview);
                         });
 
-                        uploadArea.addEventListener('dragleave', function(e) {
-                            e.preventDefault();
-                            uploadArea.classList.remove('dragover');
-                        });
+                        // Add drag and drop functionality (skip on mobile to avoid issues)
+                        const uploadArea = input.parentElement.querySelector('.image-upload-area');
+                        if (uploadArea && !isMobileDevice()) {
+                            uploadArea.addEventListener('dragover', function(e) {
+                                e.preventDefault();
+                                uploadArea.classList.add('dragover');
+                            });
 
-                        uploadArea.addEventListener('drop', function(e) {
-                            e.preventDefault();
-                            uploadArea.classList.remove('dragover');
-                            handleImageSelection(e.dataTransfer.files, config.type, preview);
-                        });
+                            uploadArea.addEventListener('dragleave', function(e) {
+                                e.preventDefault();
+                                uploadArea.classList.remove('dragover');
+                            });
+
+                            uploadArea.addEventListener('drop', function(e) {
+                                e.preventDefault();
+                                uploadArea.classList.remove('dragover');
+                                handleImageSelection(e.dataTransfer.files, config.type, preview);
+                            });
+                        }
                     }
-                }
-            });
+                });
+            }, 100);
+        }
+
+        // Check if device is mobile
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
         }
 
         // Handle image selection
@@ -3297,3 +3349,20 @@
                 closeImageModal();
             }
         };
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMobileFeatures();
+            checkLoginStatus();
+        });
+
+        // Fallback initialization for older browsers
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeMobileFeatures();
+                checkLoginStatus();
+            });
+        } else {
+            initializeMobileFeatures();
+            checkLoginStatus();
+        }
