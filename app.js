@@ -281,9 +281,10 @@
             showTab('maint');
         });
 
-        // Handle window resize to adjust statistics visibility
+        // Handle window resize to adjust statistics visibility (but respect user's manual toggle)
+        let userToggledStats = false;
         window.addEventListener('resize', function() {
-            if (document.getElementById('mainDashboard').style.display !== 'none') {
+            if (document.getElementById('mainDashboard').style.display !== 'none' && !userToggledStats) {
                 initializeStatsVisibility();
             }
         });
@@ -2039,6 +2040,9 @@
     function toggleMonthlyStats() {
         const statsContent = document.getElementById('monthlyStatsContent');
         const toggleText = document.getElementById('statsToggleText');
+        
+        // Mark that user has manually toggled stats
+        userToggledStats = true;
         
         if (statsContent.classList.contains('hidden')) {
             statsContent.classList.remove('hidden');
