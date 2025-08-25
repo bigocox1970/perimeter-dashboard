@@ -94,6 +94,11 @@
             if (tabName === 'scaff') {
                 loadScaffoldData();
             }
+            
+            // Load NSI data when nsi tab is selected (complaints by default)
+            if (tabName === 'nsi') {
+                loadComplaintData();
+            }
         }
 
         // Handle Enter key in password field
@@ -2176,11 +2181,1096 @@
 
         // ===== END SCAFFOLD SYSTEM FUNCTIONS =====
 
+        // ===== NSI SYSTEM FUNCTIONS =====
+
+        // NSI data variables
+        let nsiComplaints = [];
+        let nsiIdBadges = [];
+        let nsiTestEquipment = [];
+        let nsiFirstAid = [];
+        let editingComplaintId = null;
+        let editingIdBadgeId = null;
+        let editingTestEquipId = null;
+        let editingFirstAidId = null;
+
+        // Image handling variables
+        let currentImages = {
+            complaint: [],
+            badge: [],
+            equipment: [],
+            firstAid: []
+        };
+
+        // NSI sub-page navigation
+        function showNsiSubPage(subPageName) {
+            // Hide all sub-content
+            const subContents = document.querySelectorAll('.nsi-sub-content');
+            subContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all sub-buttons
+            const subButtons = document.querySelectorAll('.nsi-sub-button');
+            subButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected sub-content
+            const selectedContent = document.getElementById(subPageName + 'SubPage');
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            const selectedButton = document.querySelector(`[onclick="showNsiSubPage('${subPageName}')"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('active');
+            }
+
+            // Load data for the selected sub-page
+            switch(subPageName) {
+                case 'complaints':
+                    loadComplaintData();
+                    break;
+                case 'id-badge':
+                    loadIdBadgeData();
+                    break;
+                case 'test-equip':
+                    loadTestEquipmentData();
+                    break;
+                case 'first-aid':
+                    loadFirstAidData();
+                    break;
+            }
+        }
+
+        // ===== COMPLAINTS FUNCTIONS =====
+
+        // Load customers into dropdown
+        async function loadCustomersIntoDropdown() {
+            try {
+                const { data, error } = await supabase
+                    .from(TABLE_NAME)
+                    .select('id, name')
+                    .order('name', { ascending: true });
+
+                if (error) {
+                    console.error('Error loading customers:', error);
+                    return;
+                }
+
+                const customerSelect = document.getElementById('complaintCustomer');
+                if (customerSelect) {
+                    // Clear existing options except the first one
+                    customerSelect.innerHTML = '<option value="">Select a customer...</option>';
+                    
+                    // Add customer options
+                    data.forEach(customer => {
+                        const option = document.createElement('option');
+                        option.value = customer.name;
+                        option.textContent = customer.name;
+                        customerSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+        }
+
+        // Load complaint data
+        async function loadComplaintData() {
+            try {
+                const { data, error } = await supabase
+                    .from(NSI_COMPLAINTS_TABLE)
+                    .select('*')
+                    .order('date', { ascending: false });
+
+                if (error) {
+                    console.error('Error loading complaints:', error);
+                    showNsiMessage('Error loading complaints: ' + error.message, 'error');
+                    return;
+                }
+
+                nsiComplaints = data || [];
+                renderComplaintTable();
+                
+            } catch (error) {
+                console.error('Error loading complaints:', error);
+                showNsiMessage('Error loading complaints: ' + error.message, 'error');
+            }
+        }
+
+        // Render complaint table
+        function renderComplaintTable() {
+            const tableBody = document.getElementById('complaintTableBody');
+            const emptyState = document.getElementById('complaintEmptyState');
+            
+            if (nsiComplaints.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = nsiComplaints.map(complaint => `
+                <tr>
+                    <td>${formatDate(complaint.date)}</td>
+                    <td>${complaint.reference}</td>
+                    <td>${complaint.customer}</td>
+                    <td>${complaint.type}</td>
+                    <td>${complaint.description}</td>
+                    <td><span class="status-badge status-${complaint.status}">${complaint.status}</span></td>
+                    <td>${complaint.assigned_to || '-'}</td>
+                    <td>${renderImageThumbnails(parseImagesFromBase64(complaint.images))}</td>
+                    <td>
+                        <button class="btn btn-warning" onclick="editComplaint(${complaint.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                        <button class="btn btn-danger" onclick="deleteComplaint(${complaint.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Open complaint modal
+        async function openComplaintModal() {
+            editingComplaintId = null;
+            document.getElementById('complaintModalTitle').textContent = 'Add Complaint';
+            document.getElementById('complaintForm').reset();
+            document.getElementById('complaintDate').value = new Date().toISOString().split('T')[0];
+            clearCurrentImages('complaint');
+            await loadCustomersIntoDropdown();
+            document.getElementById('complaintModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Close complaint modal
+        function closeComplaintModal() {
+            document.getElementById('complaintModal').style.display = 'none';
+            editingComplaintId = null;
+        }
+
+        // Edit complaint
+        async function editComplaint(id) {
+            const complaint = nsiComplaints.find(c => c.id === id);
+            if (!complaint) return;
+            
+            editingComplaintId = id;
+            document.getElementById('complaintModalTitle').textContent = 'Edit Complaint';
+            
+            // Load customers first
+            await loadCustomersIntoDropdown();
+            
+            document.getElementById('complaintDate').value = complaint.date;
+            document.getElementById('complaintReference').value = complaint.reference;
+            document.getElementById('complaintCustomer').value = complaint.customer;
+            document.getElementById('complaintType').value = complaint.type;
+            document.getElementById('complaintDescription').value = complaint.description;
+            document.getElementById('complaintStatus').value = complaint.status;
+            document.getElementById('complaintAssignedTo').value = complaint.assigned_to || '';
+            document.getElementById('complaintNotes').value = complaint.notes || '';
+            
+            loadImagesIntoForm(complaint.images, 'complaint');
+            document.getElementById('complaintModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Delete complaint
+        async function deleteComplaint(id) {
+            if (!confirm('Are you sure you want to delete this complaint?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from(NSI_COMPLAINTS_TABLE)
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                
+                await loadComplaintData();
+                showNsiMessage('Complaint deleted successfully!', 'success');
+            } catch (error) {
+                console.error('Error deleting complaint:', error);
+                showNsiMessage('Error deleting complaint: ' + error.message, 'error');
+            }
+        }
+
+        // Handle complaint form submission
+        document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                date: document.getElementById('complaintDate').value,
+                reference: document.getElementById('complaintReference').value || generateComplaintReference(),
+                customer: document.getElementById('complaintCustomer').value,
+                type: document.getElementById('complaintType').value,
+                description: document.getElementById('complaintDescription').value,
+                status: document.getElementById('complaintStatus').value,
+                assigned_to: document.getElementById('complaintAssignedTo').value,
+                notes: document.getElementById('complaintNotes').value,
+                images: imagesToBase64String(currentImages.complaint)
+            };
+            
+            try {
+                if (editingComplaintId) {
+                    // Update existing complaint
+                    const { error } = await supabase
+                        .from(NSI_COMPLAINTS_TABLE)
+                        .update(formData)
+                        .eq('id', editingComplaintId);
+                        
+                    if (error) throw error;
+                    showNsiMessage('Complaint updated successfully!', 'success');
+                } else {
+                    // Add new complaint
+                    const { error } = await supabase
+                        .from(NSI_COMPLAINTS_TABLE)
+                        .insert([formData]);
+                        
+                    if (error) throw error;
+                    showNsiMessage('Complaint added successfully!', 'success');
+                }
+                
+                closeComplaintModal();
+                await loadComplaintData();
+            } catch (error) {
+                console.error('Error saving complaint:', error);
+                showNsiMessage('Error saving complaint: ' + error.message, 'error');
+            }
+        });
+
+        // Generate complaint reference
+        function generateComplaintReference() {
+            const date = new Date();
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            return `COMP-${year}${month}${day}-${random}`;
+        }
+
+        // Export complaint data
+        function exportComplaintData() {
+            const dataStr = JSON.stringify(nsiComplaints, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'nsi_complaints_' + new Date().toISOString().split('T')[0] + '.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNsiMessage('Complaint data exported successfully!', 'success');
+        }
+
+        // Filter complaint table
+        function filterComplaintTable() {
+            // Implementation for filtering complaints
+            renderComplaintTable();
+        }
+
+        // ===== ID BADGE FUNCTIONS =====
+
+        // Load ID badge data
+        async function loadIdBadgeData() {
+            try {
+                const { data, error } = await supabase
+                    .from(NSI_ID_BADGES_TABLE)
+                    .select('*')
+                    .order('valid_from', { ascending: false });
+
+                if (error) {
+                    console.error('Error loading ID badges:', error);
+                    showNsiMessage('Error loading ID badges: ' + error.message, 'error');
+                    return;
+                }
+
+                nsiIdBadges = data || [];
+                renderIdBadgeTable();
+                
+            } catch (error) {
+                console.error('Error loading ID badges:', error);
+                showNsiMessage('Error loading ID badges: ' + error.message, 'error');
+            }
+        }
+
+        // Render ID badge table
+        function renderIdBadgeTable() {
+            const tableBody = document.getElementById('idBadgeTableBody');
+            const emptyState = document.getElementById('idBadgeEmptyState');
+            
+            if (nsiIdBadges.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = nsiIdBadges.map(badge => {
+                const status = getBadgeStatus(badge.valid_to);
+                return `
+                    <tr>
+                        <td>${badge.badge_number}</td>
+                        <td>${badge.issued_to}</td>
+                        <td>${badge.issued_by}</td>
+                        <td>${formatDate(badge.valid_from)}</td>
+                        <td>${formatDate(badge.valid_to)}</td>
+                        <td><span class="status-badge status-${status}">${status}</span></td>
+                        <td>${renderImageThumbnails(parseImagesFromBase64(badge.images))}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editIdBadge(${badge.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteIdBadge(${badge.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get badge status
+        function getBadgeStatus(validTo) {
+            const today = new Date();
+            const expiryDate = new Date(validTo);
+            
+            if (expiryDate < today) {
+                return 'expired';
+            } else {
+                return 'active';
+            }
+        }
+
+        // Open ID badge modal
+        function openIdBadgeModal() {
+            editingIdBadgeId = null;
+            document.getElementById('idBadgeModalTitle').textContent = 'Issue ID Badge';
+            document.getElementById('idBadgeForm').reset();
+            document.getElementById('badgeValidFrom').value = new Date().toISOString().split('T')[0];
+            clearCurrentImages('badge');
+            document.getElementById('idBadgeModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Close ID badge modal
+        function closeIdBadgeModal() {
+            document.getElementById('idBadgeModal').style.display = 'none';
+            editingIdBadgeId = null;
+        }
+
+        // Edit ID badge
+        function editIdBadge(id) {
+            const badge = nsiIdBadges.find(b => b.id === id);
+            if (!badge) return;
+            
+            editingIdBadgeId = id;
+            document.getElementById('idBadgeModalTitle').textContent = 'Edit ID Badge';
+            
+            document.getElementById('badgeNumber').value = badge.badge_number;
+            document.getElementById('badgeType').value = badge.badge_type;
+            document.getElementById('badgeIssuedTo').value = badge.issued_to;
+            document.getElementById('badgeIssuedBy').value = badge.issued_by;
+            document.getElementById('badgeValidFrom').value = badge.valid_from;
+            document.getElementById('badgeValidTo').value = badge.valid_to;
+            document.getElementById('badgeNotes').value = badge.notes || '';
+            
+            loadImagesIntoForm(badge.images, 'badge');
+            document.getElementById('idBadgeModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Delete ID badge
+        async function deleteIdBadge(id) {
+            if (!confirm('Are you sure you want to delete this ID badge record?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from(NSI_ID_BADGES_TABLE)
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                
+                await loadIdBadgeData();
+                showNsiMessage('ID badge record deleted successfully!', 'success');
+            } catch (error) {
+                console.error('Error deleting ID badge:', error);
+                showNsiMessage('Error deleting ID badge: ' + error.message, 'error');
+            }
+        }
+
+        // Handle ID badge form submission
+        document.getElementById('idBadgeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                badge_number: document.getElementById('badgeNumber').value,
+                badge_type: document.getElementById('badgeType').value,
+                issued_to: document.getElementById('badgeIssuedTo').value,
+                issued_by: document.getElementById('badgeIssuedBy').value,
+                valid_from: document.getElementById('badgeValidFrom').value,
+                valid_to: document.getElementById('badgeValidTo').value,
+                notes: document.getElementById('badgeNotes').value,
+                images: imagesToBase64String(currentImages.badge)
+            };
+            
+            try {
+                if (editingIdBadgeId) {
+                    // Update existing badge
+                    const { error } = await supabase
+                        .from(NSI_ID_BADGES_TABLE)
+                        .update(formData)
+                        .eq('id', editingIdBadgeId);
+                        
+                    if (error) throw error;
+                    showNsiMessage('ID badge updated successfully!', 'success');
+                } else {
+                    // Add new badge
+                    const { error } = await supabase
+                        .from(NSI_ID_BADGES_TABLE)
+                        .insert([formData]);
+                        
+                    if (error) throw error;
+                    showNsiMessage('ID badge issued successfully!', 'success');
+                }
+                
+                closeIdBadgeModal();
+                await loadIdBadgeData();
+            } catch (error) {
+                console.error('Error saving ID badge:', error);
+                showNsiMessage('Error saving ID badge: ' + error.message, 'error');
+            }
+        });
+
+        // Export ID badge data
+        function exportIdBadgeData() {
+            const dataStr = JSON.stringify(nsiIdBadges, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'nsi_id_badges_' + new Date().toISOString().split('T')[0] + '.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNsiMessage('ID badge data exported successfully!', 'success');
+        }
+
+        // Filter ID badge table
+        function filterIdBadgeTable() {
+            // Implementation for filtering ID badges
+            renderIdBadgeTable();
+        }
+
+        // ===== TEST EQUIPMENT FUNCTIONS =====
+
+        // Load test equipment data
+        async function loadTestEquipmentData() {
+            try {
+                const { data, error } = await supabase
+                    .from(NSI_TEST_EQUIPMENT_TABLE)
+                    .select('*')
+                    .order('next_calibration', { ascending: true });
+
+                if (error) {
+                    console.error('Error loading test equipment:', error);
+                    showNsiMessage('Error loading test equipment: ' + error.message, 'error');
+                    return;
+                }
+
+                nsiTestEquipment = data || [];
+                renderTestEquipTable();
+                
+            } catch (error) {
+                console.error('Error loading test equipment:', error);
+                showNsiMessage('Error loading test equipment: ' + error.message, 'error');
+            }
+        }
+
+        // Render test equipment table
+        function renderTestEquipTable() {
+            const tableBody = document.getElementById('testEquipTableBody');
+            const emptyState = document.getElementById('testEquipEmptyState');
+            
+            if (nsiTestEquipment.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = nsiTestEquipment.map(equipment => {
+                const status = getEquipmentStatus(equipment.next_calibration);
+                return `
+                    <tr>
+                        <td>${equipment.equipment_id}</td>
+                        <td>${equipment.equipment_type}</td>
+                        <td>${equipment.manufacturer}</td>
+                        <td>${equipment.model}</td>
+                        <td>${formatDate(equipment.purchase_date)}</td>
+                        <td>${formatDate(equipment.last_calibration)}</td>
+                        <td>${formatDate(equipment.next_calibration)}</td>
+                        <td><span class="status-badge status-${status}">${status}</span></td>
+                        <td>${renderImageThumbnails(parseImagesFromBase64(equipment.images))}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editTestEquipment(${equipment.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteTestEquipment(${equipment.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get equipment calibration status
+        function getEquipmentStatus(nextCalibration) {
+            const today = new Date();
+            const calibrationDate = new Date(nextCalibration);
+            const daysDiff = Math.ceil((calibrationDate - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < 0) {
+                return 'overdue';
+            } else if (daysDiff <= 30) {
+                return 'due-calibration';
+            } else {
+                return 'calibrated';
+            }
+        }
+
+        // Open test equipment modal
+        function openTestEquipModal() {
+            editingTestEquipId = null;
+            document.getElementById('testEquipModalTitle').textContent = 'Add Test Equipment';
+            document.getElementById('testEquipForm').reset();
+            clearCurrentImages('equipment');
+            document.getElementById('testEquipModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Close test equipment modal
+        function closeTestEquipModal() {
+            document.getElementById('testEquipModal').style.display = 'none';
+            editingTestEquipId = null;
+        }
+
+        // Edit test equipment
+        function editTestEquipment(id) {
+            const equipment = nsiTestEquipment.find(e => e.id === id);
+            if (!equipment) return;
+            
+            editingTestEquipId = id;
+            document.getElementById('testEquipModalTitle').textContent = 'Edit Test Equipment';
+            
+            document.getElementById('equipmentId').value = equipment.equipment_id;
+            document.getElementById('equipmentType').value = equipment.equipment_type;
+            document.getElementById('equipmentManufacturer').value = equipment.manufacturer;
+            document.getElementById('equipmentModel').value = equipment.model;
+            document.getElementById('equipmentPurchaseDate').value = equipment.purchase_date;
+            document.getElementById('equipmentSerialNumber').value = equipment.serial_number || '';
+            document.getElementById('equipmentLastCalibration').value = equipment.last_calibration || '';
+            document.getElementById('equipmentNextCalibration').value = equipment.next_calibration;
+            document.getElementById('equipmentNotes').value = equipment.notes || '';
+            
+            loadImagesIntoForm(equipment.images, 'equipment');
+            document.getElementById('testEquipModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Delete test equipment
+        async function deleteTestEquipment(id) {
+            if (!confirm('Are you sure you want to delete this test equipment record?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from(NSI_TEST_EQUIPMENT_TABLE)
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                
+                await loadTestEquipmentData();
+                showNsiMessage('Test equipment record deleted successfully!', 'success');
+            } catch (error) {
+                console.error('Error deleting test equipment:', error);
+                showNsiMessage('Error deleting test equipment: ' + error.message, 'error');
+            }
+        }
+
+        // Handle test equipment form submission
+        document.getElementById('testEquipForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                equipment_id: document.getElementById('equipmentId').value,
+                equipment_type: document.getElementById('equipmentType').value,
+                manufacturer: document.getElementById('equipmentManufacturer').value,
+                model: document.getElementById('equipmentModel').value,
+                purchase_date: document.getElementById('equipmentPurchaseDate').value,
+                serial_number: document.getElementById('equipmentSerialNumber').value,
+                last_calibration: document.getElementById('equipmentLastCalibration').value,
+                next_calibration: document.getElementById('equipmentNextCalibration').value,
+                notes: document.getElementById('equipmentNotes').value,
+                images: imagesToBase64String(currentImages.equipment)
+            };
+            
+            try {
+                if (editingTestEquipId) {
+                    // Update existing equipment
+                    const { error } = await supabase
+                        .from(NSI_TEST_EQUIPMENT_TABLE)
+                        .update(formData)
+                        .eq('id', editingTestEquipId);
+                        
+                    if (error) throw error;
+                    showNsiMessage('Test equipment updated successfully!', 'success');
+                } else {
+                    // Add new equipment
+                    const { error } = await supabase
+                        .from(NSI_TEST_EQUIPMENT_TABLE)
+                        .insert([formData]);
+                        
+                    if (error) throw error;
+                    showNsiMessage('Test equipment added successfully!', 'success');
+                }
+                
+                closeTestEquipModal();
+                await loadTestEquipmentData();
+            } catch (error) {
+                console.error('Error saving test equipment:', error);
+                showNsiMessage('Error saving test equipment: ' + error.message, 'error');
+            }
+        });
+
+        // Export test equipment data
+        function exportTestEquipData() {
+            const dataStr = JSON.stringify(nsiTestEquipment, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'nsi_test_equipment_' + new Date().toISOString().split('T')[0] + '.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNsiMessage('Test equipment data exported successfully!', 'success');
+        }
+
+        // Filter test equipment table
+        function filterTestEquipTable() {
+            // Implementation for filtering test equipment
+            renderTestEquipTable();
+        }
+
+        // ===== FIRST AID FUNCTIONS =====
+
+        // Load first aid data
+        async function loadFirstAidData() {
+            try {
+                const { data, error } = await supabase
+                    .from(NSI_FIRST_AID_TABLE)
+                    .select('*')
+                    .order('expiry_date', { ascending: true });
+
+                if (error) {
+                    console.error('Error loading first aid kits:', error);
+                    showNsiMessage('Error loading first aid kits: ' + error.message, 'error');
+                    return;
+                }
+
+                nsiFirstAid = data || [];
+                renderFirstAidTable();
+                
+            } catch (error) {
+                console.error('Error loading first aid kits:', error);
+                showNsiMessage('Error loading first aid kits: ' + error.message, 'error');
+            }
+        }
+
+        // Render first aid table
+        function renderFirstAidTable() {
+            const tableBody = document.getElementById('firstAidTableBody');
+            const emptyState = document.getElementById('firstAidEmptyState');
+            
+            if (nsiFirstAid.length === 0) {
+                tableBody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            tableBody.innerHTML = nsiFirstAid.map(kit => {
+                const status = getFirstAidStatus(kit.expiry_date);
+                return `
+                    <tr>
+                        <td>${kit.kit_id}</td>
+                        <td>${kit.kit_type}</td>
+                        <td>${kit.issued_to}</td>
+                        <td>${kit.issued_by}</td>
+                        <td>${formatDate(kit.issue_date)}</td>
+                        <td>${formatDate(kit.expiry_date)}</td>
+                        <td>${kit.location}</td>
+                        <td><span class="status-badge status-${status}">${status}</span></td>
+                        <td>${renderImageThumbnails(parseImagesFromBase64(kit.images))}</td>
+                        <td>
+                            <button class="btn btn-warning" onclick="editFirstAidKit(${kit.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteFirstAidKit(${kit.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Get first aid kit status
+        function getFirstAidStatus(expiryDate) {
+            const today = new Date();
+            const expiry = new Date(expiryDate);
+            const daysDiff = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24));
+            
+            if (daysDiff < 0) {
+                return 'expired';
+            } else if (daysDiff <= 30) {
+                return 'due-soon';
+            } else {
+                return 'active';
+            }
+        }
+
+        // Open first aid modal
+        function openFirstAidModal() {
+            editingFirstAidId = null;
+            document.getElementById('firstAidModalTitle').textContent = 'Issue First Aid Kit';
+            document.getElementById('firstAidForm').reset();
+            document.getElementById('firstAidIssueDate').value = new Date().toISOString().split('T')[0];
+            clearCurrentImages('firstAid');
+            document.getElementById('firstAidModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Close first aid modal
+        function closeFirstAidModal() {
+            document.getElementById('firstAidModal').style.display = 'none';
+            editingFirstAidId = null;
+        }
+
+        // Edit first aid kit
+        function editFirstAidKit(id) {
+            const kit = nsiFirstAid.find(k => k.id === id);
+            if (!kit) return;
+            
+            editingFirstAidId = id;
+            document.getElementById('firstAidModalTitle').textContent = 'Edit First Aid Kit';
+            
+            document.getElementById('firstAidKitId').value = kit.kit_id;
+            document.getElementById('firstAidKitType').value = kit.kit_type;
+            document.getElementById('firstAidIssuedTo').value = kit.issued_to;
+            document.getElementById('firstAidIssuedBy').value = kit.issued_by;
+            document.getElementById('firstAidIssueDate').value = kit.issue_date;
+            document.getElementById('firstAidExpiryDate').value = kit.expiry_date;
+            document.getElementById('firstAidLocation').value = kit.location;
+            document.getElementById('firstAidNotes').value = kit.notes || '';
+            
+            loadImagesIntoForm(kit.images, 'firstAid');
+            document.getElementById('firstAidModal').style.display = 'block';
+            initializeImageUpload();
+        }
+
+        // Delete first aid kit
+        async function deleteFirstAidKit(id) {
+            if (!confirm('Are you sure you want to delete this first aid kit record?')) return;
+            
+            try {
+                const { error } = await supabase
+                    .from(NSI_FIRST_AID_TABLE)
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+                
+                await loadFirstAidData();
+                showNsiMessage('First aid kit record deleted successfully!', 'success');
+            } catch (error) {
+                console.error('Error deleting first aid kit:', error);
+                showNsiMessage('Error deleting first aid kit: ' + error.message, 'error');
+            }
+        }
+
+        // Handle first aid form submission
+        document.getElementById('firstAidForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                kit_id: document.getElementById('firstAidKitId').value,
+                kit_type: document.getElementById('firstAidKitType').value,
+                issued_to: document.getElementById('firstAidIssuedTo').value,
+                issued_by: document.getElementById('firstAidIssuedBy').value,
+                issue_date: document.getElementById('firstAidIssueDate').value,
+                expiry_date: document.getElementById('firstAidExpiryDate').value,
+                location: document.getElementById('firstAidLocation').value,
+                notes: document.getElementById('firstAidNotes').value,
+                images: imagesToBase64String(currentImages.firstAid)
+            };
+            
+            try {
+                if (editingFirstAidId) {
+                    // Update existing kit
+                    const { error } = await supabase
+                        .from(NSI_FIRST_AID_TABLE)
+                        .update(formData)
+                        .eq('id', editingFirstAidId);
+                        
+                    if (error) throw error;
+                    showNsiMessage('First aid kit updated successfully!', 'success');
+                } else {
+                    // Add new kit
+                    const { error } = await supabase
+                        .from(NSI_FIRST_AID_TABLE)
+                        .insert([formData]);
+                        
+                    if (error) throw error;
+                    showNsiMessage('First aid kit issued successfully!', 'success');
+                }
+                
+                closeFirstAidModal();
+                await loadFirstAidData();
+            } catch (error) {
+                console.error('Error saving first aid kit:', error);
+                showNsiMessage('Error saving first aid kit: ' + error.message, 'error');
+            }
+        });
+
+        // Export first aid data
+        function exportFirstAidData() {
+            const dataStr = JSON.stringify(nsiFirstAid, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'nsi_first_aid_kits_' + new Date().toISOString().split('T')[0] + '.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showNsiMessage('First aid kit data exported successfully!', 'success');
+        }
+
+        // Filter first aid table
+        function filterFirstAidTable() {
+            // Implementation for filtering first aid kits
+            renderFirstAidTable();
+        }
+
+        // ===== IMAGE HANDLING FUNCTIONS =====
+
+        // Initialize image upload functionality
+        function initializeImageUpload() {
+            const imageInputs = [
+                { input: 'complaintImages', preview: 'complaintImagePreview', type: 'complaint' },
+                { input: 'badgeImages', preview: 'badgeImagePreview', type: 'badge' },
+                { input: 'equipmentImages', preview: 'equipmentImagePreview', type: 'equipment' },
+                { input: 'firstAidImages', preview: 'firstAidImagePreview', type: 'firstAid' }
+            ];
+
+            imageInputs.forEach(config => {
+                const input = document.getElementById(config.input);
+                const preview = document.getElementById(config.preview);
+                
+                if (input && preview) {
+                    input.addEventListener('change', function(e) {
+                        handleImageSelection(e.target.files, config.type, preview);
+                    });
+
+                    // Add drag and drop functionality
+                    const uploadArea = input.parentElement.querySelector('.image-upload-area');
+                    if (uploadArea) {
+                        uploadArea.addEventListener('dragover', function(e) {
+                            e.preventDefault();
+                            uploadArea.classList.add('dragover');
+                        });
+
+                        uploadArea.addEventListener('dragleave', function(e) {
+                            e.preventDefault();
+                            uploadArea.classList.remove('dragover');
+                        });
+
+                        uploadArea.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            uploadArea.classList.remove('dragover');
+                            handleImageSelection(e.dataTransfer.files, config.type, preview);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Handle image selection
+        function handleImageSelection(files, type, previewContainer) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const imageData = {
+                            name: file.name,
+                            data: e.target.result,
+                            size: file.size,
+                            type: file.type
+                        };
+                        
+                        currentImages[type].push(imageData);
+                        renderImagePreview(previewContainer, currentImages[type], type);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // Render image preview
+        function renderImagePreview(container, images, type) {
+            container.innerHTML = images.map((image, index) => `
+                <div class="image-preview">
+                    <img src="${image.data}" alt="${image.name}" onclick="openImageModal('${image.data}')">
+                    <button class="image-preview-remove" onclick="removeImage('${type}', ${index})" type="button">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Remove image from preview
+        function removeImage(type, index) {
+            currentImages[type].splice(index, 1);
+            const previewContainer = document.getElementById(getPreviewContainerId(type));
+            if (previewContainer) {
+                renderImagePreview(previewContainer, currentImages[type], type);
+            }
+        }
+
+        // Get preview container ID by type
+        function getPreviewContainerId(type) {
+            const mapping = {
+                complaint: 'complaintImagePreview',
+                badge: 'badgeImagePreview',
+                equipment: 'equipmentImagePreview',
+                firstAid: 'firstAidImagePreview'
+            };
+            return mapping[type];
+        }
+
+        // Open image modal
+        function openImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('imageModalImg');
+            modal.style.display = 'block';
+            modalImg.src = imageSrc;
+        }
+
+        // Close image modal
+        function closeImageModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        // Convert images to base64 string for database storage
+        function imagesToBase64String(images) {
+            return JSON.stringify(images.map(img => ({
+                name: img.name,
+                data: img.data,
+                size: img.size,
+                type: img.type
+            })));
+        }
+
+        // Parse base64 string back to images
+        function parseImagesFromBase64(imageString) {
+            if (!imageString) return [];
+            try {
+                return JSON.parse(imageString);
+            } catch (e) {
+                console.error('Error parsing images:', e);
+                return [];
+            }
+        }
+
+        // Render image thumbnails for table display
+        function renderImageThumbnails(images, maxDisplay = 3) {
+            if (!images || images.length === 0) {
+                return '<span style="color: #999;">No images</span>';
+            }
+
+            const imagesToShow = images.slice(0, maxDisplay);
+            const remaining = images.length - maxDisplay;
+
+            let html = '<div class="image-gallery">';
+            imagesToShow.forEach(image => {
+                html += `<img src="${image.data}" alt="${image.name}" class="image-thumbnail" onclick="openImageModal('${image.data}')">`;
+            });
+            
+            if (remaining > 0) {
+                html += `<span style="font-size: 12px; color: #666;">+${remaining} more</span>`;
+            }
+            html += '</div>';
+
+            return html;
+        }
+
+        // Clear current images
+        function clearCurrentImages(type) {
+            currentImages[type] = [];
+            const previewContainer = document.getElementById(getPreviewContainerId(type));
+            if (previewContainer) {
+                previewContainer.innerHTML = '';
+            }
+        }
+
+        // Load images into form when editing
+        function loadImagesIntoForm(images, type) {
+            currentImages[type] = parseImagesFromBase64(images);
+            const previewContainer = document.getElementById(getPreviewContainerId(type));
+            if (previewContainer) {
+                renderImagePreview(previewContainer, currentImages[type], type);
+            }
+        }
+
+        // ===== UTILITY FUNCTIONS =====
+
+        // Show NSI messages
+        function showNsiMessage(message, type) {
+            const errorElement = document.getElementById('nsiErrorMessage');
+            const successElement = document.getElementById('nsiSuccessMessage');
+            
+            if (type === 'error') {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                successElement.style.display = 'none';
+                setTimeout(() => {
+                    errorElement.style.display = 'none';
+                }, 5000);
+            } else {
+                successElement.textContent = message;
+                successElement.style.display = 'block';
+                errorElement.style.display = 'none';
+                setTimeout(() => {
+                    successElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB');
+        }
+
+        // ===== END NSI SYSTEM FUNCTIONS =====
+
         // Close modals when clicking outside
         window.onclick = function(event) {
             const customerModal = document.getElementById('customerModal');
             const completionModal = document.getElementById('completionModal');
             const monthlyCompletionsModal = document.getElementById('monthlyCompletionsModal');
+            const complaintModal = document.getElementById('complaintModal');
+            const idBadgeModal = document.getElementById('idBadgeModal');
+            const testEquipModal = document.getElementById('testEquipModal');
+            const firstAidModal = document.getElementById('firstAidModal');
+            const imageModal = document.getElementById('imageModal');
             
             if (event.target === customerModal) {
                 closeModal();
@@ -2190,5 +3280,20 @@
             }
             if (event.target === monthlyCompletionsModal) {
                 closeMonthlyCompletionsModal();
+            }
+            if (event.target === complaintModal) {
+                closeComplaintModal();
+            }
+            if (event.target === idBadgeModal) {
+                closeIdBadgeModal();
+            }
+            if (event.target === testEquipModal) {
+                closeTestEquipModal();
+            }
+            if (event.target === firstAidModal) {
+                closeFirstAidModal();
+            }
+            if (event.target === imageModal) {
+                closeImageModal();
             }
         };

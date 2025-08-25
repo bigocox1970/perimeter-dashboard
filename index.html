@@ -68,6 +68,7 @@
         <div class="tab-navigation">
             <button class="tab-button active" onclick="showTab('maint')">Maint</button>
             <button class="tab-button" onclick="showTab('scaff')">Scaff</button>
+            <button class="tab-button" onclick="showTab('nsi')">NSI</button>
         </div>
 
         <!-- Tab Contents -->
@@ -192,11 +193,11 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="weeklyRevenue">£0.00</div>
-                    <div class="stat-label">Weekly Revenue (ex VAT)</div>
+                    <div class="stat-label">Weekly Revenue</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number" id="monthlyRevenue">£0.00</div>
-                    <div class="stat-label">Monthly Revenue (ex VAT)</div>
+                    <div class="stat-label">Monthly Revenue</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number overdue" id="overdueInvoices">0</div>
@@ -237,8 +238,8 @@
                         <tr>
                             <th class="sortable" onclick="sortScaffTable('pNumber')">P Number</th>
                             <th class="sortable" onclick="sortScaffTable('sensors')">Sensors</th>
-                            <th class="sortable" onclick="sortScaffTable('weeklyCost')">Weekly Cost (ex VAT)</th>
-                            <th class="sortable" onclick="sortScaffTable('monthlyCost')">Monthly Cost (ex VAT)</th>
+                            <th class="sortable" onclick="sortScaffTable('weeklyCost')">Weekly Cost</th>
+                            <th class="sortable" onclick="sortScaffTable('monthlyCost')">Monthly Cost</th>
                             <th class="sortable" onclick="sortScaffTable('nextInvoice')">Next Invoice</th>
                             <th>Site Contact</th>
                             <th>App Contact</th>
@@ -259,6 +260,194 @@
             <!-- Mobile Scaffold Cards -->
             <div class="mobile-customer-cards" id="mobileScaffCards">
                 <!-- Mobile cards will be generated here -->
+            </div>
+        </div>
+
+        <!-- NSI Tab Content -->
+        <div id="nsiTab" class="tab-content">
+            <div class="error-message" id="nsiErrorMessage"></div>
+            <div class="success-message" id="nsiSuccessMessage"></div>
+
+            <!-- NSI Sub-navigation -->
+            <div class="nsi-sub-navigation">
+                <button class="nsi-sub-button active" onclick="showNsiSubPage('complaints')">Complaints</button>
+                <button class="nsi-sub-button" onclick="showNsiSubPage('id-badge')">ID Badge</button>
+                <button class="nsi-sub-button" onclick="showNsiSubPage('test-equip')">Test Equipment</button>
+                <button class="nsi-sub-button" onclick="showNsiSubPage('first-aid')">First Aid</button>
+            </div>
+
+            <!-- Complaints Sub-page -->
+            <div id="complaintsSubPage" class="nsi-sub-content active">
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="openComplaintModal()">➕ Add Complaint</button>
+                    <button class="btn btn-success" onclick="exportComplaintData()">📥 Export Data</button>
+                    
+                    <div class="search-filter">
+                        <input type="text" class="search-input" id="complaintSearchInput" placeholder="Search complaints..." onkeyup="filterComplaintTable()">
+                        <select class="filter-select" id="complaintStatusFilter" onchange="filterComplaintTable()">
+                            <option value="">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="investigating">Investigating</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="customer-table" id="complaintTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortComplaintTable('date')">Date</th>
+                                <th class="sortable" onclick="sortComplaintTable('reference')">Reference</th>
+                                <th class="sortable" onclick="sortComplaintTable('customer')">Customer</th>
+                                <th class="sortable" onclick="sortComplaintTable('type')">Type</th>
+                                <th class="sortable" onclick="sortComplaintTable('description')">Description</th>
+                                <th class="sortable" onclick="sortComplaintTable('status')">Status</th>
+                                <th class="sortable" onclick="sortComplaintTable('assignedTo')">Assigned To</th>
+                                <th>Images</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="complaintTableBody">
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="complaintEmptyState" style="display: none;">
+                        <h3>No complaints recorded</h3>
+                        <p>Add your first complaint to get started with complaint tracking.</p>
+                        <button class="btn btn-primary" onclick="openComplaintModal()" style="margin-top: 20px;">Add First Complaint</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ID Badge Sub-page -->
+            <div id="id-badgeSubPage" class="nsi-sub-content">
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="openIdBadgeModal()">➕ Issue Badge</button>
+                    <button class="btn btn-success" onclick="exportIdBadgeData()">📥 Export Data</button>
+                    
+                    <div class="search-filter">
+                        <input type="text" class="search-input" id="idBadgeSearchInput" placeholder="Search badges..." onkeyup="filterIdBadgeTable()">
+                        <select class="filter-select" id="idBadgeStatusFilter" onchange="filterIdBadgeTable()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            <option value="revoked">Revoked</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="customer-table" id="idBadgeTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortIdBadgeTable('badgeNumber')">Badge Number</th>
+                                <th class="sortable" onclick="sortIdBadgeTable('issuedTo')">Issued To</th>
+                                <th class="sortable" onclick="sortIdBadgeTable('issuedBy')">Issued By</th>
+                                <th class="sortable" onclick="sortIdBadgeTable('validFrom')">Valid From</th>
+                                <th class="sortable" onclick="sortIdBadgeTable('validTo')">Valid To</th>
+                                <th class="sortable" onclick="sortIdBadgeTable('status')">Status</th>
+                                <th>Images</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="idBadgeTableBody">
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="idBadgeEmptyState" style="display: none;">
+                        <h3>No ID badges issued</h3>
+                        <p>Issue your first ID badge to get started with badge tracking.</p>
+                        <button class="btn btn-primary" onclick="openIdBadgeModal()" style="margin-top: 20px;">Issue First Badge</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Equipment Sub-page -->
+            <div id="test-equipSubPage" class="nsi-sub-content">
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="openTestEquipModal()">➕ Add Equipment</button>
+                    <button class="btn btn-success" onclick="exportTestEquipData()">📥 Export Data</button>
+                    
+                    <div class="search-filter">
+                        <input type="text" class="search-input" id="testEquipSearchInput" placeholder="Search equipment..." onkeyup="filterTestEquipTable()">
+                        <select class="filter-select" id="testEquipStatusFilter" onchange="filterTestEquipTable()">
+                            <option value="">All Status</option>
+                            <option value="calibrated">Calibrated</option>
+                            <option value="due-calibration">Due Calibration</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="customer-table" id="testEquipTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortTestEquipTable('equipmentId')">Equipment ID</th>
+                                <th class="sortable" onclick="sortTestEquipTable('type')">Type</th>
+                                <th class="sortable" onclick="sortTestEquipTable('manufacturer')">Manufacturer</th>
+                                <th class="sortable" onclick="sortTestEquipTable('model')">Model</th>
+                                <th class="sortable" onclick="sortTestEquipTable('purchaseDate')">Purchase Date</th>
+                                <th class="sortable" onclick="sortTestEquipTable('lastCalibration')">Last Calibration</th>
+                                <th class="sortable" onclick="sortTestEquipTable('nextCalibration')">Next Calibration</th>
+                                <th class="sortable" onclick="sortTestEquipTable('status')">Status</th>
+                                <th>Images</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="testEquipTableBody">
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="testEquipEmptyState" style="display: none;">
+                        <h3>No test equipment recorded</h3>
+                        <p>Add your first piece of test equipment to get started with equipment tracking.</p>
+                        <button class="btn btn-primary" onclick="openTestEquipModal()" style="margin-top: 20px;">Add First Equipment</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- First Aid Sub-page -->
+            <div id="first-aidSubPage" class="nsi-sub-content">
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="openFirstAidModal()">➕ Issue First Aid Kit</button>
+                    <button class="btn btn-success" onclick="exportFirstAidData()">📥 Export Data</button>
+                    
+                    <div class="search-filter">
+                        <input type="text" class="search-input" id="firstAidSearchInput" placeholder="Search first aid kits..." onkeyup="filterFirstAidTable()">
+                        <select class="filter-select" id="firstAidStatusFilter" onchange="filterFirstAidTable()">
+                            <option value="">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="expired">Expired</option>
+                            <option value="due-soon">Due Soon</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="customer-table" id="firstAidTable">
+                        <thead>
+                            <tr>
+                                <th class="sortable" onclick="sortFirstAidTable('kitId')">Kit ID</th>
+                                <th class="sortable" onclick="sortFirstAidTable('type')">Type</th>
+                                <th class="sortable" onclick="sortFirstAidTable('issuedTo')">Issued To</th>
+                                <th class="sortable" onclick="sortFirstAidTable('issuedBy')">Issued By</th>
+                                <th class="sortable" onclick="sortFirstAidTable('issueDate')">Issue Date</th>
+                                <th class="sortable" onclick="sortFirstAidTable('expiryDate')">Expiry Date</th>
+                                <th class="sortable" onclick="sortFirstAidTable('location')">Location</th>
+                                <th class="sortable" onclick="sortFirstAidTable('status')">Status</th>
+                                <th>Images</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="firstAidTableBody">
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="firstAidEmptyState" style="display: none;">
+                        <h3>No first aid kits issued</h3>
+                        <p>Issue your first aid kit to get started with first aid tracking.</p>
+                        <button class="btn btn-primary" onclick="openFirstAidModal()" style="margin-top: 20px;">Issue First Kit</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -497,8 +686,8 @@
                 
                 <div class="cost-preview" id="scaffCostPreview">
                     <h4>Cost Preview</h4>
-                    <p>Weekly Cost: <span id="scaffWeeklyCostPreview">£100.00</span> (ex VAT)</p>
-                    <p>Monthly Cost: <span id="scaffMonthlyCostPreview">£400.00</span> (ex VAT)</p>
+                    <p>Weekly Cost: <span id="scaffWeeklyCostPreview">£120.00</span> (inc. VAT)</p>
+                    <p>Monthly Cost: <span id="scaffMonthlyCostPreview">£480.00</span> (inc. VAT)</p>
                 </div>
                 
                 <div class="form-actions">
@@ -536,6 +725,299 @@
         </div>
     </div>
 
+    <!-- Complaint Modal -->
+    <div class="modal" id="complaintModal">
+        <div class="modal-content">
+            <h2 id="complaintModalTitle">Add Complaint</h2>
+            <form id="complaintForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="complaintDate">Date *</label>
+                        <input type="date" id="complaintDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="complaintReference">Reference</label>
+                        <input type="text" id="complaintReference" placeholder="Auto-generated if empty">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="complaintCustomer">Customer *</label>
+                        <select id="complaintCustomer" required>
+                            <option value="">Select a customer...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="complaintType">Type *</label>
+                        <select id="complaintType" required>
+                            <option value="">Select complaint type</option>
+                            <option value="Service">Service</option>
+                            <option value="Technical">Technical</option>
+                            <option value="Billing">Billing</option>
+                            <option value="Installation">Installation</option>
+                            <option value="Response Time">Response Time</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="complaintDescription">Description *</label>
+                    <textarea id="complaintDescription" required placeholder="Detailed description of the complaint..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="complaintStatus">Status *</label>
+                        <select id="complaintStatus" required>
+                            <option value="open">Open</option>
+                            <option value="investigating">Investigating</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="complaintAssignedTo">Assigned To</label>
+                        <input type="text" id="complaintAssignedTo" placeholder="Person responsible">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="complaintNotes">Notes</label>
+                    <textarea id="complaintNotes" placeholder="Additional notes or updates..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Images</label>
+                    <div class="image-upload-container">
+                        <div class="image-upload-area" onclick="document.getElementById('complaintImages').click()">
+                            <p>📷 Click to upload images or drag & drop</p>
+                            <small>Upload receipts, photos, or documents related to this complaint</small>
+                        </div>
+                        <input type="file" id="complaintImages" class="image-upload-input" multiple accept="image/*">
+                        <div id="complaintImagePreview" class="image-preview-container"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeComplaintModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Complaint</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ID Badge Modal -->
+    <div class="modal" id="idBadgeModal">
+        <div class="modal-content">
+            <h2 id="idBadgeModalTitle">Issue ID Badge</h2>
+            <form id="idBadgeForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="badgeNumber">Badge Number *</label>
+                        <input type="text" id="badgeNumber" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="badgeType">Badge Type *</label>
+                        <select id="badgeType" required>
+                            <option value="">Select badge type</option>
+                            <option value="Employee">Employee</option>
+                            <option value="Contractor">Contractor</option>
+                            <option value="Visitor">Visitor</option>
+                            <option value="Temporary">Temporary</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="badgeIssuedTo">Issued To *</label>
+                        <input type="text" id="badgeIssuedTo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="badgeIssuedBy">Issued By *</label>
+                        <input type="text" id="badgeIssuedBy" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="badgeValidFrom">Valid From *</label>
+                        <input type="date" id="badgeValidFrom" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="badgeValidTo">Valid To *</label>
+                        <input type="date" id="badgeValidTo" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="badgeNotes">Notes</label>
+                    <textarea id="badgeNotes" placeholder="Additional notes about the badge..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Images</label>
+                    <div class="image-upload-container">
+                        <div class="image-upload-area" onclick="document.getElementById('badgeImages').click()">
+                            <p>📷 Click to upload images or drag & drop</p>
+                            <small>Upload photos of the badge, ID documents, or related paperwork</small>
+                        </div>
+                        <input type="file" id="badgeImages" class="image-upload-input" multiple accept="image/*">
+                        <div id="badgeImagePreview" class="image-preview-container"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeIdBadgeModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Issue Badge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Test Equipment Modal -->
+    <div class="modal" id="testEquipModal">
+        <div class="modal-content">
+            <h2 id="testEquipModalTitle">Add Test Equipment</h2>
+            <form id="testEquipForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="equipmentId">Equipment ID *</label>
+                        <input type="text" id="equipmentId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipmentType">Type *</label>
+                        <select id="equipmentType" required>
+                            <option value="">Select equipment type</option>
+                            <option value="Multimeter">Multimeter</option>
+                            <option value="Loop Tester">Loop Tester</option>
+                            <option value="PAT Tester">PAT Tester</option>
+                            <option value="Insulation Tester">Insulation Tester</option>
+                            <option value="RCD Tester">RCD Tester</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="equipmentManufacturer">Manufacturer *</label>
+                        <input type="text" id="equipmentManufacturer" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipmentModel">Model *</label>
+                        <input type="text" id="equipmentModel" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="equipmentPurchaseDate">Purchase Date *</label>
+                        <input type="date" id="equipmentPurchaseDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="equipmentSerialNumber">Serial Number</label>
+                        <input type="text" id="equipmentSerialNumber">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="equipmentLastCalibration">Last Calibration</label>
+                        <input type="date" id="equipmentLastCalibration">
+                    </div>
+                    <div class="form-group">
+                        <label for="equipmentNextCalibration">Next Calibration *</label>
+                        <input type="date" id="equipmentNextCalibration" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="equipmentNotes">Notes</label>
+                    <textarea id="equipmentNotes" placeholder="Additional notes about the equipment..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Images</label>
+                    <div class="image-upload-container">
+                        <div class="image-upload-area" onclick="document.getElementById('equipmentImages').click()">
+                            <p>📷 Click to upload images or drag & drop</p>
+                            <small>Upload photos of receipts, calibration certificates, or equipment photos</small>
+                        </div>
+                        <input type="file" id="equipmentImages" class="image-upload-input" multiple accept="image/*">
+                        <div id="equipmentImagePreview" class="image-preview-container"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeTestEquipModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Equipment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- First Aid Modal -->
+    <div class="modal" id="firstAidModal">
+        <div class="modal-content">
+            <h2 id="firstAidModalTitle">Issue First Aid Kit</h2>
+            <form id="firstAidForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstAidKitId">Kit ID *</label>
+                        <input type="text" id="firstAidKitId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="firstAidKitType">Type *</label>
+                        <select id="firstAidKitType" required>
+                            <option value="">Select kit type</option>
+                            <option value="Basic">Basic (1-10 people)</option>
+                            <option value="Standard">Standard (11-25 people)</option>
+                            <option value="Large">Large (26-50 people)</option>
+                            <option value="Travel">Travel Kit</option>
+                            <option value="Vehicle">Vehicle Kit</option>
+                            <option value="Burns">Burns Kit</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstAidIssuedTo">Issued To *</label>
+                        <input type="text" id="firstAidIssuedTo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="firstAidIssuedBy">Issued By *</label>
+                        <input type="text" id="firstAidIssuedBy" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstAidIssueDate">Issue Date *</label>
+                        <input type="date" id="firstAidIssueDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="firstAidExpiryDate">Expiry Date *</label>
+                        <input type="date" id="firstAidExpiryDate" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="firstAidLocation">Location *</label>
+                    <input type="text" id="firstAidLocation" required placeholder="Where is the kit located?">
+                </div>
+                <div class="form-group">
+                    <label for="firstAidNotes">Notes</label>
+                    <textarea id="firstAidNotes" placeholder="Additional notes about the first aid kit..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Images</label>
+                    <div class="image-upload-container">
+                        <div class="image-upload-area" onclick="document.getElementById('firstAidImages').click()">
+                            <p>📷 Click to upload images or drag & drop</p>
+                            <small>Upload photos of receipts, kit contents, or installation location</small>
+                        </div>
+                        <input type="file" id="firstAidImages" class="image-upload-input" multiple accept="image/*">
+                        <div id="firstAidImagePreview" class="image-preview-container"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeFirstAidModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Issue Kit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+        <img id="imageModalImg" src="" alt="Full size image">
+    </div>
+
     <script>
         // Supabase Configuration
         const SUPABASE_URL = 'https://itsxxdxyigsyqxkeonqr.supabase.co';
@@ -543,6 +1025,10 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const TABLE_NAME = 'perim_customers';
         const SCAFF_TABLE_NAME = 'perim_scaff_systems';
+        const NSI_COMPLAINTS_TABLE = 'perim_nsi_complaints';
+        const NSI_ID_BADGES_TABLE = 'perim_nsi_id_badges';
+        const NSI_TEST_EQUIPMENT_TABLE = 'perim_nsi_test_equipment';
+        const NSI_FIRST_AID_TABLE = 'perim_nsi_first_aid';
     </script>
     <script src="app.js"></script>
     </script>
