@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Perimeter Admin Dashboard</title>
     
     <!-- PWA Meta Tags -->
@@ -26,6 +26,36 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-72x72.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-72x72.png">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Emergency mobile override - ensure consistent portrait mode support */
+        @media (max-width: 900px), (max-height: 900px), (orientation: portrait) {
+            .table-container {
+                display: none !important;
+            }
+            .mobile-customer-cards {
+                display: block !important;
+            }
+            /* Force NSI tables to be hidden on mobile/portrait */
+            #complaintTable, #idBadgeTable, #testEquipTable, #firstAidTable {
+                display: none !important;
+            }
+            /* Force NSI mobile cards to show on mobile/portrait */
+            #mobileComplaintCards, #mobileIdBadgeCards, #mobileTestEquipCards, #mobileFirstAidCards {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            /* Ensure NSI sub-content is visible */
+            .nsi-sub-content {
+                display: block !important;
+                min-height: 300px !important;
+                width: 100% !important;
+            }
+            .nsi-sub-content.active {
+                display: block !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <!-- Login Screen -->
@@ -318,6 +348,11 @@
                         <button class="btn btn-primary" onclick="openComplaintModal()" style="margin-top: 20px;">Add First Complaint</button>
                     </div>
                 </div>
+
+                <!-- Mobile Complaint Cards -->
+                <div class="mobile-customer-cards" id="mobileComplaintCards">
+                    <!-- Mobile cards will be generated here -->
+                </div>
             </div>
 
             <!-- ID Badge Sub-page -->
@@ -359,6 +394,11 @@
                         <p>Issue your first ID badge to get started with badge tracking.</p>
                         <button class="btn btn-primary" onclick="openIdBadgeModal()" style="margin-top: 20px;">Issue First Badge</button>
                     </div>
+                </div>
+
+                <!-- Mobile ID Badge Cards -->
+                <div class="mobile-customer-cards" id="mobileIdBadgeCards">
+                    <!-- Mobile cards will be generated here -->
                 </div>
             </div>
 
@@ -404,6 +444,11 @@
                         <button class="btn btn-primary" onclick="openTestEquipModal()" style="margin-top: 20px;">Add First Equipment</button>
                     </div>
                 </div>
+
+                <!-- Mobile Test Equipment Cards -->
+                <div class="mobile-customer-cards" id="mobileTestEquipCards">
+                    <!-- Mobile cards will be generated here -->
+                </div>
             </div>
 
             <!-- First Aid Sub-page -->
@@ -447,6 +492,11 @@
                         <p>Issue your first aid kit to get started with first aid tracking.</p>
                         <button class="btn btn-primary" onclick="openFirstAidModal()" style="margin-top: 20px;">Issue First Kit</button>
                     </div>
+                </div>
+
+                <!-- Mobile First Aid Cards -->
+                <div class="mobile-customer-cards" id="mobileFirstAidCards">
+                    <!-- Mobile cards will be generated here -->
                 </div>
             </div>
         </div>

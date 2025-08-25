@@ -31,13 +31,50 @@
             if (isMobileDevice()) {
                 console.log('Mobile device detected, applying mobile optimizations');
                 
+                // Force mobile layout
+                document.body.classList.add('force-mobile');
+                document.documentElement.classList.add('force-mobile');
+                
                 // Add mobile-specific event listeners
                 document.addEventListener('touchstart', function() {}, { passive: true });
+                
+                // Handle orientation changes
+                window.addEventListener('orientationchange', function() {
+                    console.log('Orientation changed, reloading data...');
+                    setTimeout(function() {
+                        // Force reload of current NSI data
+                        const activeSubPage = document.querySelector('.nsi-sub-button.active');
+                        if (activeSubPage) {
+                            const subPageName = activeSubPage.textContent.toLowerCase().replace(' ', '-');
+                            console.log('Reloading sub-page:', subPageName);
+                            showNsiSubPage(subPageName);
+                        }
+                        
+                        // Trigger window resize event to fix any layout issues
+                        window.dispatchEvent(new Event('resize'));
+                    }, 300);
+                });
+                
+                // Handle resize events
+                window.addEventListener('resize', function() {
+                    setTimeout(function() {
+                        // Force table re-render on resize
+                        const activeNsiTab = document.querySelector('.tab-button.active');
+                        if (activeNsiTab && activeNsiTab.textContent === 'NSI') {
+                            const activeSubPage = document.querySelector('.nsi-sub-button.active');
+                            if (activeSubPage) {
+                                const subPageName = activeSubPage.textContent.toLowerCase().replace(' ', '-');
+                                console.log('Resize detected, refreshing:', subPageName);
+                                showNsiSubPage(subPageName);
+                            }
+                        }
+                    }, 100);
+                });
                 
                 // Ensure viewport is properly set
                 const viewport = document.querySelector('meta[name="viewport"]');
                 if (viewport) {
-                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+                    viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
                 }
             }
         }
@@ -111,12 +148,13 @@
                 loadScaffoldData();
             }
             
-            // Load NSI data when nsi tab is selected (complaints by default)
+                // Load NSI data when nsi tab is selected (complaints by default)
             if (tabName === 'nsi') {
                 // Add delay for mobile devices to ensure DOM is ready
                 setTimeout(function() {
+                    console.log('Loading NSI tab data...');
                     loadComplaintData();
-                }, isMobileDevice() ? 200 : 0);
+                }, isMobileDevice() ? 300 : 0);
             }
         }
 
@@ -2348,15 +2386,22 @@
         function renderComplaintTable() {
             const tableBody = document.getElementById('complaintTableBody');
             const emptyState = document.getElementById('complaintEmptyState');
+            const mobileCards = document.getElementById('mobileComplaintCards');
+            
+            console.log('Rendering complaint table, data count:', nsiComplaints.length);
+            console.log('Mobile cards element found:', !!mobileCards);
+            console.log('Is mobile device:', isMobileDevice());
             
             if (nsiComplaints.length === 0) {
                 tableBody.innerHTML = '';
+                if (mobileCards) mobileCards.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
             
+            // Render desktop table
             tableBody.innerHTML = nsiComplaints.map(complaint => `
                 <tr>
                     <td>${formatDate(complaint.date)}</td>
@@ -2373,6 +2418,37 @@
                     </td>
                 </tr>
             `).join('');
+
+            // Render mobile cards
+            if (mobileCards) {
+                mobileCards.innerHTML = nsiComplaints.map(complaint => `
+                    <div class="customer-card">
+                        <div class="customer-card-header">
+                            <div>
+                                <div class="customer-name">${complaint.reference}</div>
+                                <div class="customer-details">
+                                    <strong>Customer:</strong> ${complaint.customer}<br>
+                                    <strong>Type:</strong> ${complaint.type}<br>
+                                    <strong>Date:</strong> ${formatDate(complaint.date)}<br>
+                                    <strong>Status:</strong> <span class="status-badge status-${complaint.status}">${complaint.status}</span><br>
+                                    ${complaint.assigned_to ? `<strong>Assigned To:</strong> ${complaint.assigned_to}<br>` : ''}
+                                    <strong>Description:</strong> ${complaint.description}
+                                </div>
+                            </div>
+                        </div>
+                        ${parseImagesFromBase64(complaint.images).length > 0 ? `
+                            <div style="margin: 10px 0;">
+                                <strong>Images:</strong><br>
+                                ${renderImageThumbnails(parseImagesFromBase64(complaint.images))}
+                            </div>
+                        ` : ''}
+                        <div class="customer-actions">
+                            <button class="btn btn-warning" onclick="editComplaint(${complaint.id})">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteComplaint(${complaint.id})">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
         }
 
         // Open complaint modal
@@ -2542,15 +2618,18 @@
         function renderIdBadgeTable() {
             const tableBody = document.getElementById('idBadgeTableBody');
             const emptyState = document.getElementById('idBadgeEmptyState');
+            const mobileCards = document.getElementById('mobileIdBadgeCards');
             
             if (nsiIdBadges.length === 0) {
                 tableBody.innerHTML = '';
+                if (mobileCards) mobileCards.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
             
+            // Render desktop table
             tableBody.innerHTML = nsiIdBadges.map(badge => {
                 const status = getBadgeStatus(badge.valid_to);
                 return `
@@ -2569,6 +2648,40 @@
                     </tr>
                 `;
             }).join('');
+
+            // Render mobile cards
+            if (mobileCards) {
+                mobileCards.innerHTML = nsiIdBadges.map(badge => {
+                    const status = getBadgeStatus(badge.valid_to);
+                    return `
+                        <div class="customer-card">
+                            <div class="customer-card-header">
+                                <div>
+                                    <div class="customer-name">${badge.badge_number}</div>
+                                    <div class="customer-details">
+                                        <strong>Type:</strong> ${badge.badge_type}<br>
+                                        <strong>Issued To:</strong> ${badge.issued_to}<br>
+                                        <strong>Issued By:</strong> ${badge.issued_by}<br>
+                                        <strong>Valid From:</strong> ${formatDate(badge.valid_from)}<br>
+                                        <strong>Valid To:</strong> ${formatDate(badge.valid_to)}<br>
+                                        <strong>Status:</strong> <span class="status-badge status-${status}">${status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${parseImagesFromBase64(badge.images).length > 0 ? `
+                                <div style="margin: 10px 0;">
+                                    <strong>Images:</strong><br>
+                                    ${renderImageThumbnails(parseImagesFromBase64(badge.images))}
+                                </div>
+                            ` : ''}
+                            <div class="customer-actions">
+                                <button class="btn btn-warning" onclick="editIdBadge(${badge.id})">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteIdBadge(${badge.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // Get badge status
@@ -2734,15 +2847,18 @@
         function renderTestEquipTable() {
             const tableBody = document.getElementById('testEquipTableBody');
             const emptyState = document.getElementById('testEquipEmptyState');
+            const mobileCards = document.getElementById('mobileTestEquipCards');
             
             if (nsiTestEquipment.length === 0) {
                 tableBody.innerHTML = '';
+                if (mobileCards) mobileCards.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
             
+            // Render desktop table
             tableBody.innerHTML = nsiTestEquipment.map(equipment => {
                 const status = getEquipmentStatus(equipment.next_calibration);
                 return `
@@ -2763,6 +2879,41 @@
                     </tr>
                 `;
             }).join('');
+
+            // Render mobile cards
+            if (mobileCards) {
+                mobileCards.innerHTML = nsiTestEquipment.map(equipment => {
+                    const status = getEquipmentStatus(equipment.next_calibration);
+                    return `
+                        <div class="customer-card">
+                            <div class="customer-card-header">
+                                <div>
+                                    <div class="customer-name">${equipment.equipment_id}</div>
+                                    <div class="customer-details">
+                                        <strong>Type:</strong> ${equipment.equipment_type}<br>
+                                        <strong>Manufacturer:</strong> ${equipment.manufacturer}<br>
+                                        <strong>Model:</strong> ${equipment.model}<br>
+                                        <strong>Purchase Date:</strong> ${formatDate(equipment.purchase_date)}<br>
+                                        <strong>Last Calibration:</strong> ${formatDate(equipment.last_calibration)}<br>
+                                        <strong>Next Calibration:</strong> ${formatDate(equipment.next_calibration)}<br>
+                                        <strong>Status:</strong> <span class="status-badge status-${status}">${status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${parseImagesFromBase64(equipment.images).length > 0 ? `
+                                <div style="margin: 10px 0;">
+                                    <strong>Images:</strong><br>
+                                    ${renderImageThumbnails(parseImagesFromBase64(equipment.images))}
+                                </div>
+                            ` : ''}
+                            <div class="customer-actions">
+                                <button class="btn btn-warning" onclick="editTestEquipment(${equipment.id})">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteTestEquipment(${equipment.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // Get equipment calibration status
@@ -2934,15 +3085,18 @@
         function renderFirstAidTable() {
             const tableBody = document.getElementById('firstAidTableBody');
             const emptyState = document.getElementById('firstAidEmptyState');
+            const mobileCards = document.getElementById('mobileFirstAidCards');
             
             if (nsiFirstAid.length === 0) {
                 tableBody.innerHTML = '';
+                if (mobileCards) mobileCards.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
             
             emptyState.style.display = 'none';
             
+            // Render desktop table
             tableBody.innerHTML = nsiFirstAid.map(kit => {
                 const status = getFirstAidStatus(kit.expiry_date);
                 return `
@@ -2963,6 +3117,41 @@
                     </tr>
                 `;
             }).join('');
+
+            // Render mobile cards
+            if (mobileCards) {
+                mobileCards.innerHTML = nsiFirstAid.map(kit => {
+                    const status = getFirstAidStatus(kit.expiry_date);
+                    return `
+                        <div class="customer-card">
+                            <div class="customer-card-header">
+                                <div>
+                                    <div class="customer-name">${kit.kit_id}</div>
+                                    <div class="customer-details">
+                                        <strong>Type:</strong> ${kit.kit_type}<br>
+                                        <strong>Issued To:</strong> ${kit.issued_to}<br>
+                                        <strong>Issued By:</strong> ${kit.issued_by}<br>
+                                        <strong>Issue Date:</strong> ${formatDate(kit.issue_date)}<br>
+                                        <strong>Expiry Date:</strong> ${formatDate(kit.expiry_date)}<br>
+                                        <strong>Location:</strong> ${kit.location}<br>
+                                        <strong>Status:</strong> <span class="status-badge status-${status}">${status}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ${parseImagesFromBase64(kit.images).length > 0 ? `
+                                <div style="margin: 10px 0;">
+                                    <strong>Images:</strong><br>
+                                    ${renderImageThumbnails(parseImagesFromBase64(kit.images))}
+                                </div>
+                            ` : ''}
+                            <div class="customer-actions">
+                                <button class="btn btn-warning" onclick="editFirstAidKit(${kit.id})">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteFirstAidKit(${kit.id})">Delete</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // Get first aid kit status
@@ -3152,7 +3341,12 @@
 
         // Check if device is mobile
         function isMobileDevice() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+            const isMobileWidth = window.innerWidth <= 768 || window.innerHeight <= 768;
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            return isMobileUA || isMobileWidth || isTouchDevice;
         }
 
         // Handle image selection

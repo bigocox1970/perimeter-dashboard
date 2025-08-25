@@ -457,6 +457,26 @@
             padding: 0 20px 30px;
         }
 
+        /* Force mobile layout class */
+        .force-mobile .table-container {
+            display: none !important;
+        }
+
+        .force-mobile .mobile-customer-cards {
+            display: block !important;
+        }
+
+        /* Show mobile cards by default on small screens */
+        @media (max-width: 900px) {
+            .table-container {
+                display: none !important;
+            }
+
+            .mobile-customer-cards {
+                display: block !important;
+            }
+        }
+
         .customer-card {
             background: white;
             border-radius: 10px;
@@ -998,9 +1018,46 @@
             color: #333;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 768px), (max-height: 768px), (orientation: portrait) {
             .header {
                 padding: 20px;
+            }
+            
+            /* Force proper layout in portrait mode */
+            .container {
+                min-height: 100vh;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            /* Hide tables and show mobile cards in portrait/small screens */
+            .table-container {
+                display: none !important;
+            }
+            
+            /* Force mobile cards to show */
+            .mobile-customer-cards {
+                display: block !important;
+            }
+            
+            /* Fix NSI content visibility in portrait mode */
+            .nsi-sub-content {
+                width: 100% !important;
+                min-height: 300px !important;
+                display: block !important;
+            }
+            
+            .nsi-sub-content.active {
+                display: block !important;
+                visibility: visible !important;
+            }
+            
+            /* Ensure NSI mobile cards are visible */
+            #mobileComplaintCards, #mobileIdBadgeCards, #mobileTestEquipCards, #mobileFirstAidCards {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                padding: 0 20px 30px !important;
             }
             
             /* NSI sub-navigation mobile styles */
@@ -1072,14 +1129,7 @@
                 gap: 15px;
             }
 
-            /* Hide table on mobile, show cards instead */
-            .table-container {
-                display: none;
-            }
-
-            .mobile-customer-cards {
-                display: block;
-            }
+            /* These rules are now handled above in the main mobile media query */
 
             .customer-table {
                 font-size: 12px;
