@@ -903,8 +903,8 @@
                 });
             }
             
-            // Get last 5 months
-            for (let i = 4; i >= 0; i--) {
+            // Get last 12 months
+            for (let i = 11; i >= 0; i--) {
                 const monthDate = new Date(today.getFullYear(), today.getMonth() - i, 1);
                 const monthKey = `${monthDate.getFullYear()}-${String(monthDate.getMonth() + 1).padStart(2, '0')}`;
                 const monthName = monthDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
@@ -914,16 +914,19 @@
                 let totalDue = 0;
                 
                 filteredCustomers.forEach(customer => {
-                    // Check Inspection 1
+                    // Check Inspection 1 - group by due month instead of completion month
                     if (customer.inspection_history?.inspection1) {
-                        customer.inspection_history.inspection1.forEach(completion => {
-                            const completionDate = new Date(completion.date);
-                            const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+                        const dueMonth = customer.first_inspection_month;
+                        const dueYear = monthDate.getFullYear();
+                        const dueMonthKey = `${dueYear}-${String(dueMonth).padStart(2, '0')}`;
+                        
+                        if (dueMonthKey === monthKey) {
+                            // Find the most recent completion for this inspection type
+                            const latestCompletion = customer.inspection_history.inspection1
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
                             
-                            if (completionMonth === monthKey) {
-                                // Check if completion was on time (within flexible window)
-                                const dueMonth = customer.first_inspection_month;
-                                const dueYear = monthDate.getFullYear();
+                            if (latestCompletion) {
+                                const completionDate = new Date(latestCompletion.date);
                                 const monthBefore = new Date(dueYear, dueMonth - 2, 1);
                                 const monthAfter = new Date(dueYear, dueMonth, 1);
                                 
@@ -933,19 +936,22 @@
                                     lateCompletions++;
                                 }
                             }
-                        });
+                        }
                     }
                     
-                    // Check Inspection 2
+                    // Check Inspection 2 - group by due month instead of completion month
                     if (customer.inspections_per_year === 2 && customer.inspection_history?.inspection2) {
-                        customer.inspection_history.inspection2.forEach(completion => {
-                            const completionDate = new Date(completion.date);
-                            const completionMonth = `${completionDate.getFullYear()}-${String(completionDate.getMonth() + 1).padStart(2, '0')}`;
+                        const dueMonth = customer.second_inspection_month;
+                        const dueYear = monthDate.getFullYear();
+                        const dueMonthKey = `${dueYear}-${String(dueMonth).padStart(2, '0')}`;
+                        
+                        if (dueMonthKey === monthKey) {
+                            // Find the most recent completion for this inspection type
+                            const latestCompletion = customer.inspection_history.inspection2
+                                .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
                             
-                            if (completionMonth === monthKey) {
-                                // Check if completion was on time (within flexible window)
-                                const dueMonth = customer.second_inspection_month;
-                                const dueYear = monthDate.getFullYear();
+                            if (latestCompletion) {
+                                const completionDate = new Date(latestCompletion.date);
                                 const monthBefore = new Date(dueYear, dueMonth - 2, 1);
                                 const monthAfter = new Date(dueYear, dueMonth, 1);
                                 
@@ -955,12 +961,12 @@
                                     lateCompletions++;
                                 }
                             }
-                        });
+                        }
                     }
                 });
                 
                 totalDue = onTimeCompletions + lateCompletions;
-                const onTimeRate = totalDue > 0 ? Math.round((onTimeCompletions / totalDue) * 100) : 0;
+                const onTimeRate = totalDue > 0 ? Math.round((onTimeCompletions / totalDue) * 100) : 100;
                 
                 monthlyStats.push({
                     month: monthDate.toLocaleDateString('en-GB', { month: 'short' }),
@@ -1007,23 +1013,224 @@
                 </div>
             `).join('');
             
-            // Render completion chart
-            completionChart.innerHTML = monthlyStats.map(stat => {
-                const onTimeWidth = stat.total > 0 ? (stat.onTime / stat.total) * 100 : 0;
-                const lateWidth = stat.total > 0 ? (stat.late / stat.total) * 100 : 0;
+            // Calculate TRUE rolling 12-month completion rate - count customers, not individual completions
+            const today = new Date();
+            let totalRollingOnTime = 0;
+            let totalRollingCompletions = 0;
+            
+            // Get current NSI filter (same as monthly stats)
+            const nsiFilter = document.getElementById('nsiFilter').value;
+            let filteredCustomersForRolling = customers;
+            if (nsiFilter) {
+                filteredCustomersForRolling = customers.filter(customer => {
+                    const nsiStatus = customer.nsi_status || 'NSI';
+                    return nsiStatus === nsiFilter;
+                });
+            }
+            
+            // Separate customers into categories (exclude current month and previous month from rolling calc)
+            let totalCustomers = 0;
+            let onTimeCustomers = 0;
+            let lateCustomers = 0;
+            let canBeDoneCustomers = 0;
+            
+            filteredCustomersForRolling.forEach(customer => {
+                totalCustomers++;
+                let hasOnTimeCompletion = false;
+                let hasLateCompletion = false;
+                let hasAnyCompletion = false;
+                let canStillCompleteOnTime = false;
                 
-                return `
-                    <div class="chart-bar" title="Completion statistics for ${stat.month}">
-                        <div class="chart-label">${stat.month}</div>
-                        <div class="chart-bar-container">
-                            <div class="chart-bar-fill on-time" style="width: ${onTimeWidth}%"></div>
-                            <div class="chart-bar-fill late" style="width: ${lateWidth}%"></div>
-                        </div>
-                        <div class="chart-percentage">${stat.rate}%</div>
+                // Check if customer can still complete Inspection 1 on time
+                if (customer.first_inspection_month) {
+                    const currentYear = new Date().getFullYear();
+                    const dueMonth = customer.first_inspection_month;
+                    const monthAfter = new Date(currentYear, dueMonth, 1); // End of valid window
+                    
+                    if (today < monthAfter) {
+                        canStillCompleteOnTime = true;
+                    }
+                }
+                
+                // Check if customer can still complete Inspection 2 on time  
+                if (customer.inspections_per_year === 2 && customer.second_inspection_month) {
+                    const currentYear = new Date().getFullYear();
+                    const dueMonth = customer.second_inspection_month;
+                    const monthAfter = new Date(currentYear, dueMonth, 1); // End of valid window
+                    
+                    if (today < monthAfter) {
+                        canStillCompleteOnTime = true;
+                    }
+                }
+                
+                // Check completions but exclude current and previous month
+                if (customer.inspection_history?.inspection1) {
+                    customer.inspection_history.inspection1.forEach(completion => {
+                        const completionDate = new Date(completion.date);
+                        const monthsAgo = Math.floor((today - completionDate) / (1000 * 60 * 60 * 24 * 30.44));
+                        
+                        // Only count completions from 2+ months ago for rolling calculation
+                        if (monthsAgo >= 2 && monthsAgo <= 12) {
+                            hasAnyCompletion = true;
+                            // Check if completion was on time
+                            const dueMonth = customer.first_inspection_month;
+                            const dueYear = completionDate.getFullYear();
+                            const monthBefore = new Date(dueYear, dueMonth - 2, 1);
+                            const monthAfter = new Date(dueYear, dueMonth, 1);
+                            
+                            if (completionDate >= monthBefore && completionDate < monthAfter) {
+                                hasOnTimeCompletion = true;
+                            } else {
+                                hasLateCompletion = true;
+                            }
+                        }
+                    });
+                }
+                
+                // Check Inspection 2 completions
+                if (customer.inspections_per_year === 2 && customer.inspection_history?.inspection2) {
+                    customer.inspection_history.inspection2.forEach(completion => {
+                        const completionDate = new Date(completion.date);
+                        const monthsAgo = Math.floor((today - completionDate) / (1000 * 60 * 60 * 24 * 30.44));
+                        
+                        // Only count completions from 2+ months ago for rolling calculation
+                        if (monthsAgo >= 2 && monthsAgo <= 12) {
+                            hasAnyCompletion = true;
+                            // Check if completion was on time
+                            const dueMonth = customer.second_inspection_month;
+                            const dueYear = completionDate.getFullYear();
+                            const monthBefore = new Date(dueYear, dueMonth - 2, 1);
+                            const monthAfter = new Date(dueYear, dueMonth, 1);
+                            
+                            if (completionDate >= monthBefore && completionDate < monthAfter) {
+                                hasOnTimeCompletion = true;
+                            } else {
+                                hasLateCompletion = true;
+                            }
+                        }
+                    });
+                }
+                
+                // Categorize customers
+                if (canStillCompleteOnTime && !hasAnyCompletion) {
+                    canBeDoneCustomers++;
+                } else if (hasOnTimeCompletion) {
+                    onTimeCustomers++;
+                } else if (hasAnyCompletion || !canStillCompleteOnTime) {
+                    lateCustomers++;
+                }
+            });
+            
+            // Calculate rolling stats excluding "can be done" customers
+            totalRollingCompletions = onTimeCustomers + lateCustomers;
+            totalRollingOnTime = onTimeCustomers;
+            
+            const rollingRate = totalRollingCompletions > 0 ? Math.round((totalRollingOnTime / totalRollingCompletions) * 100) : 0;
+            const rollingOnTimeWidth = totalRollingCompletions > 0 ? (totalRollingOnTime / totalRollingCompletions) * 100 : 0;
+            const rollingLateWidth = totalRollingCompletions > 0 ? ((totalRollingCompletions - totalRollingOnTime) / totalRollingCompletions) * 100 : 0;
+            
+            
+            // Calculate date range for display (exclude current and previous month)
+            const startDate = new Date(today.getFullYear() - 1, today.getMonth() - 2, 1);
+            const endDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+            endDate.setMonth(endDate.getMonth() + 1, 0); // Last day of previous month
+            const startMonth = startDate.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+            const endMonth = endDate.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+            
+            // Render single rolling 12-month completion chart
+            completionChart.innerHTML = `
+                <div class="rolling-period" style="text-align: center; margin-bottom: 15px; color: #666; font-size: 0.9rem;">
+                    Rolling Period: ${startMonth} - ${endMonth}
+                </div>
+                <div class="rolling-stats-summary" style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; flex-wrap: wrap;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: #27ae60;">${onTimeCustomers}</div>
+                        <div style="font-size: 0.9rem; color: #666;">On Time</div>
                     </div>
-                `;
-            }).join('');
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: #e74c3c;">${lateCustomers}</div>
+                        <div style="font-size: 0.9rem; color: #666;">Late</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: #f39c12;">${canBeDoneCustomers}</div>
+                        <div style="font-size: 0.9rem; color: #666;">Can Be Done</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 2rem; font-weight: bold; color: #2c3e50;">${totalCustomers}</div>
+                        <div style="font-size: 0.9rem; color: #666;">Total</div>
+                    </div>
+                </div>
+                <div class="chart-bar" title="Rolling completion statistics">
+                    <div class="chart-label">Rolling 12 Months</div>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar-fill on-time" style="width: ${rollingOnTimeWidth}%"></div>
+                        <div class="chart-bar-fill late" style="width: ${rollingLateWidth}%"></div>
+                    </div>
+                    <div class="chart-percentage">${rollingRate}%</div>
+                </div>
+                <div style="text-align: center; margin-top: 15px; font-size: 1.2rem; font-weight: bold; color: ${rollingRate >= 80 ? '#27ae60' : rollingRate >= 60 ? '#f39c12' : '#e74c3c'};">
+                    ${rollingRate}% On Time (Rolling 12 Months)
+                </div>
+            `;
+            
+            // Initialize carousel buttons
+            setTimeout(() => {
+                const cards = monthlyGrid.children;
+                const totalCards = cards.length;
+                const currentCardsPerView = window.innerWidth <= 768 ? 1 : 5;
+                const maxSlides = Math.max(0, totalCards - currentCardsPerView);
+                
+                document.getElementById('monthlyPrev').disabled = true;
+                document.getElementById('monthlyNext').disabled = maxSlides === 0;
+                currentMonthSlide = 0;
+            }, 100);
         }
+
+        // Monthly cards carousel functionality
+        let currentMonthSlide = 0;
+        const cardsPerView = window.innerWidth <= 768 ? 1 : 5;
+
+        function slideMonthlyCards(direction) {
+            const monthlyGrid = document.getElementById('monthlyGrid');
+            const cards = monthlyGrid.children;
+            const totalCards = cards.length;
+            const maxSlides = Math.max(0, totalCards - cardsPerView);
+            
+            currentMonthSlide += direction;
+            
+            if (currentMonthSlide < 0) {
+                currentMonthSlide = 0;
+            }
+            if (currentMonthSlide > maxSlides) {
+                currentMonthSlide = maxSlides;
+            }
+            
+            const cardWidth = cards[0] ? cards[0].offsetWidth : 220;
+            const gap = 20;
+            const translateX = -(currentMonthSlide * (cardWidth + gap));
+            
+            monthlyGrid.style.transform = `translateX(${translateX}px)`;
+            
+            // Update button states
+            document.getElementById('monthlyPrev').disabled = currentMonthSlide === 0;
+            document.getElementById('monthlyNext').disabled = currentMonthSlide >= maxSlides;
+        }
+
+        // Initialize carousel on window resize
+        window.addEventListener('resize', () => {
+            currentMonthSlide = 0;
+            const monthlyGrid = document.getElementById('monthlyGrid');
+            monthlyGrid.style.transform = 'translateX(0px)';
+            
+            // Update button states
+            const cards = monthlyGrid.children;
+            const totalCards = cards.length;
+            const newCardsPerView = window.innerWidth <= 768 ? 1 : 5;
+            const maxSlides = Math.max(0, totalCards - newCardsPerView);
+            
+            document.getElementById('monthlyPrev').disabled = true;
+            document.getElementById('monthlyNext').disabled = maxSlides === 0;
+        });
 
         // Show customers by status modal
         function showCustomersByStatus(statusType) {

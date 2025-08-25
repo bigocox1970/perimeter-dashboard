@@ -150,11 +150,17 @@
                 </button>
             </div>
             <div class="monthly-stats" id="monthlyStatsContent">
-                <div class="monthly-grid" id="monthlyGrid">
-                    <!-- Monthly cards will be generated here -->
+                <div class="monthly-carousel">
+                    <button class="carousel-btn carousel-prev" onclick="slideMonthlyCards(-1)" id="monthlyPrev">‹</button>
+                    <div class="monthly-grid-container">
+                        <div class="monthly-grid" id="monthlyGrid">
+                            <!-- Monthly cards will be generated here -->
+                        </div>
+                    </div>
+                    <button class="carousel-btn carousel-next" onclick="slideMonthlyCards(1)" id="monthlyNext">›</button>
                 </div>
                 <div class="completion-chart">
-                    <h4>Completion Rate Trends</h4>
+                    <h4>Rolling 12-Month Completion Rate</h4>
                     <div id="completionChart">
                         <!-- Chart bars will be generated here -->
                     </div>
@@ -184,10 +190,6 @@
              </div>
          </div>
 
-        <!-- Mobile Floating Action Button -->
-        <div class="mobile-fab" onclick="openAddModal()">
-            <span>+</span>
-        </div>
 
         <div class="table-container">
                          <table class="customer-table" id="customerTable">
@@ -270,10 +272,6 @@
                 </div>
             </div>
 
-            <!-- Mobile Floating Action Button -->
-            <div class="mobile-fab" onclick="openScaffAddModal()">
-                <span>+</span>
-            </div>
 
             <div class="table-container">
                 <table class="customer-table" id="scaffTable">

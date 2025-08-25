@@ -736,11 +736,50 @@
             display: none;
         }
 
-        .monthly-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+        .monthly-carousel {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 15px;
             margin-bottom: 30px;
+        }
+
+        .monthly-grid-container {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .monthly-grid {
+            display: flex;
+            gap: 20px;
+            transition: transform 0.3s ease;
+            min-height: 200px;
+        }
+
+        .carousel-btn {
+            background: #3498db;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .carousel-btn:hover {
+            background: #2980b9;
+        }
+
+        .carousel-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
         }
 
         .monthly-card {
@@ -749,6 +788,8 @@
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             text-align: center;
+            min-width: 200px;
+            flex-shrink: 0;
         }
 
         .monthly-card h4 {
@@ -823,6 +864,10 @@
 
         .chart-bar-fill.on-time {
             background: #27ae60;
+        }
+
+        .chart-bar-fill.can-be-done {
+            background: #f39c12;
         }
 
         .chart-bar-fill.late {
@@ -1297,6 +1342,17 @@
 
             .monthly-card {
                 padding: 15px;
+                min-width: 250px;
+            }
+
+            .monthly-carousel {
+                gap: 10px;
+            }
+
+            .carousel-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
             }
 
             .monthly-numbers {
@@ -1342,41 +1398,7 @@
             }
         }
 
-        /* Mobile Floating Action Button */
-        .mobile-fab {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            background: #3498db;
-            border-radius: 50%;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 1000;
-            transition: all 0.3s ease;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .mobile-fab:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-        }
-
-        .mobile-fab:active {
-            transform: scale(0.95);
-        }
-
         @media (max-width: 768px) {
-            .mobile-fab {
-                display: flex;
-            }
-            
             /* Hide main tab Add buttons on mobile, but keep NSI sub-page buttons */
             .tab-content:not(#nsiTab) .controls .btn-primary {
                 display: none;
