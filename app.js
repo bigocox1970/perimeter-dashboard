@@ -435,6 +435,77 @@
             editingCustomerId = null;
         }
 
+        // View customer maintenance list
+        function viewCustomerMaintenanceList(customerId) {
+            const customer = customers.find(c => String(c.id) === String(customerId));
+            if (!customer) return;
+
+            const inspection1History = customer.inspection_history?.inspection1 || [];
+            const inspection2History = customer.inspection_history?.inspection2 || [];
+            
+            // Combine all maintenance records with inspection type
+            const allMaintenance = [];
+            
+            inspection1History.forEach(record => {
+                allMaintenance.push({
+                    ...record,
+                    inspectionType: 'Inspection 1',
+                    month: getMonthName(customer.first_inspection_month)
+                });
+            });
+            
+            if (customer.inspections_per_year === 2) {
+                inspection2History.forEach(record => {
+                    allMaintenance.push({
+                        ...record,
+                        inspectionType: 'Inspection 2',
+                        month: getMonthName(customer.second_inspection_month)
+                    });
+                });
+            }
+            
+            // Sort by date (newest first)
+            allMaintenance.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Show in modal
+            const modal = document.getElementById('monthlyCompletionsModal');
+            const tbody = document.getElementById('monthlyCompletionsBody');
+            const title = document.getElementById('monthlyCompletionsTitle');
+            
+            title.textContent = `Maintenance History - ${customer.name} (${allMaintenance.length} records)`;
+            
+            // Update table headers
+            const table = document.querySelector('#monthlyCompletionsModal table');
+            table.querySelector('thead tr').innerHTML = `
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Date</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Inspection Type</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Schedule</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Job Number</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Notes</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 1px solid #ddd;">Action</th>
+            `;
+            
+            tbody.innerHTML = allMaintenance.map(record => `
+                <tr>
+                    <td><strong>${new Date(record.date).toLocaleDateString()}</strong></td>
+                    <td>${record.inspectionType}</td>
+                    <td>${record.month}</td>
+                    <td>${record.jobNumber || '<span style="color: #999;">Not recorded</span>'}</td>
+                    <td>${record.notes || '<span style="color: #999;">No notes</span>'}</td>
+                    <td>
+                        <button class="btn" onclick="openEditInspectionDateModal(${customerId}, '${record.inspectionType.toLowerCase().replace(' ', '')}', '${record.date}', '${(record.notes || '').replace(/'/g, '&#39;')}')" style="background: #f39c12; color: white; padding: 6px; width: 28px; margin-right: 5px;" title="Edit this inspection">✏️</button>
+                        <button class="btn" onclick="deleteInspection(${customerId}, '${record.inspectionType.toLowerCase().replace(' ', '')}', '${record.date}')" style="background: #e74c3c; color: white; padding: 6px; width: 28px;" title="Delete this inspection">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            if (allMaintenance.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No maintenance records found</td></tr>';
+            }
+            
+            modal.style.display = 'block';
+        }
+
         // Handle form submission
         document.getElementById('customerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -611,6 +682,7 @@
             
             document.getElementById('completionModalTitle').textContent = `Record ${inspectionName} Completion - ${customer.name}`;
             document.getElementById('completionDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('jobNumber').value = '';
             document.getElementById('completionNotes').value = '';
             document.getElementById('completionModal').style.display = 'block';
         }
@@ -702,6 +774,7 @@
             
             const completion = {
                 date: document.getElementById('completionDate').value,
+                jobNumber: document.getElementById('jobNumber').value,
                 notes: document.getElementById('completionNotes').value,
                 recordedAt: new Date().toISOString()
             };
@@ -829,6 +902,7 @@
                                 ${inspection1History.slice(-5).map(h => `
                                     <div class="completion-item">
                                         <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        ${h.jobNumber ? `<span style="color: #666; font-size: 10px;">Job: ${h.jobNumber}</span>` : ''}
                                         <span>${h.notes ? '📝' : ''}</span>
                                     </div>
                                 `).join('')}
@@ -848,6 +922,7 @@
                                 ${inspection2History.slice(-5).map(h => `
                                     <div class="completion-item">
                                         <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        ${h.jobNumber ? `<span style="color: #666; font-size: 10px;">Job: ${h.jobNumber}</span>` : ''}
                                         <span>${h.notes ? '📝' : ''}</span>
                                     </div>
                                 `).join('')}
@@ -892,8 +967,9 @@
                              ${getOverallStatus(customer)}
                          </td>
                          <td>
-                             <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; margin-right: 5px; padding: 6px 12px;">Edit</button>
-                             <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 6px 12px;">Delete</button>
+                             <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; margin-right: 5px; padding: 8px; width: 32px;" title="Edit Customer">✏️</button>
+                             <button class="btn" onclick="viewCustomerMaintenanceList(${customer.id})" style="background: #27ae60; color: white; margin-right: 5px; padding: 8px; width: 32px;" title="View Maintenance History">📋</button>
+                             <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 8px; width: 32px;" title="Delete Customer">🗑️</button>
                          </td>
                      </tr>
                  `;
@@ -920,6 +996,7 @@
                                 ${inspection1History.slice(-5).map(h => `
                                     <div class="completion-item">
                                         <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        ${h.jobNumber ? `<span style="color: #666; font-size: 10px;">Job: ${h.jobNumber}</span>` : ''}
                                         <span>${h.notes ? '📝' : ''}</span>
                                     </div>
                                 `).join('')}
@@ -939,6 +1016,7 @@
                                 ${inspection2History.slice(-5).map(h => `
                                     <div class="completion-item">
                                         <span>${new Date(h.date).toLocaleDateString()}</span>
+                                        ${h.jobNumber ? `<span style="color: #666; font-size: 10px;">Job: ${h.jobNumber}</span>` : ''}
                                         <span>${h.notes ? '📝' : ''}</span>
                                     </div>
                                 `).join('')}
@@ -983,8 +1061,8 @@
                              </div>
                          </div>
                          <div class="customer-actions">
-                            <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})">Delete</button>
+                            <button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Customer">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteCustomer(${customer.id})" style="padding: 8px; width: 32px;" title="Delete Customer">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -1550,7 +1628,7 @@
                         <td>${customer.nsi_status || 'NSI'}</td>
                         <td><span class="status-badge ${inspection1Status}">${inspection1Status.replace('-', ' ').toUpperCase()}</span></td>
                         <td>${inspection2Status ? `<span class="status-badge ${inspection2Status}">${inspection2Status.replace('-', ' ').toUpperCase()}</span>` : 'N/A'}</td>
-                        <td><button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px;">Edit</button></td>
+                        <td><button class="btn" onclick="editCustomer(${customer.id})" style="background: #3498db; color: white; padding: 6px; width: 28px;" title="Edit Customer">✏️</button></td>
                     </tr>
                 `;
             }).join('');
@@ -1691,9 +1769,9 @@
                     <td><span class="status-badge ${item.status === 'On Time' ? 'on-time' : item.status === 'Late' ? 'late' : 'pending'}">${item.status}</span></td>
                     <td>${item.notes}</td>
                     <td>
-                        <button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px; margin-right: 5px;">Edit Customer</button>
+                        <button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 6px; width: 28px; margin-right: 5px;" title="Edit Customer">✏️</button>
                         ${item.completionDate ? 
-                            `<button class="btn" onclick="deleteInspection(${item.customer.id}, '${item.inspectionType.toLowerCase().replace(' ', '')}', '${item.completionDate}')" style="background: #e74c3c; color: white; padding: 4px 8px; font-size: 12px;" title="Delete this inspection">🗑️</button>` : 
+                            `<button class="btn" onclick="deleteInspection(${item.customer.id}, '${item.inspectionType.toLowerCase().replace(' ', '')}', '${item.completionDate}')" style="background: #e74c3c; color: white; padding: 6px; width: 28px;" title="Delete this inspection">🗑️</button>` : 
                             ''
                         }
                     </td>
@@ -1867,9 +1945,9 @@
                     </td>
                     <td>${item.notes}</td>
                     <td>
-                        <button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 4px 8px; font-size: 12px; margin-right: 5px;">Edit</button>
+                        <button class="btn" onclick="editCustomer(${item.customer.id})" style="background: #3498db; color: white; padding: 6px; width: 28px; margin-right: 5px;" title="Edit Customer">✏️</button>
                         ${item.completionDate ? 
-                            `<button class="btn" onclick="deleteInspection(${item.customer.id}, '${item.inspectionType.toLowerCase().replace(' ', '')}', '${item.completionDate}')" style="background: #e74c3c; color: white; padding: 4px 8px; font-size: 12px;" title="Delete this inspection">🗑️</button>` : 
+                            `<button class="btn" onclick="deleteInspection(${item.customer.id}, '${item.inspectionType.toLowerCase().replace(' ', '')}', '${item.completionDate}')" style="background: #e74c3c; color: white; padding: 6px; width: 28px;" title="Delete this inspection">🗑️</button>` : 
                             ''
                         }
                     </td>
@@ -2491,7 +2569,7 @@
                             }
                         </td>
                         <td>
-                            <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 6px 12px;">Edit</button>
+                            <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Scaffold System">✏️</button>
                         </td>
                     </tr>
                 `;
@@ -2556,7 +2634,7 @@
                             `}
                             
                             <div class="customer-actions">
-                                <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white;">Edit</button>
+                                <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Scaffold System">✏️</button>
                             </div>
                         </div>
                     `;
@@ -3041,8 +3119,8 @@
                             <td>${safeComplaint.assigned_to || '-'}</td>
                             <td>${renderImageThumbnails(parseImagesFromBase64(safeComplaint.images))}</td>
                             <td>
-                                <button class="btn btn-warning" onclick="editComplaint(${safeComplaint.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteComplaint(${safeComplaint.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                                <button class="btn btn-warning" onclick="editComplaint(${safeComplaint.id})" style="padding: 6px; width: 28px; margin-right: 5px;" title="Edit Complaint">✏️</button>
+                                <button class="btn btn-danger" onclick="deleteComplaint(${safeComplaint.id})" style="padding: 6px; width: 28px;" title="Delete Complaint">🗑️</button>
                             </td>
                         </tr>
                     `;
@@ -3086,8 +3164,8 @@
                                     </div>
                                 ` : ''}
                                 <div class="customer-actions">
-                                    <button class="btn btn-warning" onclick="editComplaint(${safeComplaint.id})">Edit</button>
-                                    <button class="btn btn-danger" onclick="deleteComplaint(${safeComplaint.id})">Delete</button>
+                                    <button class="btn btn-warning" onclick="editComplaint(${safeComplaint.id})" style="padding: 8px; width: 32px; margin-right: 5px;" title="Edit Complaint">✏️</button>
+                                    <button class="btn btn-danger" onclick="deleteComplaint(${safeComplaint.id})" style="padding: 8px; width: 32px;" title="Delete Complaint">🗑️</button>
                                 </div>
                             </div>
                         `;
@@ -3297,8 +3375,8 @@
                         <td><span class="status-badge status-${status}">${status}</span></td>
                         <td>${renderImageThumbnails(parseImagesFromBase64(badge.images))}</td>
                         <td>
-                            <button class="btn btn-warning" onclick="editIdBadge(${badge.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteIdBadge(${badge.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                            <button class="btn btn-warning" onclick="editIdBadge(${badge.id})" style="padding: 6px; width: 28px; margin-right: 5px;" title="Edit ID Badge">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteIdBadge(${badge.id})" style="padding: 6px; width: 28px;" title="Delete ID Badge">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -3330,8 +3408,8 @@
                                 </div>
                             ` : ''}
                             <div class="customer-actions">
-                                <button class="btn btn-warning" onclick="editIdBadge(${badge.id})">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteIdBadge(${badge.id})">Delete</button>
+                                <button class="btn btn-warning" onclick="editIdBadge(${badge.id})" style="padding: 8px; width: 32px; margin-right: 5px;" title="Edit ID Badge">✏️</button>
+                                <button class="btn btn-danger" onclick="deleteIdBadge(${badge.id})" style="padding: 8px; width: 32px;" title="Delete ID Badge">🗑️</button>
                             </div>
                         </div>
                     `;
@@ -3528,8 +3606,8 @@
                         <td><span class="status-badge status-${status}">${status}</span></td>
                         <td>${renderImageThumbnails(parseImagesFromBase64(equipment.images))}</td>
                         <td>
-                            <button class="btn btn-warning" onclick="editTestEquipment(${equipment.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteTestEquipment(${equipment.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                            <button class="btn btn-warning" onclick="editTestEquipment(${equipment.id})" style="padding: 6px; width: 28px; margin-right: 5px;" title="Edit Test Equipment">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteTestEquipment(${equipment.id})" style="padding: 6px; width: 28px;" title="Delete Test Equipment">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -3562,8 +3640,8 @@
                                 </div>
                             ` : ''}
                             <div class="customer-actions">
-                                <button class="btn btn-warning" onclick="editTestEquipment(${equipment.id})">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteTestEquipment(${equipment.id})">Delete</button>
+                                <button class="btn btn-warning" onclick="editTestEquipment(${equipment.id})" style="padding: 8px; width: 32px; margin-right: 5px;" title="Edit Test Equipment">✏️</button>
+                                <button class="btn btn-danger" onclick="deleteTestEquipment(${equipment.id})" style="padding: 8px; width: 32px;" title="Delete Test Equipment">🗑️</button>
                             </div>
                         </div>
                     `;
@@ -3766,8 +3844,8 @@
                         <td><span class="status-badge status-${status}">${status}</span></td>
                         <td>${renderImageThumbnails(parseImagesFromBase64(kit.images))}</td>
                         <td>
-                            <button class="btn btn-warning" onclick="editFirstAidKit(${kit.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteFirstAidKit(${kit.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                            <button class="btn btn-warning" onclick="editFirstAidKit(${kit.id})" style="padding: 6px; width: 28px; margin-right: 5px;" title="Edit First Aid Kit">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteFirstAidKit(${kit.id})" style="padding: 6px; width: 28px;" title="Delete First Aid Kit">🗑️</button>
                         </td>
                     </tr>
                 `;
@@ -3800,8 +3878,8 @@
                                 </div>
                             ` : ''}
                             <div class="customer-actions">
-                                <button class="btn btn-warning" onclick="editFirstAidKit(${kit.id})">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteFirstAidKit(${kit.id})">Delete</button>
+                                <button class="btn btn-warning" onclick="editFirstAidKit(${kit.id})" style="padding: 8px; width: 32px; margin-right: 5px;" title="Edit First Aid Kit">✏️</button>
+                                <button class="btn btn-danger" onclick="deleteFirstAidKit(${kit.id})" style="padding: 8px; width: 32px;" title="Delete First Aid Kit">🗑️</button>
                             </div>
                         </div>
                     `;
