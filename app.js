@@ -56,19 +56,34 @@
                 });
                 
                 // Handle resize events
+                let resizeTimeout;
                 window.addEventListener('resize', function() {
-                    setTimeout(function() {
-                        // Force table re-render on resize
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(function() {
+                        // Only reload data on significant size changes, not on scroll
+                        const currentWidth = window.innerWidth;
+                        const currentHeight = window.innerHeight;
+                        
+                        // Skip reload if this is likely a scroll event (small dimension changes)
+                        if (Math.abs(currentWidth - (window.lastResizeWidth || currentWidth)) < 50 && 
+                            Math.abs(currentHeight - (window.lastResizeHeight || currentHeight)) < 50) {
+                            return;
+                        }
+                        
+                        window.lastResizeWidth = currentWidth;
+                        window.lastResizeHeight = currentHeight;
+                        
+                        // Force table re-render on actual resize
                         const activeNsiTab = document.querySelector('.tab-button.active');
                         if (activeNsiTab && activeNsiTab.textContent === 'NSI') {
                             const activeSubPage = document.querySelector('.nsi-sub-button.active');
                             if (activeSubPage) {
                                 const subPageName = activeSubPage.textContent.toLowerCase().replace(' ', '-');
-                                console.log('Resize detected, refreshing:', subPageName);
+                                console.log('Actual resize detected, refreshing:', subPageName);
                                 showNsiSubPage(subPageName);
                             }
                         }
-                    }, 100);
+                    }, 300);
                 });
                 
                 // Ensure viewport is properly set
