@@ -502,7 +502,16 @@
         .customer-details {
             font-size: 0.9rem;
             color: #7f8c8d;
-            line-height: 1.4;
+            line-height: 1.6;
+        }
+        
+        /* Enhanced spacing for NSI mobile cards */
+        .nsi-sub-content .customer-details {
+            line-height: 1.8;
+        }
+        
+        .nsi-sub-content .customer-details br {
+            line-height: 2.2;
         }
 
         .customer-actions {
@@ -1063,6 +1072,32 @@
                 padding: 0 20px 30px !important;
             }
             
+            /* Enhanced line spacing for NSI mobile cards on mobile */
+            .nsi-sub-content .customer-card .customer-details {
+                line-height: 1.9 !important;
+                margin-bottom: 15px;
+            }
+            
+            .nsi-sub-content .customer-card .customer-details strong {
+                display: inline-block;
+                margin-bottom: 3px;
+                margin-top: 2px;
+            }
+            
+            /* Add space after each info line in NSI mobile cards */
+            .nsi-sub-content .customer-card .customer-details br {
+                display: block;
+                margin-bottom: 6px;
+                content: "";
+            }
+            
+            /* Alternative approach: style each line as a block */
+            .nsi-info-line {
+                display: block;
+                margin-bottom: 8px;
+                line-height: 1.5;
+            }
+            
             /* Hide NSI mobile cards when their parent sub-content is not active */
             .nsi-sub-content:not(.active) #mobileComplaintCards,
             .nsi-sub-content:not(.active) #mobileIdBadgeCards,
@@ -1342,10 +1377,12 @@
                 display: flex;
             }
             
-            .controls .btn-primary {
+            /* Hide main tab Add buttons on mobile, but keep NSI sub-page buttons */
+            .tab-content:not(#nsiTab) .controls .btn-primary {
                 display: none;
             }
         }
+        
 
         /* Login Screen Styles */
         .login-screen {

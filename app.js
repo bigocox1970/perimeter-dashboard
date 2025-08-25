@@ -2401,72 +2401,120 @@
             }
         }
 
-        // Render complaint table
+        // Render complaint table with better error handling
         function renderComplaintTable() {
-            const tableBody = document.getElementById('complaintTableBody');
-            const emptyState = document.getElementById('complaintEmptyState');
-            const mobileCards = document.getElementById('mobileComplaintCards');
-            
-            console.log('Rendering complaint table, data count:', nsiComplaints.length);
-            console.log('Mobile cards element found:', !!mobileCards);
-            console.log('Is mobile device:', isMobileDevice());
-            
-            if (nsiComplaints.length === 0) {
-                tableBody.innerHTML = '';
-                if (mobileCards) mobileCards.innerHTML = '';
-                emptyState.style.display = 'block';
-                return;
-            }
-            
-            emptyState.style.display = 'none';
-            
-            // Render desktop table
-            tableBody.innerHTML = nsiComplaints.map(complaint => `
-                <tr>
-                    <td>${formatDate(complaint.date)}</td>
-                    <td>${complaint.reference}</td>
-                    <td>${complaint.customer}</td>
-                    <td>${complaint.type}</td>
-                    <td>${complaint.description}</td>
-                    <td><span class="status-badge status-${complaint.status}">${complaint.status}</span></td>
-                    <td>${complaint.assigned_to || '-'}</td>
-                    <td>${renderImageThumbnails(parseImagesFromBase64(complaint.images))}</td>
-                    <td>
-                        <button class="btn btn-warning" onclick="editComplaint(${complaint.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
-                        <button class="btn btn-danger" onclick="deleteComplaint(${complaint.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
-                    </td>
-                </tr>
-            `).join('');
+            try {
+                const tableBody = document.getElementById('complaintTableBody');
+                const emptyState = document.getElementById('complaintEmptyState');
+                const mobileCards = document.getElementById('mobileComplaintCards');
+                
+                console.log('Rendering complaint table, data count:', nsiComplaints.length);
+                console.log('Mobile cards element found:', !!mobileCards);
+                console.log('Is mobile device:', isMobileDevice());
+                
+                // Ensure we have valid elements
+                if (!tableBody || !emptyState) {
+                    console.error('Required DOM elements not found for complaint table');
+                    return;
+                }
+                
+                if (!nsiComplaints || nsiComplaints.length === 0) {
+                    tableBody.innerHTML = '';
+                    if (mobileCards) mobileCards.innerHTML = '';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                
+                // Render desktop table with safe data handling
+                tableBody.innerHTML = nsiComplaints.map(complaint => {
+                    // Ensure complaint object has all required properties
+                    const safeComplaint = {
+                        id: complaint.id || '',
+                        date: complaint.date || '',
+                        reference: complaint.reference || 'N/A',
+                        customer: complaint.customer || 'N/A',
+                        type: complaint.type || 'N/A',
+                        description: complaint.description || 'N/A',
+                        status: complaint.status || 'open',
+                        assigned_to: complaint.assigned_to || '',
+                        images: complaint.images || ''
+                    };
+                    
+                    return `
+                        <tr>
+                            <td>${formatDate(safeComplaint.date)}</td>
+                            <td>${safeComplaint.reference}</td>
+                            <td>${safeComplaint.customer}</td>
+                            <td>${safeComplaint.type}</td>
+                            <td>${safeComplaint.description}</td>
+                            <td><span class="status-badge status-${safeComplaint.status}">${safeComplaint.status}</span></td>
+                            <td>${safeComplaint.assigned_to || '-'}</td>
+                            <td>${renderImageThumbnails(parseImagesFromBase64(safeComplaint.images))}</td>
+                            <td>
+                                <button class="btn btn-warning" onclick="editComplaint(${safeComplaint.id})" style="padding: 6px 12px; font-size: 12px;">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteComplaint(${safeComplaint.id})" style="padding: 6px 12px; font-size: 12px;">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
 
-            // Render mobile cards
-            if (mobileCards) {
-                mobileCards.innerHTML = nsiComplaints.map(complaint => `
-                    <div class="customer-card">
-                        <div class="customer-card-header">
-                            <div>
-                                <div class="customer-name">${complaint.reference}</div>
-                                <div class="customer-details">
-                                    <strong>Customer:</strong> ${complaint.customer}<br>
-                                    <strong>Type:</strong> ${complaint.type}<br>
-                                    <strong>Date:</strong> ${formatDate(complaint.date)}<br>
-                                    <strong>Status:</strong> <span class="status-badge status-${complaint.status}">${complaint.status}</span><br>
-                                    ${complaint.assigned_to ? `<strong>Assigned To:</strong> ${complaint.assigned_to}<br>` : ''}
-                                    <strong>Description:</strong> ${complaint.description}
+                // Render mobile cards with safe data handling
+                if (mobileCards) {
+                    mobileCards.innerHTML = nsiComplaints.map(complaint => {
+                        // Ensure complaint object has all required properties for mobile cards
+                        const safeComplaint = {
+                            id: complaint.id || '',
+                            reference: complaint.reference || 'N/A',
+                            customer: complaint.customer || 'N/A',
+                            type: complaint.type || 'N/A',
+                            date: complaint.date || '',
+                            status: complaint.status || 'open',
+                            assigned_to: complaint.assigned_to || '',
+                            description: complaint.description || 'No description',
+                            images: complaint.images || ''
+                        };
+                        
+                        return `
+                            <div class="customer-card">
+                                <div class="customer-card-header">
+                                    <div>
+                                        <div class="customer-name">Ref: ${safeComplaint.reference}</div>
+                                        <div class="customer-details">
+                                            <div class="nsi-info-line"><strong>Customer:</strong> ${safeComplaint.customer}</div>
+                                            <div class="nsi-info-line"><strong>Type:</strong> ${safeComplaint.type}</div>
+                                            <div class="nsi-info-line"><strong>Date:</strong> ${formatDate(safeComplaint.date)}</div>
+                                            <div class="nsi-info-line"><strong>Status:</strong> <span class="status-badge status-${safeComplaint.status}">${safeComplaint.status}</span></div>
+                                            ${safeComplaint.assigned_to ? `<div class="nsi-info-line"><strong>Assigned To:</strong> ${safeComplaint.assigned_to}</div>` : ''}
+                                            <div class="nsi-info-line"><strong>Description:</strong> ${safeComplaint.description}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${parseImagesFromBase64(safeComplaint.images).length > 0 ? `
+                                    <div style="margin: 10px 0;">
+                                        <strong>Images:</strong><br>
+                                        ${renderImageThumbnails(parseImagesFromBase64(safeComplaint.images))}
+                                    </div>
+                                ` : ''}
+                                <div class="customer-actions">
+                                    <button class="btn btn-warning" onclick="editComplaint(${safeComplaint.id})">Edit</button>
+                                    <button class="btn btn-danger" onclick="deleteComplaint(${safeComplaint.id})">Delete</button>
                                 </div>
                             </div>
-                        </div>
-                        ${parseImagesFromBase64(complaint.images).length > 0 ? `
-                            <div style="margin: 10px 0;">
-                                <strong>Images:</strong><br>
-                                ${renderImageThumbnails(parseImagesFromBase64(complaint.images))}
-                            </div>
-                        ` : ''}
-                        <div class="customer-actions">
-                            <button class="btn btn-warning" onclick="editComplaint(${complaint.id})">Edit</button>
-                            <button class="btn btn-danger" onclick="deleteComplaint(${complaint.id})">Delete</button>
-                        </div>
-                    </div>
-                `).join('');
+                        `;
+                    }).join('');
+                }
+                
+            } catch (error) {
+                console.error('Error rendering complaint table:', error);
+                showNsiMessage('Error displaying complaints: ' + (error.message || 'Unknown error'), 'error');
+                
+                // Show empty state as fallback
+                const emptyState = document.getElementById('complaintEmptyState');
+                if (emptyState) {
+                    emptyState.style.display = 'block';
+                }
             }
         }
 
@@ -2676,14 +2724,14 @@
                         <div class="customer-card">
                             <div class="customer-card-header">
                                 <div>
-                                    <div class="customer-name">${badge.badge_number}</div>
+                                    <div class="customer-name">Badge ID: ${badge.badge_number}</div>
                                     <div class="customer-details">
-                                        <strong>Type:</strong> ${badge.badge_type}<br>
-                                        <strong>Issued To:</strong> ${badge.issued_to}<br>
-                                        <strong>Issued By:</strong> ${badge.issued_by}<br>
-                                        <strong>Valid From:</strong> ${formatDate(badge.valid_from)}<br>
-                                        <strong>Valid To:</strong> ${formatDate(badge.valid_to)}<br>
-                                        <strong>Status:</strong> <span class="status-badge status-${status}">${status}</span>
+                                        <div class="nsi-info-line"><strong>Type:</strong> ${badge.badge_type}</div>
+                                        <div class="nsi-info-line"><strong>Issued To:</strong> ${badge.issued_to}</div>
+                                        <div class="nsi-info-line"><strong>Issued By:</strong> ${badge.issued_by}</div>
+                                        <div class="nsi-info-line"><strong>Valid From:</strong> ${formatDate(badge.valid_from)}</div>
+                                        <div class="nsi-info-line"><strong>Valid To:</strong> ${formatDate(badge.valid_to)}</div>
+                                        <div class="nsi-info-line"><strong>Status:</strong> <span class="status-badge status-${status}">${status}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -2907,15 +2955,15 @@
                         <div class="customer-card">
                             <div class="customer-card-header">
                                 <div>
-                                    <div class="customer-name">${equipment.equipment_id}</div>
+                                    <div class="customer-name">Equipment ID: ${equipment.equipment_id}</div>
                                     <div class="customer-details">
-                                        <strong>Type:</strong> ${equipment.equipment_type}<br>
-                                        <strong>Manufacturer:</strong> ${equipment.manufacturer}<br>
-                                        <strong>Model:</strong> ${equipment.model}<br>
-                                        <strong>Purchase Date:</strong> ${formatDate(equipment.purchase_date)}<br>
-                                        <strong>Last Calibration:</strong> ${formatDate(equipment.last_calibration)}<br>
-                                        <strong>Next Calibration:</strong> ${formatDate(equipment.next_calibration)}<br>
-                                        <strong>Status:</strong> <span class="status-badge status-${status}">${status}</span>
+                                        <div class="nsi-info-line"><strong>Type:</strong> ${equipment.equipment_type}</div>
+                                        <div class="nsi-info-line"><strong>Manufacturer:</strong> ${equipment.manufacturer}</div>
+                                        <div class="nsi-info-line"><strong>Model:</strong> ${equipment.model}</div>
+                                        <div class="nsi-info-line"><strong>Purchase Date:</strong> ${formatDate(equipment.purchase_date)}</div>
+                                        <div class="nsi-info-line"><strong>Last Calibration:</strong> ${formatDate(equipment.last_calibration)}</div>
+                                        <div class="nsi-info-line"><strong>Next Calibration:</strong> ${formatDate(equipment.next_calibration)}</div>
+                                        <div class="nsi-info-line"><strong>Status:</strong> <span class="status-badge status-${status}">${status}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -3145,15 +3193,15 @@
                         <div class="customer-card">
                             <div class="customer-card-header">
                                 <div>
-                                    <div class="customer-name">${kit.kit_id}</div>
+                                    <div class="customer-name">Kit ID: ${kit.kit_id}</div>
                                     <div class="customer-details">
-                                        <strong>Type:</strong> ${kit.kit_type}<br>
-                                        <strong>Issued To:</strong> ${kit.issued_to}<br>
-                                        <strong>Issued By:</strong> ${kit.issued_by}<br>
-                                        <strong>Issue Date:</strong> ${formatDate(kit.issue_date)}<br>
-                                        <strong>Expiry Date:</strong> ${formatDate(kit.expiry_date)}<br>
-                                        <strong>Location:</strong> ${kit.location}<br>
-                                        <strong>Status:</strong> <span class="status-badge status-${status}">${status}</span>
+                                        <div class="nsi-info-line"><strong>Type:</strong> ${kit.kit_type}</div>
+                                        <div class="nsi-info-line"><strong>Issued To:</strong> ${kit.issued_to}</div>
+                                        <div class="nsi-info-line"><strong>Issued By:</strong> ${kit.issued_by}</div>
+                                        <div class="nsi-info-line"><strong>Issue Date:</strong> ${formatDate(kit.issue_date)}</div>
+                                        <div class="nsi-info-line"><strong>Expiry Date:</strong> ${formatDate(kit.expiry_date)}</div>
+                                        <div class="nsi-info-line"><strong>Location:</strong> ${kit.location}</div>
+                                        <div class="nsi-info-line"><strong>Status:</strong> <span class="status-badge status-${status}">${status}</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -3444,35 +3492,63 @@
 
         // Parse base64 string back to images
         function parseImagesFromBase64(imageString) {
-            if (!imageString) return [];
+            // Handle null, undefined, or empty strings
+            if (!imageString || imageString === 'null' || imageString === 'undefined') {
+                return [];
+            }
+            
+            // Handle already parsed arrays
+            if (Array.isArray(imageString)) {
+                return imageString;
+            }
+            
+            // Handle non-string types
+            if (typeof imageString !== 'string') {
+                console.warn('Expected string for image data, got:', typeof imageString);
+                return [];
+            }
+            
             try {
-                return JSON.parse(imageString);
+                const parsed = JSON.parse(imageString);
+                return Array.isArray(parsed) ? parsed : [];
             } catch (e) {
-                console.error('Error parsing images:', e);
+                console.error('Error parsing images from string:', imageString, e);
                 return [];
             }
         }
 
-        // Render image thumbnails for table display
+        // Render image thumbnails for table display with error handling
         function renderImageThumbnails(images, maxDisplay = 3) {
-            if (!images || images.length === 0) {
-                return '<span style="color: #999;">No images</span>';
+            try {
+                // Handle null, undefined, or empty arrays
+                if (!images || !Array.isArray(images) || images.length === 0) {
+                    return '<span style="color: #999;">No images</span>';
+                }
+
+                const imagesToShow = images.slice(0, maxDisplay);
+                const remaining = Math.max(0, images.length - maxDisplay);
+
+                let html = '<div class="image-gallery">';
+                imagesToShow.forEach(image => {
+                    // Ensure image object has required properties
+                    if (image && image.data && image.name) {
+                        // Escape quotes in image data and name for onclick
+                        const escapedData = image.data.replace(/'/g, "\\'");
+                        const escapedName = image.name.replace(/'/g, "\\'");
+                        html += `<img src="${image.data}" alt="${escapedName}" class="image-thumbnail" onclick="openImageModal('${escapedData}')">`;
+                    }
+                });
+                
+                if (remaining > 0) {
+                    html += `<span style="font-size: 12px; color: #666;">+${remaining} more</span>`;
+                }
+                html += '</div>';
+
+                return html;
+            } catch (error) {
+                console.error('Error rendering image thumbnails:', error);
+                return '<span style="color: #f00;">Error loading images</span>';
             }
-
-            const imagesToShow = images.slice(0, maxDisplay);
-            const remaining = images.length - maxDisplay;
-
-            let html = '<div class="image-gallery">';
-            imagesToShow.forEach(image => {
-                html += `<img src="${image.data}" alt="${image.name}" class="image-thumbnail" onclick="openImageModal('${image.data}')">`;
-            });
-            
-            if (remaining > 0) {
-                html += `<span style="font-size: 12px; color: #666;">+${remaining} more</span>`;
-            }
-            html += '</div>';
-
-            return html;
         }
 
         // Clear current images
