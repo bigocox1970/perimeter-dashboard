@@ -140,8 +140,8 @@
                 content.classList.remove('active');
             });
             
-            // Remove active class from all tab buttons
-            const tabButtons = document.querySelectorAll('.tab-button');
+            // Remove active class from all tab buttons (both top and mobile footer)
+            const tabButtons = document.querySelectorAll('.tab-button, .mobile-tab-button');
             tabButtons.forEach(button => {
                 button.classList.remove('active');
             });
@@ -152,11 +152,11 @@
                 selectedContent.classList.add('active');
             }
             
-            // Add active class to clicked button
-            const selectedButton = document.querySelector(`[onclick="showTab('${tabName}')"]`);
-            if (selectedButton) {
-                selectedButton.classList.add('active');
-            }
+            // Add active class to clicked button (both top and mobile footer)
+            const selectedButtons = document.querySelectorAll(`[onclick="showTab('${tabName}')"], [data-tab="${tabName}"]`);
+            selectedButtons.forEach(button => {
+                button.classList.add('active');
+            });
 
             // Load scaffold data when scaff tab is selected
             if (tabName === 'scaff') {
@@ -1127,7 +1127,7 @@
             
             // Filter customers based on NSI status if needed
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1278,7 +1278,7 @@
             // Get current NSI filter
             const nsiFilter = document.getElementById('nsiFilter').value;
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1443,7 +1443,7 @@
             // Get current NSI filter (same as monthly stats)
             const nsiFilter = document.getElementById('nsiFilter').value;
             let filteredCustomersForRolling = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomersForRolling = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1480,6 +1480,10 @@
             const potentialOnTime = totalOnTime + canBeDoneInspections;
             const totalInspectionsInPeriod = totalOnTime + totalLate + canBeDoneInspections;
             const rollingPercentage = totalInspectionsInPeriod > 0 ? Math.round((potentialOnTime / totalInspectionsInPeriod) * 100) : 100;
+            
+            // Debug logging
+            console.log(`NSI Filter: "${nsiFilter}", Filtered customers: ${filteredCustomersForRolling.length}, Total customers: ${customers.length}`);
+            console.log(`Rolling stats - OnTime: ${totalOnTime}, Late: ${totalLate}, CanBeDone: ${canBeDoneInspections}, Total: ${totalInspectionsInPeriod}, Percentage: ${rollingPercentage}%`);
             
             // Calculate date range for display (exclude current month)
             const startDate = new Date(today.getFullYear() - 1, today.getMonth(), 1);
@@ -1589,7 +1593,7 @@
             
             // Filter customers based on NSI status if needed
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1677,7 +1681,7 @@
             
             // Filter customers based on NSI status if needed - SAME AS calculateMonthlyStats
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1805,7 +1809,7 @@
             // Get current NSI filter
             const nsiFilter = document.getElementById('nsiFilter').value;
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1886,7 +1890,7 @@
             
             // Filter customers based on NSI status if needed
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
@@ -1984,7 +1988,7 @@
             
             // Filter customers based on NSI status
             let filteredCustomers = customers;
-            if (nsiFilter) {
+            if (nsiFilter && nsiFilter !== '') {
                 filteredCustomers = customers.filter(customer => {
                     const nsiStatus = customer.nsi_status || 'NSI';
                     return nsiStatus === nsiFilter;
