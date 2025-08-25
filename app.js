@@ -96,9 +96,12 @@
 
         // Show login screen
         function showLoginScreen() {
+            document.getElementById('splashScreen').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
             document.getElementById('mainDashboard').style.display = 'none';
-            document.getElementById('passwordInput').focus();
+            setTimeout(() => {
+                document.getElementById('passwordInput').focus();
+            }, 100);
         }
 
         // Show dashboard
@@ -193,16 +196,13 @@
                     });
             }
 
-            // Check for PWA install prompt
-            let deferredPrompt;
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                showInstallPrompt();
-            });
+            // PWA install prompt disabled - users can install via browser menu
 
-            // Check login status first
+                    // Handle splash screen timing
+        setTimeout(() => {
+            document.getElementById('splashScreen').style.display = 'none';
             checkLoginStatus();
+        }, 2500); // Show splash for 2.5 seconds
             
             // Set default completion date to today
             if (document.getElementById('completionDate')) {
@@ -289,27 +289,7 @@
             }
         });
 
-        // Show install prompt for PWA
-        function showInstallPrompt() {
-            const installButton = document.createElement('button');
-            installButton.textContent = '📱 Install App';
-            installButton.className = 'btn btn-primary';
-            installButton.style.position = 'fixed';
-            installButton.style.top = '20px';
-            installButton.style.right = '20px';
-            installButton.style.zIndex = '10000';
-            installButton.onclick = () => {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    }
-                    deferredPrompt = null;
-                    installButton.remove();
-                });
-            };
-            document.body.appendChild(installButton);
-        }
+
 
         // Show/hide loading
         function showLoading(show = true) {

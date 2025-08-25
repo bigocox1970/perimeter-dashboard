@@ -1493,6 +1493,67 @@
         }
         
 
+        /* Splash Screen Styles */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 15000;
+            animation: fadeOut 0.5s ease-in-out 2s forwards;
+        }
+
+        .splash-logo {
+            width: 120px;
+            height: 120px;
+            background-image: url('icons/web-app-manifest-192x192.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            animation: logoFadeIn 1s ease-in-out, logoPulse 2s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        .splash-text {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1E1B5C;
+            animation: textFadeIn 1s ease-in-out 0.5s both;
+        }
+
+        .splash-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin-top: 10px;
+            animation: textFadeIn 1s ease-in-out 1s both;
+        }
+
+        @keyframes logoFadeIn {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes textFadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+
         /* Login Screen Styles */
         .login-screen {
             position: fixed;
@@ -1500,7 +1561,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: white;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1511,16 +1572,29 @@
             background: white;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
             max-width: 400px;
             width: 90%;
+            border: 1px solid #f0f0f0;
+        }
+
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            background-image: url('icons/web-app-manifest-192x192.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            margin: 0 auto 20px auto;
+            animation: logoFadeIn 0.8s ease-in-out;
         }
 
         .login-header h1 {
-            color: #2c3e50;
+            color: #1E1B5C;
             margin-bottom: 10px;
-            font-size: 2rem;
+            font-size: 1.8rem;
+            font-weight: 600;
         }
 
         .login-header p {

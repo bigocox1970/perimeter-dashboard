@@ -7,11 +7,11 @@
     
     <!-- PWA Meta Tags -->
     <meta name="description" content="Admin dashboard for managing customer inspections and scaffold alarm systems">
-    <meta name="theme-color" content="#1E1B5C">
+    <meta name="theme-color" content="#f8f9fa">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="PerimMaint">
-    <meta name="msapplication-TileColor" content="#1E1B5C">
+    <meta name="msapplication-TileColor" content="#f8f9fa">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -70,9 +70,17 @@
     </style>
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-logo"></div>
+        <div class="splash-text">Perimeter Security</div>
+        <div class="splash-subtitle">Admin Dashboard</div>
+    </div>
+
     <!-- Login Screen -->
-    <div class="login-screen" id="loginScreen">
+    <div class="login-screen" id="loginScreen" style="display: none;">
         <div class="login-container">
+            <div class="login-logo"></div>
             <div class="login-header">
                 <h1>Perimeter Security</h1>
                 <p>Please enter password to access the dashboard</p>
