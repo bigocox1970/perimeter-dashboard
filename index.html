@@ -124,19 +124,19 @@
         </div>
 
         <div class="stats">
-            <div class="stat-card" onclick="showCustomersByStatus('all')" style="cursor: pointer;" title="Click to see all customers">
+            <div class="stat-card" onclick="showCustomersByStatus('all')" style="cursor: pointer;" title="Click to see all inspections due per year">
                 <div class="stat-number" id="totalCustomers">0</div>
-                <div class="stat-label">Total Customers</div>
+                <div class="stat-label">Total Inspections Due Per Year</div>
             </div>
-            <div class="stat-card" onclick="showCustomersByStatus('overdue')" style="cursor: pointer;" title="Click to see overdue customers">
+            <div class="stat-card" onclick="showCustomersByStatus('overdue')" style="cursor: pointer;" title="Click to see overdue inspections (past NSI 3-month window)">
                 <div class="stat-number overdue" id="overdueCount">0</div>
                 <div class="stat-label">Overdue Inspections</div>
             </div>
-            <div class="stat-card" onclick="showCustomersByStatus('due-soon')" style="cursor: pointer;" title="Click to see customers due this month or last month">
+            <div class="stat-card" onclick="showCustomersByStatus('due-soon')" style="cursor: pointer;" title="Click to see inspections due soon (within NSI 3-month window)">
                 <div class="stat-number due-soon" id="dueSoonCount">0</div>
                 <div class="stat-label">Due Soon</div>
             </div>
-            <div class="stat-card" onclick="showCustomersByStatus('current')" style="cursor: pointer;" title="Click to see up-to-date customers">
+            <div class="stat-card" onclick="showCustomersByStatus('current')" style="cursor: pointer;" title="Click to see up-to-date inspections">
                 <div class="stat-number current" id="currentCount">0</div>
                 <div class="stat-label">Up to Date</div>
             </div>
@@ -144,7 +144,7 @@
 
         <div class="monthly-stats-container">
             <div class="monthly-stats-header">
-                <h3>📊 Monthly Completion Statistics (Last 5 Months)</h3>
+                <h3>📊 Monthly Completion Statistics - NSI 3-Month Window Rule</h3>
                 <button class="btn btn-secondary" id="statsToggleBtn" onclick="toggleMonthlyStats()" style="background: #6c757d; color: white; padding: 6px 12px; font-size: 12px;">
                     <span id="statsToggleText">Hide</span>
                 </button>
@@ -160,7 +160,8 @@
                     <button class="carousel-btn carousel-next" onclick="slideMonthlyCards(1)" id="monthlyNext">›</button>
                 </div>
                 <div class="completion-chart">
-                    <h4>Rolling 12-Month Completion Rate</h4>
+                    <h4>Rolling 12-Month Performance (Including Current Potential)</h4>
+                    <p style="font-size: 0.9rem; color: #666; text-align: center; margin: 5px 0;">Shows past completions + current "Can Be Done" as potential on-time</p>
                     <div id="completionChart">
                         <!-- Chart bars will be generated here -->
                     </div>
@@ -1072,6 +1073,28 @@
                 <div class="form-actions">
                     <button type="button" class="btn" onclick="closeFirstAidModal()" style="background: #95a5a6; color: white;">Cancel</button>
                     <button type="submit" class="btn btn-primary">Issue Kit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Inspection Date Modal -->
+    <div class="completion-modal" id="editInspectionDateModal">
+        <div class="completion-modal-content">
+            <button class="modal-close" onclick="closeEditInspectionDateModal()" title="Close">×</button>
+            <h2 id="editInspectionDateTitle">Edit Inspection Date</h2>
+            <form id="editInspectionDateForm">
+                <div class="form-group">
+                    <label for="editCompletionDate">Completion Date *</label>
+                    <input type="date" id="editCompletionDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCompletionNotes">Notes</label>
+                    <textarea id="editCompletionNotes" placeholder="Any notes about this inspection..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeEditInspectionDateModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn btn-success">Update Inspection</button>
                 </div>
             </form>
         </div>
