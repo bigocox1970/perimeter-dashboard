@@ -69,17 +69,34 @@ class VoiceControl {
                 throw new Error('Browser does not support audio recording');
             }
 
-            // DEBUG: Show what STT and TTS we're using
+            // Check if MediaRecorder is available (needed for OpenAI Whisper)
+            const hasMediaRecorder = !!window.MediaRecorder;
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+            console.log('📱 Device check:');
+            console.log('   Mobile:', isMobile);
+            console.log('   MediaRecorder supported:', hasMediaRecorder);
+
+            // Force browser TTS on mobile (autoplay policy too strict for ElevenLabs)
+            if (isMobile) {
+                console.log('📱 Mobile device detected - using Browser TTS to avoid autoplay issues');
+                envConfig.config.TTS_PROVIDER = 'browser';
+            }
+
+            // If no MediaRecorder, must use browser STT
+            if (!hasMediaRecorder) {
+                console.warn('⚠️ MediaRecorder not supported - must use browser speech recognition');
+                envConfig.config.USE_BROWSER_STT = true;
+            }
+
             const useBrowserSTT = envConfig.getBool('USE_BROWSER_STT', false);
             const ttsProvider = envConfig.get('TTS_PROVIDER', 'elevenlabs');
-            console.log('🔧 DEBUG - VOICE CONFIG:');
-            console.log('   USE_BROWSER_STT:', useBrowserSTT);
-            console.log('   TTS_PROVIDER:', ttsProvider);
-            console.log('   Will use:', useBrowserSTT ? 'BROWSER Speech Recognition' : 'OPENAI WHISPER');
-            console.log('   Will use:', ttsProvider === 'elevenlabs' ? 'ELEVENLABS TTS' : 'BROWSER TTS');
 
-            // VISIBLE DEBUG - Show on screen
-            this.showDebugOverlay(`STT: ${useBrowserSTT ? 'BROWSER' : 'WHISPER'}\nTTS: ${ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER'}`);
+            console.log('🔧 VOICE CONFIG:');
+            console.log('   STT:', useBrowserSTT ? 'BROWSER (inaccurate)' : 'OPENAI WHISPER (accurate)');
+            console.log('   TTS:', ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER');
+
+            this.showDebugOverlay(`STT: ${useBrowserSTT ? 'BROWSER' : 'WHISPER'}\nTTS: ${ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER'}\nMediaRecorder: ${hasMediaRecorder ? 'YES' : 'NO'}`);
 
             console.log('✅ Voice Control System initialized successfully');
             return true;
