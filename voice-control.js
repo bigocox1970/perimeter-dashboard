@@ -923,17 +923,55 @@ Be conversational but concise. UK English spelling and phrasing.`
                 URL.revokeObjectURL(audioUrl);
                 resolve();
             };
-            audio.onerror = (error) => {
-                console.error('❌ Audio element error:', error);
-                this.showDebugOverlay('ELEVENLABS\nAUDIO ERROR!');
+            audio.onerror = (event) => {
+                // Get detailed error info from audio.error
+                const mediaError = audio.error;
+                let errorDetails = 'Unknown audio error';
+                let errorCode = 'UNKNOWN';
+
+                if (mediaError) {
+                    errorCode = mediaError.code;
+                    switch (mediaError.code) {
+                        case 1:
+                            errorDetails = 'MEDIA_ERR_ABORTED: Audio loading aborted';
+                            break;
+                        case 2:
+                            errorDetails = 'MEDIA_ERR_NETWORK: Network error while loading audio';
+                            break;
+                        case 3:
+                            errorDetails = 'MEDIA_ERR_DECODE: Audio decoding failed (format issue)';
+                            break;
+                        case 4:
+                            errorDetails = 'MEDIA_ERR_SRC_NOT_SUPPORTED: Audio format not supported or blob URL blocked';
+                            break;
+                    }
+                    if (mediaError.message) {
+                        errorDetails += ' - ' + mediaError.message;
+                    }
+                }
+
+                console.error('❌ Audio element error:', errorDetails);
+                console.error('   Error code:', errorCode);
+                console.error('   Blob URL:', audioUrl);
+
+                this.showDebugOverlay(`ELEVENLABS ERROR!\n${errorCode}\nTrying data URI...`);
+
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.logTTS('elevenlabs', 'failed', {
                         reason: 'Audio element error',
-                        error: error.toString()
+                        errorCode: errorCode,
+                        errorDetails: errorDetails,
+                        blobUrl: audioUrl
                     });
                 }
+
                 URL.revokeObjectURL(audioUrl);
-                reject(error);
+
+                // Try data URI as fallback before giving up completely
+                this.tryDataURIPlayback(audioBlob, text).then(resolve).catch(() => {
+                    // If data URI also fails, reject to trigger browser TTS fallback
+                    reject(new Error(errorDetails));
+                });
             };
 
             // Try to play, but properly handle errors
@@ -956,6 +994,81 @@ Be conversational but concise. UK English spelling and phrasing.`
                 // Don't silently continue - user wants to hear audio!
                 reject(error);
             });
+        });
+    }
+
+    // Try playing audio using data URI instead of blob URL
+    async tryDataURIPlayback(audioBlob, text) {
+        console.log('🔄 Trying data URI playback as fallback...');
+
+        if (typeof voiceLogger !== 'undefined') {
+            voiceLogger.logTTS('elevenlabs', 'attempting', {
+                method: 'data_uri_fallback',
+                text: text.substring(0, 50)
+            });
+        }
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = () => {
+                const dataUri = reader.result;
+                console.log('✅ Created data URI, length:', dataUri.length);
+
+                const audio = new Audio(dataUri);
+                audio.volume = 1.0;
+
+                audio.onended = () => {
+                    console.log('✅ Data URI audio playback ended successfully');
+                    this.showDebugOverlay('ELEVENLABS\n(data URI)\nPLAYED OK!');
+                    if (typeof voiceLogger !== 'undefined') {
+                        voiceLogger.logTTS('elevenlabs', 'success', {
+                            method: 'data_uri_fallback',
+                            message: 'Audio played via data URI'
+                        });
+                    }
+                    resolve();
+                };
+
+                audio.onerror = (event) => {
+                    const mediaError = audio.error;
+                    let errorCode = mediaError ? mediaError.code : 'UNKNOWN';
+                    console.error('❌ Data URI playback also failed:', errorCode);
+                    this.showDebugOverlay('DATA URI FAILED!\nUsing browser TTS');
+
+                    if (typeof voiceLogger !== 'undefined') {
+                        voiceLogger.logTTS('elevenlabs', 'failed', {
+                            method: 'data_uri_fallback',
+                            errorCode: errorCode,
+                            willFallback: true
+                        });
+                    }
+
+                    reject(new Error('Data URI playback failed'));
+                };
+
+                audio.play().catch((error) => {
+                    console.error('❌ Data URI play() failed:', error.name, error.message);
+                    this.showDebugOverlay('DATA URI BLOCKED!\nUsing browser TTS');
+
+                    if (typeof voiceLogger !== 'undefined') {
+                        voiceLogger.logTTS('elevenlabs', 'blocked', {
+                            method: 'data_uri_fallback',
+                            reason: error.name,
+                            willFallback: true
+                        });
+                    }
+
+                    reject(error);
+                });
+            };
+
+            reader.onerror = () => {
+                console.error('❌ Failed to convert blob to data URI');
+                reject(new Error('FileReader error'));
+            };
+
+            reader.readAsDataURL(audioBlob);
         });
     }
 

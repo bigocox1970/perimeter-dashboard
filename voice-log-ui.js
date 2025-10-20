@@ -209,11 +209,15 @@ class VoiceLogUI {
                     <span class="log-entry-time">${this.formatTime(log.timestamp)}</span>
                 </div>
                 <div class="log-entry-details">
+                    ${log.method ? `<div><strong>Method:</strong> ${log.method}</div>` : ''}
                     ${log.text ? `<div><strong>Text:</strong> "${log.text}"</div>` : ''}
                     ${log.blobSize ? `<div><strong>Audio size:</strong> ${(log.blobSize / 1024).toFixed(1)} KB (${log.blobType || 'unknown'})</div>` : ''}
                     ${log.reason ? `<div><strong>Reason:</strong> ${log.reason}</div>` : ''}
                     ${log.message ? `<div><strong>Message:</strong> ${log.message}</div>` : ''}
+                    ${log.errorCode ? `<div style="color: #e74c3c"><strong>Error Code:</strong> ${log.errorCode}</div>` : ''}
+                    ${log.errorDetails ? `<div style="color: #e74c3c"><strong>Details:</strong> ${log.errorDetails}</div>` : ''}
                     ${log.error ? `<div style="color: #e74c3c"><strong>Error:</strong> ${log.error}</div>` : ''}
+                    ${log.blobUrl ? `<div style="font-size: 11px; color: #7f8c8d"><strong>URL:</strong> ${log.blobUrl.substring(0, 50)}...</div>` : ''}
                     ${log.willFallback ? `<div style="color: #f39c12"><strong>⚠️ Falling back to Browser TTS</strong></div>` : ''}
                     ${log.voice ? `<div><strong>Voice:</strong> ${log.voice}</div>` : ''}
                     ${log.status === 'api_success' ? `<div style="color: #27ae60">✓ Audio received from API</div>` : ''}
