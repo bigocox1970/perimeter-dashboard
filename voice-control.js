@@ -13,6 +13,21 @@ class VoiceControl {
         this.statusCallback = null;
         this.transcriptCallback = null;
         this.audioUnlocked = false;
+        this.debugOverlay = null;
+    }
+
+    // Show debug info on screen (for mobile)
+    showDebugOverlay(text) {
+        if (!this.debugOverlay) {
+            this.debugOverlay = document.createElement('div');
+            this.debugOverlay.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,0,0,0.9);color:#0f0;padding:10px;font-family:monospace;font-size:12px;z-index:99999;border:2px solid #0f0;border-radius:5px;white-space:pre;max-width:200px;';
+            document.body.appendChild(this.debugOverlay);
+        }
+        this.debugOverlay.textContent = text;
+        setTimeout(() => {
+            if (this.debugOverlay) this.debugOverlay.style.display = 'none';
+        }, 10000);
+        this.debugOverlay.style.display = 'block';
     }
 
     // Unlock audio playback (must be called on user interaction)
