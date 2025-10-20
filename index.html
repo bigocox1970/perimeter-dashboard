@@ -1239,47 +1239,44 @@
     <script src="app.js"></script>
 
     <!-- Voice Control System -->
-    <link rel="stylesheet" href="voice-control.css">
-    <link rel="stylesheet" href="voice-log.css">
-    <script src="voice-config.js"></script>
-    <script src="env-config.js"></script>
-    <script src="voice-system-knowledge.js"></script>
-    <script src="voice-command-logger.js"></script>
-    <script src="voice-control.js"></script>
-    <script src="voice-ui.js"></script>
-    <script src="voice-log-ui.js"></script>
-    <script src="voice-dashboard-bridge.js"></script>
+    <link rel="stylesheet" href="voice-control.css?v=2">
+    <link rel="stylesheet" href="voice-log.css?v=2">
+    <script src="voice-config.js?v=2"></script>
+    <script src="env-config.js?v=2"></script>
+    <script src="voice-system-knowledge.js?v=2"></script>
+    <script src="voice-command-logger.js?v=2"></script>
+    <script src="voice-control.js?v=2"></script>
+    <script src="voice-ui.js?v=2"></script>
+    <script src="voice-log-ui.js?v=2"></script>
+    <script src="voice-dashboard-bridge.js?v=2"></script>
     <script>
-        // Initialize voice control when dashboard is ready
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Wait a moment for dashboard to initialize
-            setTimeout(async () => {
-                try {
-                    console.log('🎤 Starting voice control initialization...');
+        // Voice control initialization function (called after login)
+        window.initializeVoiceControl = async function() {
+            try {
+                console.log('🎤 Starting voice control initialization...');
 
-                    // Initialize voice control
-                    const voiceInitialized = await voiceControl.initialize();
+                // Initialize voice control
+                const voiceInitialized = await voiceControl.initialize();
 
-                    if (voiceInitialized) {
-                        // Initialize UI
-                        voiceUI.initialize();
+                if (voiceInitialized) {
+                    // Initialize UI
+                    voiceUI.initialize();
 
-                        // Initialize log UI
-                        voiceLogUI.initialize();
+                    // Initialize log UI
+                    voiceLogUI.initialize();
 
-                        // Initialize dashboard bridge
-                        await voiceDashboardBridge.initialize();
+                    // Initialize dashboard bridge
+                    await voiceDashboardBridge.initialize();
 
-                        console.log('✅ Voice control system ready!');
-                        console.log('💡 Click the microphone button to speak');
-                    } else {
-                        console.warn('⚠️ Voice control initialization failed');
-                    }
-                } catch (error) {
-                    console.error('❌ Voice control error:', error);
+                    console.log('✅ Voice control system ready!');
+                    console.log('💡 Hold the microphone button to speak');
+                } else {
+                    console.warn('⚠️ Voice control initialization failed');
                 }
-            }, 1000);
-        });
+            } catch (error) {
+                console.error('❌ Voice control error:', error);
+            }
+        };
     </script>
 
     <!-- Mobile Footer Navigation -->
