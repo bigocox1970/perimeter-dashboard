@@ -53,6 +53,15 @@ class VoiceControl {
                 throw new Error('Browser does not support audio recording');
             }
 
+            // DEBUG: Show what STT and TTS we're using
+            const useBrowserSTT = envConfig.getBool('USE_BROWSER_STT', false);
+            const ttsProvider = envConfig.get('TTS_PROVIDER', 'elevenlabs');
+            console.log('🔧 DEBUG - VOICE CONFIG:');
+            console.log('   USE_BROWSER_STT:', useBrowserSTT);
+            console.log('   TTS_PROVIDER:', ttsProvider);
+            console.log('   Will use:', useBrowserSTT ? 'BROWSER Speech Recognition' : 'OPENAI WHISPER');
+            console.log('   Will use:', ttsProvider === 'elevenlabs' ? 'ELEVENLABS TTS' : 'BROWSER TTS');
+
             console.log('✅ Voice Control System initialized successfully');
             return true;
         } catch (error) {
