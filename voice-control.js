@@ -155,16 +155,28 @@ class VoiceControl {
         }
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        // Create new instance each time to avoid state issues
+        if (this.recognition) {
+            try {
+                this.recognition.abort();
+            } catch (e) {
+                // Ignore errors when aborting
+            }
+        }
+
         this.recognition = new SpeechRecognition();
 
         this.recognition.continuous = false;
         this.recognition.interimResults = false;
+        this.recognition.maxAlternatives = 1;
         this.recognition.lang = envConfig.get('VOICE_LANGUAGE', 'en-GB');
 
         this.recognition.onstart = () => {
             this.isListening = true;
-            this.updateStatus('listening', 'Listening...');
+            this.updateStatus('listening', 'Listening... Speak now');
             console.log('🎤 Browser speech recognition started');
+            console.log('🎯 Speak clearly and wait for processing');
         };
 
         this.recognition.onresult = async (event) => {
@@ -187,14 +199,24 @@ class VoiceControl {
             this.isListening = false;
 
             let message = 'Sorry, I had trouble hearing you.';
+            let shouldSpeak = true;
+
             if (event.error === 'no-speech') {
-                message = 'No speech detected. Please try again.';
+                message = 'No speech detected. Please speak louder or hold the button longer.';
             } else if (event.error === 'not-allowed') {
-                message = 'Microphone access denied. Please allow microphone access.';
+                message = 'Microphone access denied. Please allow microphone access in your browser settings.';
+            } else if (event.error === 'aborted') {
+                // Don't speak for aborted - user likely interrupted
+                shouldSpeak = false;
+                message = 'Cancelled';
+            } else if (event.error === 'network') {
+                message = 'Network error. Please check your internet connection.';
             }
 
             this.updateStatus('error', message);
-            await this.speak(message);
+            if (shouldSpeak) {
+                await this.speak(message);
+            }
         };
 
         this.recognition.onend = () => {
