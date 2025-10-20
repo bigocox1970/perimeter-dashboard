@@ -135,6 +135,26 @@ class VoiceCommandLogger {
         }
     }
 
+    // Log TTS (Text-to-Speech) events for debugging
+    logTTS(provider, status, details = {}) {
+        const entry = {
+            type: 'tts_debug',
+            provider, // 'elevenlabs' or 'browser'
+            status, // 'attempting', 'success', 'failed', 'blocked'
+            ...details
+        };
+
+        // Add to current conversation if active
+        if (this.currentConversation) {
+            this.addConversationStep(entry);
+        }
+
+        // Also log standalone for visibility
+        this.log('tts_debug', entry);
+
+        console.log(`🔊 TTS Log [${provider}] ${status}:`, details);
+    }
+
     // Get all logs
     getAllLogs() {
         return this.logs;
@@ -147,10 +167,12 @@ class VoiceCommandLogger {
 
     // Get statistics
     getStats() {
-        const total = this.logs.length;
-        const success = this.logs.filter(l => l.type === 'success').length;
-        const unhandled = this.logs.filter(l => l.type === 'unhandled').length;
-        const errors = this.logs.filter(l => l.type === 'error').length;
+        // Filter out tts_debug from stats (they're just debugging info)
+        const commandLogs = this.logs.filter(l => l.type !== 'tts_debug');
+        const total = commandLogs.length;
+        const success = commandLogs.filter(l => l.type === 'success').length;
+        const unhandled = commandLogs.filter(l => l.type === 'unhandled').length;
+        const errors = commandLogs.filter(l => l.type === 'error').length;
 
         return {
             total,

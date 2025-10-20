@@ -179,13 +179,64 @@ class VoiceLogUI {
         `).join('');
     }
 
+    // Render TTS debug entry
+    renderTTSDebugEntry(log) {
+        const statusColors = {
+            attempting: '#3498db',
+            api_success: '#2ecc71',
+            success: '#27ae60',
+            blocked: '#e74c3c',
+            failed: '#c0392b'
+        };
+
+        const statusIcons = {
+            attempting: '🔄',
+            api_success: '✓',
+            success: '✅',
+            blocked: '🚫',
+            failed: '❌'
+        };
+
+        const statusColor = statusColors[log.status] || '#95a5a6';
+        const statusIcon = statusIcons[log.status] || '🔊';
+        const providerName = log.provider === 'elevenlabs' ? 'ElevenLabs' : 'Browser TTS';
+
+        return `
+            <div class="voice-log-entry tts-debug" style="border-left: 4px solid ${statusColor}">
+                <div class="log-entry-header">
+                    <span class="log-entry-icon">${statusIcon}</span>
+                    <span class="log-entry-transcript"><strong>${providerName}</strong> - ${log.status}</span>
+                    <span class="log-entry-time">${this.formatTime(log.timestamp)}</span>
+                </div>
+                <div class="log-entry-details">
+                    ${log.text ? `<div><strong>Text:</strong> "${log.text}"</div>` : ''}
+                    ${log.blobSize ? `<div><strong>Audio size:</strong> ${(log.blobSize / 1024).toFixed(1)} KB (${log.blobType || 'unknown'})</div>` : ''}
+                    ${log.reason ? `<div><strong>Reason:</strong> ${log.reason}</div>` : ''}
+                    ${log.message ? `<div><strong>Message:</strong> ${log.message}</div>` : ''}
+                    ${log.error ? `<div style="color: #e74c3c"><strong>Error:</strong> ${log.error}</div>` : ''}
+                    ${log.willFallback ? `<div style="color: #f39c12"><strong>⚠️ Falling back to Browser TTS</strong></div>` : ''}
+                    ${log.voice ? `<div><strong>Voice:</strong> ${log.voice}</div>` : ''}
+                    ${log.status === 'api_success' ? `<div style="color: #27ae60">✓ Audio received from API</div>` : ''}
+                    ${log.status === 'success' ? `<div style="color: #27ae60">✓ Playback completed successfully</div>` : ''}
+                    ${log.status === 'blocked' ? `<div style="color: #e74c3c">⚠️ Audio playback blocked - likely autoplay policy</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
     // Render a single log entry
     renderLogEntry(log) {
         const typeIcon = {
             success: '✅',
             unhandled: '⚠️',
-            error: '❌'
+            error: '❌',
+            tts_debug: '🔊'
         };
+
+        // Special rendering for TTS debug logs
+        if (log.type === 'tts_debug') {
+            return this.renderTTSDebugEntry(log);
+        }
 
         const isConversation = log.steps && log.steps.length > 0;
         const displayTranscript = log.originalTranscript || log.transcript;

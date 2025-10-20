@@ -860,6 +860,11 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('   Text:', text);
         this.showDebugOverlay('TTS: ELEVENLABS\nCalling API...');
 
+        // Log attempt
+        if (typeof voiceLogger !== 'undefined') {
+            voiceLogger.logTTS('elevenlabs', 'attempting', { text: text.substring(0, 50) });
+        }
+
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${envConfig.get('ELEVENLABS_VOICE_ID')}`, {
             method: 'POST',
             headers: {
@@ -879,6 +884,12 @@ Be conversational but concise. UK English spelling and phrasing.`
 
         if (!response.ok) {
             console.error('❌ ElevenLabs API failed:', response.status);
+            if (typeof voiceLogger !== 'undefined') {
+                voiceLogger.logTTS('elevenlabs', 'failed', {
+                    reason: 'API error',
+                    status: response.status
+                });
+            }
             throw new Error('ElevenLabs TTS failed');
         }
 
@@ -886,19 +897,41 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('✅ Got audio blob:', audioBlob.size, 'bytes');
         this.showDebugOverlay(`TTS: ELEVENLABS\nGot ${audioBlob.size} bytes\nPlaying...`);
 
+        // Log successful API response
+        if (typeof voiceLogger !== 'undefined') {
+            voiceLogger.logTTS('elevenlabs', 'api_success', {
+                blobSize: audioBlob.size,
+                blobType: audioBlob.type
+            });
+        }
+
         const audioUrl = URL.createObjectURL(audioBlob);
         console.log('✅ Created blob URL:', audioUrl);
 
         const audio = new Audio(audioUrl);
+        audio.volume = 1.0; // Ensure volume is max
 
         return new Promise((resolve, reject) => {
             audio.onended = () => {
-                console.log('✅ Audio playback ended');
+                console.log('✅ Audio playback ended successfully');
+                this.showDebugOverlay('ELEVENLABS\nPLAYED OK!');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('elevenlabs', 'success', {
+                        message: 'Audio played successfully'
+                    });
+                }
                 URL.revokeObjectURL(audioUrl);
                 resolve();
             };
             audio.onerror = (error) => {
-                console.error('❌ Audio error:', error);
+                console.error('❌ Audio element error:', error);
+                this.showDebugOverlay('ELEVENLABS\nAUDIO ERROR!');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('elevenlabs', 'failed', {
+                        reason: 'Audio element error',
+                        error: error.toString()
+                    });
+                }
                 URL.revokeObjectURL(audioUrl);
                 reject(error);
             };
@@ -907,15 +940,21 @@ Be conversational but concise. UK English spelling and phrasing.`
             console.log('▶️ Attempting to play audio...');
             audio.play().catch((error) => {
                 console.error('❌ Audio play() failed:', error.name, error.message);
+                this.showDebugOverlay(`ELEVENLABS BLOCKED!\n${error.name}\nUsing browser TTS`);
                 URL.revokeObjectURL(audioUrl);
-                // Only ignore autoplay policy errors, reject others (like blob URL security errors)
-                if (error.name === 'NotAllowedError') {
-                    console.warn('⚠️ Autoplay blocked - audio silenced');
-                    resolve(); // Autoplay blocked - continue silently
-                } else {
-                    console.error('❌ Fatal audio error - will try browser TTS');
-                    reject(error); // Other errors should trigger fallback to browser TTS
+
+                // Log the block
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('elevenlabs', 'blocked', {
+                        reason: error.name,
+                        message: error.message,
+                        willFallback: true
+                    });
                 }
+
+                // IMPORTANT: Reject on ANY error so we fall back to browser TTS
+                // Don't silently continue - user wants to hear audio!
+                reject(error);
             });
         });
     }
@@ -925,6 +964,11 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('🔊 DEBUG - Using Browser TTS');
         console.log('   Text:', text);
         this.showDebugOverlay('TTS: BROWSER\nSpeaking...');
+
+        // Log browser TTS usage
+        if (typeof voiceLogger !== 'undefined') {
+            voiceLogger.logTTS('browser', 'attempting', { text: text.substring(0, 50) });
+        }
 
         return new Promise((resolve, reject) => {
             const utterance = new SpeechSynthesisUtterance(text);
@@ -949,10 +993,24 @@ Be conversational but concise. UK English spelling and phrasing.`
 
             utterance.onend = () => {
                 console.log('✅ Browser TTS finished');
+                this.showDebugOverlay('BROWSER TTS\nCOMPLETE!');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('browser', 'success', {
+                        message: 'Browser TTS played successfully',
+                        voice: voice ? voice.name : 'default'
+                    });
+                }
                 resolve();
             };
             utterance.onerror = (error) => {
                 console.error('❌ Browser TTS error:', error);
+                this.showDebugOverlay('BROWSER TTS\nERROR!');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('browser', 'failed', {
+                        reason: 'Browser TTS error',
+                        error: error.toString()
+                    });
+                }
                 reject(error);
             };
 
