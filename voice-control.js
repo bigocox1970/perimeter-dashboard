@@ -838,6 +838,9 @@ Be conversational but concise. UK English spelling and phrasing.`
 
     // ElevenLabs TTS
     async speakElevenLabs(text) {
+        console.log('🔊 DEBUG - Using ElevenLabs TTS');
+        console.log('   Text:', text);
+
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${envConfig.get('ELEVENLABS_VOICE_ID')}`, {
             method: 'POST',
             headers: {
@@ -856,30 +859,41 @@ Be conversational but concise. UK English spelling and phrasing.`
         });
 
         if (!response.ok) {
+            console.error('❌ ElevenLabs API failed:', response.status);
             throw new Error('ElevenLabs TTS failed');
         }
 
         const audioBlob = await response.blob();
+        console.log('✅ Got audio blob:', audioBlob.size, 'bytes');
+
         const audioUrl = URL.createObjectURL(audioBlob);
+        console.log('✅ Created blob URL:', audioUrl);
+
         const audio = new Audio(audioUrl);
 
         return new Promise((resolve, reject) => {
             audio.onended = () => {
+                console.log('✅ Audio playback ended');
                 URL.revokeObjectURL(audioUrl);
                 resolve();
             };
             audio.onerror = (error) => {
+                console.error('❌ Audio error:', error);
                 URL.revokeObjectURL(audioUrl);
                 reject(error);
             };
 
             // Try to play, but properly handle errors
+            console.log('▶️ Attempting to play audio...');
             audio.play().catch((error) => {
+                console.error('❌ Audio play() failed:', error.name, error.message);
                 URL.revokeObjectURL(audioUrl);
                 // Only ignore autoplay policy errors, reject others (like blob URL security errors)
                 if (error.name === 'NotAllowedError') {
+                    console.warn('⚠️ Autoplay blocked - audio silenced');
                     resolve(); // Autoplay blocked - continue silently
                 } else {
+                    console.error('❌ Fatal audio error - will try browser TTS');
                     reject(error); // Other errors should trigger fallback to browser TTS
                 }
             });
@@ -888,25 +902,40 @@ Be conversational but concise. UK English spelling and phrasing.`
 
     // Browser TTS fallback
     async speakBrowser(text) {
+        console.log('🔊 DEBUG - Using Browser TTS');
+        console.log('   Text:', text);
+
         return new Promise((resolve, reject) => {
             const utterance = new SpeechSynthesisUtterance(text);
 
             // Configure voice
             const voices = speechSynthesis.getVoices();
+            console.log('   Available voices:', voices.length);
+
             const preferredVoice = envConfig.get('BROWSER_TTS_VOICE');
             const voice = voices.find(v => v.name.includes(preferredVoice)) ||
                          voices.find(v => v.lang.startsWith('en-GB')) ||
                          voices[0];
 
-            if (voice) utterance.voice = voice;
+            if (voice) {
+                utterance.voice = voice;
+                console.log('   Using voice:', voice.name);
+            }
 
             utterance.rate = envConfig.getNumber('TTS_SPEECH_RATE', 1.0);
             utterance.pitch = envConfig.getNumber('TTS_SPEECH_PITCH', 1.0);
             utterance.volume = envConfig.getNumber('TTS_SPEECH_VOLUME', 1.0);
 
-            utterance.onend = resolve;
-            utterance.onerror = reject;
+            utterance.onend = () => {
+                console.log('✅ Browser TTS finished');
+                resolve();
+            };
+            utterance.onerror = (error) => {
+                console.error('❌ Browser TTS error:', error);
+                reject(error);
+            };
 
+            console.log('▶️ Speaking with browser TTS...');
             speechSynthesis.speak(utterance);
         });
     }
