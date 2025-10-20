@@ -111,6 +111,13 @@
             loadCustomerData();
             // Initialize statistics visibility based on screen size
             initializeStatsVisibility();
+
+            // Initialize voice control after login
+            if (typeof window.initializeVoiceControl === 'function') {
+                setTimeout(() => {
+                    window.initializeVoiceControl();
+                }, 500);
+            }
         }
 
         // Check password
