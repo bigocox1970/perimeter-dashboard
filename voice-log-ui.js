@@ -210,6 +210,7 @@ class VoiceLogUI {
                 </div>
                 <div class="log-entry-details">
                     ${log.method ? `<div><strong>Method:</strong> ${log.method}</div>` : ''}
+                    ${log.usedPreUnlocked !== undefined ? `<div style="color: ${log.usedPreUnlocked ? '#27ae60' : '#e74c3c'}"><strong>Pre-unlocked audio:</strong> ${log.usedPreUnlocked ? 'YES ✓' : 'NO (may fail autoplay)'}</div>` : ''}
                     ${log.text ? `<div><strong>Text:</strong> "${log.text}"</div>` : ''}
                     ${log.blobSize ? `<div><strong>Audio size:</strong> ${(log.blobSize / 1024).toFixed(1)} KB (${log.blobType || 'unknown'})</div>` : ''}
                     ${log.reason ? `<div><strong>Reason:</strong> ${log.reason}</div>` : ''}

@@ -14,6 +14,7 @@ class VoiceControl {
         this.transcriptCallback = null;
         this.audioUnlocked = false;
         this.debugOverlay = null;
+        this.preUnlockedAudio = null; // Audio element created during user interaction
     }
 
     // Show debug info on screen (for mobile)
@@ -112,6 +113,16 @@ class VoiceControl {
         if (this.isListening) {
             console.warn('Already listening');
             return;
+        }
+
+        // CRITICAL: Create audio element NOW during user interaction
+        // This "unlocks" audio playback for later use
+        try {
+            this.preUnlockedAudio = new Audio();
+            this.preUnlockedAudio.volume = 1.0;
+            console.log('✅ Pre-created audio element during user interaction');
+        } catch (e) {
+            console.warn('⚠️ Failed to pre-create audio:', e);
         }
 
         // Check if we should use browser Web Speech API as fallback
@@ -908,8 +919,23 @@ Be conversational but concise. UK English spelling and phrasing.`
         const audioUrl = URL.createObjectURL(audioBlob);
         console.log('✅ Created blob URL:', audioUrl);
 
-        const audio = new Audio(audioUrl);
+        // Use pre-unlocked audio element if available (created during button press)
+        // This bypasses autoplay restrictions on mobile
+        const audio = this.preUnlockedAudio || new Audio();
+        audio.src = audioUrl; // Set source on existing element
         audio.volume = 1.0; // Ensure volume is max
+
+        if (this.preUnlockedAudio) {
+            console.log('✅ Using pre-unlocked audio element (bypassing autoplay policy)');
+            if (typeof voiceLogger !== 'undefined') {
+                voiceLogger.logTTS('elevenlabs', 'attempting', {
+                    method: 'pre_unlocked_audio',
+                    text: text.substring(0, 50)
+                });
+            }
+        } else {
+            console.warn('⚠️ No pre-unlocked audio, may be blocked by autoplay');
+        }
 
         return new Promise((resolve, reject) => {
             audio.onended = () => {
@@ -917,10 +943,12 @@ Be conversational but concise. UK English spelling and phrasing.`
                 this.showDebugOverlay('ELEVENLABS\nPLAYED OK!');
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.logTTS('elevenlabs', 'success', {
-                        message: 'Audio played successfully'
+                        message: 'Audio played successfully',
+                        usedPreUnlocked: !!this.preUnlockedAudio
                     });
                 }
                 URL.revokeObjectURL(audioUrl);
+                this.preUnlockedAudio = null; // Clear for next use
                 resolve();
             };
             audio.onerror = (event) => {
@@ -1015,8 +1043,14 @@ Be conversational but concise. UK English spelling and phrasing.`
                 const dataUri = reader.result;
                 console.log('✅ Created data URI, length:', dataUri.length);
 
-                const audio = new Audio(dataUri);
+                // Try to use pre-unlocked audio for data URI too
+                const audio = this.preUnlockedAudio || new Audio();
+                audio.src = dataUri;
                 audio.volume = 1.0;
+
+                if (this.preUnlockedAudio) {
+                    console.log('✅ Using pre-unlocked audio for data URI');
+                }
 
                 audio.onended = () => {
                     console.log('✅ Data URI audio playback ended successfully');
@@ -1024,9 +1058,11 @@ Be conversational but concise. UK English spelling and phrasing.`
                     if (typeof voiceLogger !== 'undefined') {
                         voiceLogger.logTTS('elevenlabs', 'success', {
                             method: 'data_uri_fallback',
-                            message: 'Audio played via data URI'
+                            message: 'Audio played via data URI',
+                            usedPreUnlocked: !!this.preUnlockedAudio
                         });
                     }
+                    this.preUnlockedAudio = null; // Clear for next use
                     resolve();
                 };
 
