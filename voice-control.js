@@ -128,10 +128,17 @@ class VoiceControl {
         // Check if we should use browser Web Speech API as fallback
         const useBrowserSTT = envConfig.getBool('USE_BROWSER_STT', false);
 
+        console.log('🎤 STT PROVIDER CHECK:');
+        console.log('   USE_BROWSER_STT config:', useBrowserSTT);
+        console.log('   Will use:', useBrowserSTT ? 'BROWSER (INACCURATE)' : 'OPENAI WHISPER (ACCURATE)');
+
         if (useBrowserSTT) {
+            console.log('⚠️ Using browser speech recognition');
             this.startBrowserSpeechRecognition();
             return;
         }
+
+        console.log('✅ Using OpenAI Whisper for transcription');
 
         try {
             this.updateStatus('requesting-permission', 'Requesting microphone access...');
@@ -233,6 +240,16 @@ class VoiceControl {
 
                 // Stop listening after getting final result
                 this.stopListening();
+
+                // Log which STT provider was used
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.log('stt_used', {
+                        provider: 'Browser Speech Recognition',
+                        transcript: transcript,
+                        accurate: false,
+                        confidence: confidence
+                    });
+                }
 
                 if (this.transcriptCallback) {
                     this.transcriptCallback(transcript);
@@ -381,6 +398,15 @@ class VoiceControl {
             }
 
             console.log('✅ Transcript:', transcript);
+
+            // Log which STT provider was used
+            if (typeof voiceLogger !== 'undefined') {
+                voiceLogger.log('stt_used', {
+                    provider: 'OpenAI Whisper',
+                    transcript: transcript,
+                    accurate: true
+                });
+            }
 
             if (this.transcriptCallback) {
                 this.transcriptCallback(transcript);
@@ -871,10 +897,7 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('   Text:', text);
         this.showDebugOverlay('TTS: ELEVENLABS\nCalling API...');
 
-        // Log attempt
-        if (typeof voiceLogger !== 'undefined') {
-            voiceLogger.logTTS('elevenlabs', 'attempting', { text: text.substring(0, 50) });
-        }
+        // Don't log every attempt - only log success/failure to reduce spam
 
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${envConfig.get('ELEVENLABS_VOICE_ID')}`, {
             method: 'POST',
@@ -908,13 +931,7 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('✅ Got audio blob:', audioBlob.size, 'bytes');
         this.showDebugOverlay(`TTS: ELEVENLABS\nGot ${audioBlob.size} bytes\nPlaying...`);
 
-        // Log successful API response
-        if (typeof voiceLogger !== 'undefined') {
-            voiceLogger.logTTS('elevenlabs', 'api_success', {
-                blobSize: audioBlob.size,
-                blobType: audioBlob.type
-            });
-        }
+        // Don't log api_success - only log final playback result to reduce spam
 
         const audioUrl = URL.createObjectURL(audioBlob);
         console.log('✅ Created blob URL:', audioUrl);
@@ -927,17 +944,33 @@ Be conversational but concise. UK English spelling and phrasing.`
 
         if (this.preUnlockedAudio) {
             console.log('✅ Using pre-unlocked audio element (bypassing autoplay policy)');
-            if (typeof voiceLogger !== 'undefined') {
-                voiceLogger.logTTS('elevenlabs', 'attempting', {
-                    method: 'pre_unlocked_audio',
-                    text: text.substring(0, 50)
-                });
-            }
         } else {
             console.warn('⚠️ No pre-unlocked audio, may be blocked by autoplay');
         }
 
         return new Promise((resolve, reject) => {
+            let timeoutId = null;
+
+            const cleanup = () => {
+                if (timeoutId) clearTimeout(timeoutId);
+                URL.revokeObjectURL(audioUrl);
+                this.preUnlockedAudio = null;
+            };
+
+            // Timeout after 30 seconds if audio never finishes
+            timeoutId = setTimeout(() => {
+                console.error('❌ Audio playback timeout - forcing completion');
+                this.showDebugOverlay('AUDIO TIMEOUT!\nUsing browser TTS');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('elevenlabs', 'failed', {
+                        reason: 'Playback timeout',
+                        message: 'Audio never finished playing'
+                    });
+                }
+                cleanup();
+                reject(new Error('Audio playback timeout'));
+            }, 30000);
+
             audio.onended = () => {
                 console.log('✅ Audio playback ended successfully');
                 this.showDebugOverlay('ELEVENLABS\nPLAYED OK!');
@@ -947,8 +980,7 @@ Be conversational but concise. UK English spelling and phrasing.`
                         usedPreUnlocked: !!this.preUnlockedAudio
                     });
                 }
-                URL.revokeObjectURL(audioUrl);
-                this.preUnlockedAudio = null; // Clear for next use
+                cleanup();
                 resolve();
             };
             audio.onerror = (event) => {
@@ -993,7 +1025,7 @@ Be conversational but concise. UK English spelling and phrasing.`
                     });
                 }
 
-                URL.revokeObjectURL(audioUrl);
+                cleanup();
 
                 // Try data URI as fallback before giving up completely
                 this.tryDataURIPlayback(audioBlob, text).then(resolve).catch(() => {
@@ -1007,7 +1039,6 @@ Be conversational but concise. UK English spelling and phrasing.`
             audio.play().catch((error) => {
                 console.error('❌ Audio play() failed:', error.name, error.message);
                 this.showDebugOverlay(`ELEVENLABS BLOCKED!\n${error.name}\nUsing browser TTS`);
-                URL.revokeObjectURL(audioUrl);
 
                 // Log the block
                 if (typeof voiceLogger !== 'undefined') {
@@ -1017,6 +1048,8 @@ Be conversational but concise. UK English spelling and phrasing.`
                         willFallback: true
                     });
                 }
+
+                cleanup();
 
                 // IMPORTANT: Reject on ANY error so we fall back to browser TTS
                 // Don't silently continue - user wants to hear audio!
@@ -1028,13 +1061,7 @@ Be conversational but concise. UK English spelling and phrasing.`
     // Try playing audio using data URI instead of blob URL
     async tryDataURIPlayback(audioBlob, text) {
         console.log('🔄 Trying data URI playback as fallback...');
-
-        if (typeof voiceLogger !== 'undefined') {
-            voiceLogger.logTTS('elevenlabs', 'attempting', {
-                method: 'data_uri_fallback',
-                text: text.substring(0, 50)
-            });
-        }
+        // Only log success/failure, not attempts (reduces spam)
 
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -1113,11 +1140,7 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('🔊 DEBUG - Using Browser TTS');
         console.log('   Text:', text);
         this.showDebugOverlay('TTS: BROWSER\nSpeaking...');
-
-        // Log browser TTS usage
-        if (typeof voiceLogger !== 'undefined') {
-            voiceLogger.logTTS('browser', 'attempting', { text: text.substring(0, 50) });
-        }
+        // Only log success/failure, not attempts (reduces spam)
 
         return new Promise((resolve, reject) => {
             const utterance = new SpeechSynthesisUtterance(text);

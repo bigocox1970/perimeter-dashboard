@@ -179,6 +179,32 @@ class VoiceLogUI {
         `).join('');
     }
 
+    // Render STT provider entry
+    renderSTTProviderEntry(log) {
+        const isAccurate = log.accurate !== false;
+        const color = isAccurate ? '#27ae60' : '#e74c3c';
+        const icon = isAccurate ? '✅' : '⚠️';
+
+        return `
+            <div class="voice-log-entry stt-provider" style="border-left: 4px solid ${color}; background: ${isAccurate ? '#f0f9f4' : '#fff5f5'}">
+                <div class="log-entry-header">
+                    <span class="log-entry-icon">${icon}</span>
+                    <span class="log-entry-transcript"><strong style="color: ${color}">${log.provider}</strong> - "${log.transcript}"</span>
+                    <span class="log-entry-time">${this.formatTime(log.timestamp)}</span>
+                </div>
+                <div class="log-entry-details">
+                    <div style="color: ${color}">
+                        ${isAccurate
+                            ? '<strong>✓ Using OpenAI Whisper (ACCURATE)</strong>'
+                            : '<strong>⚠️ Using Browser Speech Recognition (INACCURATE - may mishear commands)</strong>'
+                        }
+                    </div>
+                    ${log.confidence !== undefined ? `<div>Confidence: ${(log.confidence * 100).toFixed(0)}%</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
     // Render TTS debug entry
     renderTTSDebugEntry(log) {
         const statusColors = {
@@ -235,8 +261,14 @@ class VoiceLogUI {
             success: '✅',
             unhandled: '⚠️',
             error: '❌',
-            tts_debug: '🔊'
+            tts_debug: '🔊',
+            stt_used: '🎤'
         };
+
+        // Special rendering for STT provider logs
+        if (log.type === 'stt_used') {
+            return this.renderSTTProviderEntry(log);
+        }
 
         // Special rendering for TTS debug logs
         if (log.type === 'tts_debug') {

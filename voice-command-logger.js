@@ -167,8 +167,8 @@ class VoiceCommandLogger {
 
     // Get statistics
     getStats() {
-        // Filter out tts_debug from stats (they're just debugging info)
-        const commandLogs = this.logs.filter(l => l.type !== 'tts_debug');
+        // Filter out tts_debug and stt_used from stats (they're just debugging info)
+        const commandLogs = this.logs.filter(l => l.type !== 'tts_debug' && l.type !== 'stt_used');
         const total = commandLogs.length;
         const success = commandLogs.filter(l => l.type === 'success').length;
         const unhandled = commandLogs.filter(l => l.type === 'unhandled').length;
