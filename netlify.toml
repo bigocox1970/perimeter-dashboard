@@ -9,8 +9,8 @@
 [build.environment]
   # Node version for build script
   NODE_VERSION = "18"
-  # Skip secrets scanning for generated config file (contains API keys intentionally)
-  SECRETS_SCAN_OMIT_PATHS = "voice-config.js"
+  # Disable secrets scanning (voice-config.js intentionally contains API keys)
+  SECRETS_SCAN_ENABLED = "false"
 
 # Redirect rules
 [[redirects]]
