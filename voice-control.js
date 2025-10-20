@@ -62,6 +62,9 @@ class VoiceControl {
             console.log('   Will use:', useBrowserSTT ? 'BROWSER Speech Recognition' : 'OPENAI WHISPER');
             console.log('   Will use:', ttsProvider === 'elevenlabs' ? 'ELEVENLABS TTS' : 'BROWSER TTS');
 
+            // VISIBLE DEBUG - Show on screen
+            this.showDebugOverlay(`STT: ${useBrowserSTT ? 'BROWSER' : 'WHISPER'}\nTTS: ${ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER'}`);
+
             console.log('✅ Voice Control System initialized successfully');
             return true;
         } catch (error) {
@@ -840,6 +843,7 @@ Be conversational but concise. UK English spelling and phrasing.`
     async speakElevenLabs(text) {
         console.log('🔊 DEBUG - Using ElevenLabs TTS');
         console.log('   Text:', text);
+        this.showDebugOverlay('TTS: ELEVENLABS\nCalling API...');
 
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${envConfig.get('ELEVENLABS_VOICE_ID')}`, {
             method: 'POST',
@@ -865,6 +869,7 @@ Be conversational but concise. UK English spelling and phrasing.`
 
         const audioBlob = await response.blob();
         console.log('✅ Got audio blob:', audioBlob.size, 'bytes');
+        this.showDebugOverlay(`TTS: ELEVENLABS\nGot ${audioBlob.size} bytes\nPlaying...`);
 
         const audioUrl = URL.createObjectURL(audioBlob);
         console.log('✅ Created blob URL:', audioUrl);
@@ -904,6 +909,7 @@ Be conversational but concise. UK English spelling and phrasing.`
     async speakBrowser(text) {
         console.log('🔊 DEBUG - Using Browser TTS');
         console.log('   Text:', text);
+        this.showDebugOverlay('TTS: BROWSER\nSpeaking...');
 
         return new Promise((resolve, reject) => {
             const utterance = new SpeechSynthesisUtterance(text);
