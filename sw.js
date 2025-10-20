@@ -1,7 +1,5 @@
-const CACHE_NAME = 'perim-maint-v3';
+const CACHE_NAME = 'perim-maint-v4';
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/manifest.json'
 ];
 
@@ -10,8 +8,8 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
-        // Cache local resources only - external resources cause CORS issues
+        console.log('Opened cache v4');
+        // Only cache manifest - let HTML/JS/CSS fetch fresh
         return cache.addAll(urlsToCache);
       })
       .catch(err => {
@@ -22,22 +20,29 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - network first for JS/CSS, cache only manifest
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+
+  // Never cache JS, CSS, or HTML files - always fetch fresh
+  if (url.pathname.endsWith('.js') ||
+      url.pathname.endsWith('.css') ||
+      url.pathname.endsWith('.html') ||
+      url.pathname === '/') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // For other resources, try cache first
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Return cached version or fetch from network
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
+        return response || fetch(event.request);
+      })
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and take control immediately
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -49,6 +54,9 @@ self.addEventListener('activate', event => {
           }
         })
       );
+    }).then(() => {
+      // Take control of all pages immediately
+      return self.clients.claim();
     })
   );
 });
