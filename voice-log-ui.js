@@ -29,11 +29,11 @@ class VoiceLogUI {
             <div class="voice-log-header">
                 <h3>🎤 Voice Command Log</h3>
                 <div class="voice-log-actions">
-                    <button class="voice-log-btn" onclick="voiceLogUI.exportLogs()" title="Export logs">
+                    <button class="voice-log-btn" onclick="voiceLogUI.exportLogs()" title="Export logs" style="padding: 10px 20px; font-size: 16px;">
                         📥 Export
                     </button>
-                    <button class="voice-log-btn" onclick="voiceLogUI.clearLogs()" title="Clear all logs">
-                        🗑️ Clear
+                    <button class="voice-log-btn" onclick="voiceLogUI.clearLogs()" title="Clear all logs" style="padding: 10px 20px; font-size: 16px; background: #e74c3c; color: white;">
+                        🗑️ Clear Logs
                     </button>
                 </div>
             </div>

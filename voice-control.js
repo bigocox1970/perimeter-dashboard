@@ -143,6 +143,20 @@ class VoiceControl {
         try {
             this.updateStatus('requesting-permission', 'Requesting microphone access...');
 
+            // Check if MediaRecorder is supported
+            if (!window.MediaRecorder) {
+                console.error('❌ MediaRecorder not supported - falling back to browser STT');
+                this.showDebugOverlay('MediaRecorder\nNOT SUPPORTED!\nUsing browser STT');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.log('error', {
+                        error: 'MediaRecorder not supported on this browser',
+                        fallback: 'Using browser speech recognition instead'
+                    });
+                }
+                this.startBrowserSpeechRecognition();
+                return;
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
                     echoCancellation: true,
@@ -152,9 +166,25 @@ class VoiceControl {
             });
 
             this.audioChunks = [];
-            this.mediaRecorder = new MediaRecorder(stream, {
-                mimeType: 'audio/webm'
-            });
+
+            // Check supported MIME types
+            let mimeType = 'audio/webm';
+            if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                console.warn('⚠️ audio/webm not supported, trying alternatives');
+                if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    mimeType = 'audio/mp4';
+                } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
+                    mimeType = 'audio/ogg';
+                } else {
+                    console.error('❌ No supported audio format - falling back to browser STT');
+                    stream.getTracks().forEach(track => track.stop());
+                    this.startBrowserSpeechRecognition();
+                    return;
+                }
+            }
+
+            console.log('✅ Using MIME type:', mimeType);
+            this.mediaRecorder = new MediaRecorder(stream, { mimeType });
 
             this.mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
