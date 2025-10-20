@@ -626,14 +626,14 @@ Be conversational but concise. UK English spelling and phrasing.`
                 voiceLogger.startConversation(transcript, intent, action);
             }
 
-            // Handle unclear commands
-            if (intent === 'unclear' || intent === 'help') {
+            // Handle unclear commands, help requests, and conversational intents (greetings, thanks, etc.)
+            if (intent === 'unclear' || intent === 'help' || !action || action === '' || action === 'none') {
                 await this.speak(response);
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.addConversationStep({
                         type: 'info',
                         transcript,
-                        action: 'help',
+                        action: intent || 'conversational',
                         result: response
                     });
                     voiceLogger.endConversation({ success: true, message: response });
