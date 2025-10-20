@@ -134,6 +134,8 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 3. Launch from your home screen for full PWA experience
 
 ### **Voice Control Setup**
+
+#### **Local Development**
 1. Copy `voice-config.example.js` to `voice-config.js`
 2. Add your API keys:
    - `OPENAI_API_KEY` (required for AI understanding)
@@ -143,6 +145,17 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 5. Look for the purple microphone button (bottom right)
 6. Click and hold to speak, release to process
 7. See [VOICE-CONTROL-GUIDE.md](VOICE-CONTROL-GUIDE.md) for complete instructions
+
+#### **Production Deployment (Netlify)**
+1. Go to your Netlify dashboard → Site settings → Environment variables
+2. Add these required variables:
+   - `OPENAI_API_KEY` - Your OpenAI API key
+   - `ELEVENLABS_API_KEY` - Your ElevenLabs API key (optional)
+3. Optional environment variables (see `.env.example` for all options):
+   - `USE_BROWSER_STT=true` - Use browser speech recognition (recommended)
+   - `TTS_PROVIDER=elevenlabs` - Voice provider (elevenlabs or browser)
+   - `VOICE_LANGUAGE=en-GB` - Voice recognition language
+4. Deploy - `voice-config.js` is auto-generated from env vars during build
 
 **Note:** Voice control works in modern browsers (Chrome, Safari, Edge). The app uses browser speech recognition by default (`USE_BROWSER_STT: true`) to avoid OpenAI API costs for transcription.
 
