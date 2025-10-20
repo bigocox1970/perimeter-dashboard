@@ -167,8 +167,9 @@ class VoiceControl {
 
         this.recognition = new SpeechRecognition();
 
-        this.recognition.continuous = false;
-        this.recognition.interimResults = false;
+        // Continuous mode - keeps listening until manually stopped
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
         this.recognition.maxAlternatives = 1;
         this.recognition.lang = envConfig.get('VOICE_LANGUAGE', 'en-GB');
 
@@ -180,18 +181,35 @@ class VoiceControl {
         };
 
         this.recognition.onresult = async (event) => {
-            const transcript = event.results[0][0].transcript;
-            const confidence = event.results[0][0].confidence;
+            // Get the latest result (most recent speech)
+            const resultIndex = event.resultIndex;
+            const result = event.results[resultIndex];
 
-            console.log('📝 Transcript:', transcript);
-            console.log('🎯 Confidence:', confidence);
+            // Only process final results
+            if (result.isFinal) {
+                const transcript = result[0].transcript;
+                const confidence = result[0].confidence;
 
-            if (this.transcriptCallback) {
-                this.transcriptCallback(transcript);
+                console.log('📝 Final Transcript:', transcript);
+                console.log('🎯 Confidence:', confidence);
+
+                // Stop listening after getting final result
+                this.stopListening();
+
+                if (this.transcriptCallback) {
+                    this.transcriptCallback(transcript);
+                }
+
+                this.updateStatus('processing', 'Processing command...');
+                await this.processCommand(transcript);
+            } else {
+                // Show interim results
+                const transcript = result[0].transcript;
+                console.log('📝 Interim:', transcript);
+                if (this.transcriptCallback) {
+                    this.transcriptCallback(transcript + '...');
+                }
             }
-
-            this.updateStatus('processing', 'Processing command...');
-            await this.processCommand(transcript);
         };
 
         this.recognition.onerror = async (event) => {
