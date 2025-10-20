@@ -8,19 +8,27 @@ Your Perimeter Dashboard now has full two-way voice control powered by OpenAI Wh
 
 ### 1. API Keys Setup
 
-Make sure you've added your API keys to the `.env` file:
-
-```env
-OPENAI_API_KEY=sk-proj-...
-ELEVENLABS_API_KEY=sk_...
+**Local Development:**
+Copy `voice-config.example.js` to `voice-config.js` and add your API keys:
+```javascript
+OPENAI_API_KEY: 'sk-proj-...',
+ELEVENLABS_API_KEY: 'sk_...'
 ```
+
+**Production (Netlify):**
+Add environment variables in Netlify dashboard:
+- `OPENAI_API_KEY` - Required
+- `ELEVENLABS_API_KEY` - Optional (falls back to browser TTS)
 
 ### 2. Using Voice Control
 
 1. **Look for the microphone button** - Bottom right corner (purple/gradient circle)
 2. **Hold to speak** - Press and hold the mic button while speaking
 3. **Release to process** - Let go when done speaking
-4. **Listen to response** - The assistant will speak back to you
+4. **Wait for processing** - Audio is sent to OpenAI Whisper for transcription
+5. **Listen to response** - The assistant speaks back using ElevenLabs TTS
+
+**Note:** Hold-to-talk interface works on both desktop and mobile browsers.
 
 ## Supported Commands
 
@@ -114,12 +122,15 @@ The AI understands natural variations:
 - "How many systems on hire?" = "How many systems are currently on hire?" = "Count on hire systems"
 - "What's P1 status?" = "Tell me about P1" = "Show me P1 information"
 
-### 🔊 Audio Quality
+### 🔊 Audio Quality & Transcription
 
 - Use in a quiet environment
 - Speak clearly at normal volume
-- Hold button until you finish speaking
+- Hold button **before** you start speaking and **release after** you finish
+- **Speak in phrases, not single words** - "How many systems on hire?" works better than "hello"
+- Longer queries are more accurately transcribed than short greetings
 - Don't speak too fast
+- If transcription is incorrect, try speaking louder and more clearly
 
 ### 🔄 Confirmations
 

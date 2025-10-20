@@ -138,26 +138,31 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 #### **Local Development**
 1. Copy `voice-config.example.js` to `voice-config.js`
 2. Add your API keys:
-   - `OPENAI_API_KEY` (required for AI understanding)
-   - `ELEVENLABS_API_KEY` (optional - for premium voice responses)
-3. Optional: Copy `.env.example` to `.env` for additional settings
-4. Refresh the page
-5. Look for the purple microphone button (bottom right)
-6. Click and hold to speak, release to process
+   - `OPENAI_API_KEY` (required for AI understanding and speech-to-text)
+   - `ELEVENLABS_API_KEY` (optional - for premium voice responses, falls back to browser TTS)
+3. Refresh the page
+4. Look for the purple microphone button (bottom right)
+5. **Hold button down** while speaking, **release when done**
+6. Speak clearly in phrases (e.g., "How many systems on hire?")
 7. See [VOICE-CONTROL-GUIDE.md](VOICE-CONTROL-GUIDE.md) for complete instructions
 
 #### **Production Deployment (Netlify)**
 1. Go to your Netlify dashboard → Site settings → Environment variables
-2. Add these required variables:
-   - `OPENAI_API_KEY` - Your OpenAI API key
-   - `ELEVENLABS_API_KEY` - Your ElevenLabs API key (optional)
-3. Optional environment variables (see `.env.example` for all options):
-   - `USE_BROWSER_STT=true` - Use browser speech recognition (recommended)
-   - `TTS_PROVIDER=elevenlabs` - Voice provider (elevenlabs or browser)
-   - `VOICE_LANGUAGE=en-GB` - Voice recognition language
+2. Add these **required** variables:
+   - `OPENAI_API_KEY` - Your OpenAI API key (for Whisper STT and GPT-4)
+   - `ELEVENLABS_API_KEY` - Your ElevenLabs API key (for premium TTS)
+3. Optional environment variables (defaults work well):
+   - `TTS_PROVIDER=elevenlabs` - Voice provider (default: elevenlabs)
+   - `VOICE_LANGUAGE=en-GB` - Voice recognition language (default: en-GB)
 4. Deploy - `voice-config.js` is auto-generated from env vars during build
+5. Service worker is configured to always fetch fresh JS/CSS files (no caching issues)
 
-**Note:** Voice control works in modern browsers (Chrome, Safari, Edge). The app uses browser speech recognition by default (`USE_BROWSER_STT: true`) to avoid OpenAI API costs for transcription.
+**How It Works:**
+- **Speech-to-Text:** OpenAI Whisper (accurate, reliable)
+- **AI Understanding:** GPT-4 (natural language processing)
+- **Text-to-Speech:** ElevenLabs (premium quality) with browser fallback
+- **Interface:** Hold-to-talk (works on desktop and mobile)
+- **Supported Browsers:** Chrome, Safari, Edge (desktop and mobile)
 
 ### **Login**
 - Enter your password on the clean login screen
