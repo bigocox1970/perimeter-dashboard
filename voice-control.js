@@ -1187,54 +1187,97 @@ Be conversational but concise. UK English spelling and phrasing.`
         console.log('🔊 DEBUG - Using Browser TTS');
         console.log('   Text:', text);
         this.showDebugOverlay('TTS: BROWSER\nSpeaking...');
-        // Only log success/failure, not attempts (reduces spam)
 
         return new Promise((resolve, reject) => {
+            // Cancel any ongoing speech first
+            speechSynthesis.cancel();
+
             const utterance = new SpeechSynthesisUtterance(text);
 
-            // Configure voice
-            const voices = speechSynthesis.getVoices();
-            console.log('   Available voices:', voices.length);
+            // Wait for voices to load on mobile
+            let voices = speechSynthesis.getVoices();
+
+            // If no voices yet, wait for them to load (mobile issue)
+            if (voices.length === 0) {
+                console.log('⏳ Waiting for voices to load...');
+                speechSynthesis.addEventListener('voiceschanged', () => {
+                    voices = speechSynthesis.getVoices();
+                    console.log('✅ Voices loaded:', voices.length);
+                }, { once: true });
+            }
+
+            // Set timeout in case browser TTS hangs
+            let timeoutId = setTimeout(() => {
+                console.error('❌ Browser TTS timeout - forcing completion');
+                speechSynthesis.cancel();
+                this.showDebugOverlay('BROWSER TTS\nTIMEOUT!');
+                if (typeof voiceLogger !== 'undefined') {
+                    voiceLogger.logTTS('browser', 'failed', {
+                        reason: 'Timeout after 10 seconds'
+                    });
+                }
+                resolve(); // Resolve anyway so app doesn't hang
+            }, 10000);
 
             const preferredVoice = envConfig.get('BROWSER_TTS_VOICE');
             const voice = voices.find(v => v.name.includes(preferredVoice)) ||
                          voices.find(v => v.lang.startsWith('en-GB')) ||
+                         voices.find(v => v.lang.startsWith('en')) ||
                          voices[0];
 
             if (voice) {
                 utterance.voice = voice;
                 console.log('   Using voice:', voice.name);
+            } else {
+                console.warn('   No voice found - using default');
             }
 
             utterance.rate = envConfig.getNumber('TTS_SPEECH_RATE', 1.0);
             utterance.pitch = envConfig.getNumber('TTS_SPEECH_PITCH', 1.0);
-            utterance.volume = envConfig.getNumber('TTS_SPEECH_VOLUME', 1.0);
+            utterance.volume = 1.0; // Force max volume
+
+            utterance.onstart = () => {
+                console.log('🔊 Browser TTS started speaking');
+            };
 
             utterance.onend = () => {
+                clearTimeout(timeoutId);
                 console.log('✅ Browser TTS finished');
                 this.showDebugOverlay('BROWSER TTS\nCOMPLETE!');
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.logTTS('browser', 'success', {
-                        message: 'Browser TTS played successfully',
+                        message: 'Browser TTS completed',
                         voice: voice ? voice.name : 'default'
                     });
                 }
                 resolve();
             };
-            utterance.onerror = (error) => {
-                console.error('❌ Browser TTS error:', error);
+
+            utterance.onerror = (event) => {
+                clearTimeout(timeoutId);
+                console.error('❌ Browser TTS error:', event);
                 this.showDebugOverlay('BROWSER TTS\nERROR!');
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.logTTS('browser', 'failed', {
                         reason: 'Browser TTS error',
-                        error: error.toString()
+                        error: event.error || event.type
                     });
                 }
-                reject(error);
+                // Resolve anyway so app doesn't hang
+                resolve();
             };
 
             console.log('▶️ Speaking with browser TTS...');
-            speechSynthesis.speak(utterance);
+            console.log('   Text length:', text.length);
+            console.log('   Voices available:', voices.length);
+
+            try {
+                speechSynthesis.speak(utterance);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                console.error('❌ speechSynthesis.speak() threw error:', error);
+                resolve(); // Don't hang the app
+            }
         });
     }
 
