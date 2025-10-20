@@ -232,6 +232,9 @@
                         p_number: document.getElementById('scaffPNumber').value,
                         extra_sensors: parseInt(document.getElementById('scaffExtraSensors').value) || 0,
                         site_contact: document.getElementById('scaffSiteContact').value,
+                        address1: document.getElementById('scaffAddress1').value || '',
+                        address2: document.getElementById('scaffAddress2').value || '',
+                        postcode: document.getElementById('scaffPostcode').value || '',
                         site_phone: document.getElementById('scaffSitePhone').value,
                         app_contact: document.getElementById('scaffAppContact').value,
                         app_phone: document.getElementById('scaffAppPhone').value,
@@ -2131,10 +2134,13 @@
               // Filter mobile cards
               mobileCards.forEach(card => {
                   const text = card.textContent.toLowerCase();
-                  const onclickAttr = card.querySelector('button[onclick*="editCustomer"]').getAttribute('onclick');
+                  const editButton = card.querySelector('button[onclick*="editCustomer"]');
+                  if (!editButton) return;
+
+                  const onclickAttr = editButton.getAttribute('onclick');
                   const customerId = onclickAttr.match(/editCustomer\(([^)]+)\)/)[1].replace(/['"]/g, '');
                   const customer = customers.find(c => String(c.id) === String(customerId));
-                  
+
                   if (!customer) return;
                   
                   const overallStatus = getOverallStatus(customer);
@@ -2245,6 +2251,9 @@
                     pNumber: system.p_number,
                     extraSensors: system.extra_sensors,
                     siteContact: system.site_contact,
+                    address1: system.address1 || '',
+                    address2: system.address2 || '',
+                    postcode: system.postcode || '',
                     sitePhone: system.site_phone,
                     appContact: system.app_contact,
                     appPhone: system.app_phone,
@@ -2255,6 +2264,10 @@
                     lastInvoiceDate: system.last_invoice_date,
                     hireStatus: system.hire_status || 'on-hire'
                 })) : [];
+
+                console.log('📊 LOADED SCAFFOLD SYSTEMS:', scaffSystems.length);
+                console.log('📋 P NUMBERS:', scaffSystems.map(s => `${s.pNumber} (${s.hireStatus})`).join(', '));
+                console.log('🔢 First 10:', scaffSystems.slice(0, 10));
 
                 showScaffoldMessage('Scaffold data loaded successfully!', 'success');
                 
@@ -2349,30 +2362,170 @@
             return { status: 'current', class: 'current' };
         }
 
+        // ===== RENTAL HISTORY FUNCTIONS =====
+
+        // Create a new rental history record when system goes on hire
+        async function createRentalHistory(system) {
+            try {
+                const rentalData = {
+                    system_id: system.id,
+                    p_number: system.pNumber,
+                    hire_date: new Date().toISOString(),
+                    customer_name: system.siteContact,
+                    site_address: [system.address1, system.address2, system.postcode].filter(Boolean).join(', '),
+                    site_contact: system.siteContact,
+                    site_phone: system.sitePhone,
+                    extra_sensors: system.extraSensors || 0,
+                    arc_enabled: system.arcEnabled || false,
+                    arc_contact: system.arcContact || '',
+                    arc_phone: system.arcPhone || '',
+                    app_contact: system.appContact,
+                    app_phone: system.appPhone,
+                    invoices: []
+                };
+
+                const { data, error } = await supabase
+                    .from('scaffold_rental_history')
+                    .insert([rentalData])
+                    .select();
+
+                if (error) throw error;
+
+                return data[0];
+            } catch (error) {
+                console.error('Error creating rental history:', error);
+                throw error;
+            }
+        }
+
+        // Close rental history when system goes off hire
+        async function closeRentalHistory(systemId, offHireDate = null) {
+            try {
+                // Find the active rental (one without off_hire_date)
+                const { data: activeRentals, error: findError } = await supabase
+                    .from('scaffold_rental_history')
+                    .select('*')
+                    .eq('system_id', systemId)
+                    .is('off_hire_date', null)
+                    .order('hire_date', { ascending: false })
+                    .limit(1);
+
+                if (findError) throw findError;
+
+                if (activeRentals && activeRentals.length > 0) {
+                    const { error: updateError } = await supabase
+                        .from('scaffold_rental_history')
+                        .update({
+                            off_hire_date: offHireDate || new Date().toISOString()
+                        })
+                        .eq('id', activeRentals[0].id);
+
+                    if (updateError) throw updateError;
+
+                    return activeRentals[0];
+                }
+
+                return null;
+            } catch (error) {
+                console.error('Error closing rental history:', error);
+                throw error;
+            }
+        }
+
+        // Load rental history for a system
+        async function loadRentalHistory(systemId) {
+            try {
+                const { data, error } = await supabase
+                    .from('scaffold_rental_history')
+                    .select('*')
+                    .eq('system_id', systemId)
+                    .order('hire_date', { ascending: false });
+
+                if (error) throw error;
+
+                return data || [];
+            } catch (error) {
+                console.error('Error loading rental history:', error);
+                return [];
+            }
+        }
+
+        // Add invoice to current rental history
+        async function addInvoiceToRentalHistory(systemId, invoiceData) {
+            try {
+                // Find the active rental
+                const { data: activeRentals, error: findError } = await supabase
+                    .from('scaffold_rental_history')
+                    .select('*')
+                    .eq('system_id', systemId)
+                    .is('off_hire_date', null)
+                    .order('hire_date', { ascending: false })
+                    .limit(1);
+
+                if (findError) throw findError;
+
+                if (activeRentals && activeRentals.length > 0) {
+                    const rental = activeRentals[0];
+                    const currentInvoices = rental.invoices || [];
+                    const updatedInvoices = [...currentInvoices, invoiceData];
+
+                    const { error: updateError } = await supabase
+                        .from('scaffold_rental_history')
+                        .update({ invoices: updatedInvoices })
+                        .eq('id', rental.id);
+
+                    if (updateError) throw updateError;
+
+                    return true;
+                }
+
+                return false;
+            } catch (error) {
+                console.error('Error adding invoice to rental history:', error);
+                return false;
+            }
+        }
+
         // Open scaffold add modal
         function openScaffAddModal() {
+            console.log('Opening scaffold add modal');
             editingScaffId = null;
             document.getElementById('scaffModalTitle').textContent = 'Add Scaffold System';
             document.getElementById('scaffForm').reset();
-            
+
             // Set default dates
             document.getElementById('scaffStartDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('scaffLastInvoiceDate').value = new Date().toISOString().split('T')[0];
-            
+
             // Update cost preview
             updateScaffoldCostPreview();
-            
+
             // Hide ARC fields initially
             document.getElementById('scaffArcFields').style.display = 'none';
-            
+
             document.getElementById('scaffModal').style.display = 'block';
         }
 
+        // Make function globally accessible
+        window.openScaffAddModal = openScaffAddModal;
+
         // Close scaffold modal
         function closeScaffModal() {
-            document.getElementById('scaffModal').style.display = 'none';
+            console.log('Closing scaffold modal');
+            const modal = document.getElementById('scaffModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
             editingScaffId = null;
+            // Reset form
+            const form = document.getElementById('scaffForm');
+            if (form) {
+                form.reset();
+            }
         }
+
+        // Make sure function is globally accessible
+        window.closeScaffModal = closeScaffModal;
 
         // Update scaffold cost preview
         function updateScaffoldCostPreview() {
@@ -2459,6 +2612,7 @@
 
         // Edit scaffold system
         function editScaffoldSystem(id) {
+            console.log('Editing scaffold system:', id);
             const system = scaffSystems.find(s => s.id === id);
             if (!system) {
                 console.error('Scaffold system not found with ID:', id);
@@ -2467,11 +2621,14 @@
 
             editingScaffId = id;
             document.getElementById('scaffModalTitle').textContent = 'Edit Scaffold System';
-            
+
             // Populate form with system data
             document.getElementById('scaffPNumber').value = system.pNumber;
             document.getElementById('scaffExtraSensors').value = system.extraSensors;
             document.getElementById('scaffSiteContact').value = system.siteContact;
+            document.getElementById('scaffAddress1').value = system.address1 || '';
+            document.getElementById('scaffAddress2').value = system.address2 || '';
+            document.getElementById('scaffPostcode').value = system.postcode || '';
             document.getElementById('scaffSitePhone').value = system.sitePhone;
             document.getElementById('scaffAppContact').value = system.appContact;
             document.getElementById('scaffAppPhone').value = system.appPhone;
@@ -2481,18 +2638,22 @@
             document.getElementById('scaffStartDate').value = system.startDate;
             document.getElementById('scaffLastInvoiceDate').value = system.lastInvoiceDate;
             document.getElementById('scaffHireStatus').value = system.hireStatus || 'on-hire';
-            
+
             // Update cost preview
             updateScaffoldCostPreview();
-            
+
             // Show/hide ARC fields based on checkbox
             document.getElementById('scaffArcFields').style.display = system.arcEnabled ? 'block' : 'none';
-            
+
             document.getElementById('scaffModal').style.display = 'block';
         }
 
+        // Make function globally accessible
+        window.editScaffoldSystem = editScaffoldSystem;
+
         // Delete scaffold system
         async function deleteScaffoldSystem(id) {
+            console.log('Deleting scaffold system:', id);
             if (confirm('Are you sure you want to delete this scaffold system?')) {
                 try {
                     const { error } = await supabase
@@ -2501,7 +2662,7 @@
                         .eq('id', id);
 
                     if (error) throw error;
-                    
+
                     showScaffoldMessage('Scaffold system deleted successfully!', 'success');
                     await loadScaffoldData(); // Reload data from Supabase
                 } catch (error) {
@@ -2510,6 +2671,355 @@
                 }
             }
         }
+
+        // Make function globally accessible
+        window.deleteScaffoldSystem = deleteScaffoldSystem;
+
+        // ===== OFF HIRE / ON HIRE WORKFLOW =====
+
+        let currentOffHireSystemId = null;
+        let currentOnHireSystemId = null;
+
+        // Smart change hire status handler - detects current status and shows appropriate modal
+        function changeHireStatus(systemId) {
+            const system = scaffSystems.find(s => s.id === systemId);
+            if (!system) return;
+
+            if (system.hireStatus === 'on-hire') {
+                showOffHireModal(systemId);
+            } else {
+                showOnHireModal(systemId);
+            }
+        }
+
+        window.changeHireStatus = changeHireStatus;
+
+        // Show off-hire modal
+        function showOffHireModal(systemId) {
+            const system = scaffSystems.find(s => s.id === systemId);
+            if (!system) return;
+
+            currentOffHireSystemId = systemId;
+            document.getElementById('offHirePNumber').textContent = system.pNumber;
+            document.getElementById('offHireDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('offHireModal').style.display = 'block';
+        }
+
+        window.showOffHireModal = showOffHireModal;
+
+        // Close off-hire modal
+        function closeOffHireModal() {
+            document.getElementById('offHireModal').style.display = 'none';
+            currentOffHireSystemId = null;
+        }
+
+        window.closeOffHireModal = closeOffHireModal;
+
+        // Confirm off-hire
+        async function confirmOffHire() {
+            if (!currentOffHireSystemId) return;
+
+            const offHireDate = document.getElementById('offHireDate').value;
+            if (!offHireDate) {
+                alert('Please select an off-hire date');
+                return;
+            }
+
+            try {
+                showScaffoldLoading(true);
+
+                const system = scaffSystems.find(s => s.id === currentOffHireSystemId);
+                if (!system) throw new Error('System not found');
+
+                // Try to close the current rental history
+                const closedRental = await closeRentalHistory(currentOffHireSystemId, offHireDate);
+
+                // If no active rental was found, create one first then close it
+                // This handles systems that existed before the history feature
+                if (!closedRental) {
+                    console.log('No active rental found, creating historical record...');
+
+                    // Create a historical rental record
+                    const historicalRental = {
+                        system_id: system.id,
+                        p_number: system.pNumber,
+                        hire_date: system.startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days ago if no start date
+                        off_hire_date: offHireDate,
+                        customer_name: system.siteContact || 'Previous Customer',
+                        site_address: [system.address1, system.address2, system.postcode].filter(Boolean).join(', ') || 'Address not recorded',
+                        site_contact: system.siteContact,
+                        site_phone: system.sitePhone,
+                        extra_sensors: system.extraSensors || 0,
+                        arc_enabled: system.arcEnabled || false,
+                        arc_contact: system.arcContact || '',
+                        arc_phone: system.arcPhone || '',
+                        app_contact: system.appContact,
+                        app_phone: system.appPhone,
+                        invoices: []
+                    };
+
+                    const { error: historyError } = await supabase
+                        .from('scaffold_rental_history')
+                        .insert([historicalRental]);
+
+                    if (historyError) throw historyError;
+                }
+
+                // Update the system status
+                const { error } = await supabase
+                    .from(SCAFF_TABLE_NAME)
+                    .update({
+                        hire_status: 'off-hire',
+                        address1: 'In Stock',
+                        address2: '',
+                        postcode: ''
+                    })
+                    .eq('id', currentOffHireSystemId);
+
+                if (error) throw error;
+
+                showScaffoldMessage('System marked as off-hire and saved to history!', 'success');
+                closeOffHireModal();
+                await loadScaffoldData();
+            } catch (error) {
+                console.error('Error during off-hire:', error);
+                showScaffoldMessage('Error during off-hire: ' + error.message, 'error');
+            } finally {
+                showScaffoldLoading(false);
+            }
+        }
+
+        window.confirmOffHire = confirmOffHire;
+
+        // Show on-hire modal
+        function showOnHireModal(systemId) {
+            const system = scaffSystems.find(s => s.id === systemId);
+            if (!system) return;
+
+            currentOnHireSystemId = systemId;
+            document.getElementById('onHirePNumber').textContent = system.pNumber;
+            document.getElementById('onHireDate').value = new Date().toISOString().split('T')[0];
+
+            // Clear form
+            document.getElementById('onHireForm').reset();
+            document.getElementById('onHireDate').value = new Date().toISOString().split('T')[0];
+
+            document.getElementById('onHireModal').style.display = 'block';
+        }
+
+        window.showOnHireModal = showOnHireModal;
+
+        // Close on-hire modal
+        function closeOnHireModal() {
+            document.getElementById('onHireModal').style.display = 'none';
+            currentOnHireSystemId = null;
+        }
+
+        window.closeOnHireModal = closeOnHireModal;
+
+        // Handle on-hire form submission
+        document.addEventListener('DOMContentLoaded', function() {
+            const onHireForm = document.getElementById('onHireForm');
+            if (onHireForm) {
+                onHireForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    if (!currentOnHireSystemId) return;
+
+                    const system = scaffSystems.find(s => s.id === currentOnHireSystemId);
+                    if (!system) return;
+
+                    const hireDate = document.getElementById('onHireDate').value;
+                    const customerName = document.getElementById('onHireCustomer').value;
+                    const address1 = document.getElementById('onHireAddress1').value;
+                    const address2 = document.getElementById('onHireAddress2').value;
+                    const postcode = document.getElementById('onHirePostcode').value;
+                    const siteContact = document.getElementById('onHireSiteContact').value;
+                    const sitePhone = document.getElementById('onHireSitePhone').value;
+
+                    try {
+                        showScaffoldLoading(true);
+
+                        // Update system with new customer info and status
+                        const { error: updateError } = await supabase
+                            .from(SCAFF_TABLE_NAME)
+                            .update({
+                                hire_status: 'on-hire',
+                                site_contact: customerName,
+                                address1: address1,
+                                address2: address2,
+                                postcode: postcode,
+                                site_phone: sitePhone || system.sitePhone,
+                                start_date: hireDate,
+                                last_invoice_date: hireDate
+                            })
+                            .eq('id', currentOnHireSystemId);
+
+                        if (updateError) throw updateError;
+
+                        // Reload to get updated data
+                        await loadScaffoldData();
+
+                        // Get the updated system
+                        const updatedSystem = scaffSystems.find(s => s.id === currentOnHireSystemId);
+
+                        // Create rental history record
+                        await createRentalHistory(updatedSystem);
+
+                        showScaffoldMessage('System marked as on-hire and rental history created!', 'success');
+                        closeOnHireModal();
+                        await loadScaffoldData();
+                    } catch (error) {
+                        console.error('Error during on-hire:', error);
+                        showScaffoldMessage('Error during on-hire: ' + error.message, 'error');
+                    } finally {
+                        showScaffoldLoading(false);
+                    }
+                });
+            }
+        });
+
+        // Show history modal
+        async function showHistoryModal(systemId) {
+            const system = scaffSystems.find(s => s.id === systemId);
+            if (!system) return;
+
+            document.getElementById('historyPNumber').textContent = system.pNumber;
+            document.getElementById('historyModal').style.display = 'block';
+
+            try {
+                const history = await loadRentalHistory(systemId);
+                const historyContent = document.getElementById('historyContent');
+
+                if (history.length === 0) {
+                    historyContent.innerHTML = '<p style="text-align: center; color: #95a5a6;">No rental history found for this system.</p>';
+                    return;
+                }
+
+                historyContent.innerHTML = history.map((rental, index) => {
+                    const isActive = !rental.off_hire_date;
+                    const hireDate = new Date(rental.hire_date).toLocaleDateString();
+                    const offHireDate = rental.off_hire_date ? new Date(rental.off_hire_date).toLocaleDateString() : null;
+                    const duration = rental.off_hire_date ?
+                        Math.ceil((new Date(rental.off_hire_date) - new Date(rental.hire_date)) / (1000 * 60 * 60 * 24)) :
+                        Math.ceil((new Date() - new Date(rental.hire_date)) / (1000 * 60 * 60 * 24));
+
+                    const invoices = rental.invoices || [];
+                    const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+
+                    return `
+                        <div style="border: 2px solid ${isActive ? '#27ae60' : '#95a5a6'}; border-radius: 8px; padding: 20px; margin-bottom: 20px; background: ${isActive ? '#eafaf1' : '#f8f9fa'};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin: 0; color: ${isActive ? '#27ae60' : '#34495e'};">
+                                    Rental #${history.length - index} ${isActive ? '(Current)' : '(Completed)'}
+                                </h3>
+                                ${isActive ? '<span style="background: #27ae60; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px;">ACTIVE</span>' : ''}
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                <div>
+                                    <strong>Customer:</strong><br>
+                                    ${rental.customer_name}
+                                </div>
+                                <div>
+                                    <strong>Location:</strong><br>
+                                    ${rental.site_address}
+                                </div>
+                                <div>
+                                    <strong>Contact:</strong><br>
+                                    ${rental.site_contact || 'N/A'}<br>
+                                    ${rental.site_phone || ''}
+                                </div>
+                                <div>
+                                    <strong>Duration:</strong><br>
+                                    ${duration} days
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                                    <div>
+                                        <strong>Hired:</strong> ${hireDate}
+                                    </div>
+                                    ${offHireDate ? `<div><strong>Off-Hired:</strong> ${offHireDate}</div>` : '<div><strong>Status:</strong> Still on hire</div>'}
+                                    <div>
+                                        <strong>Sensors:</strong> 4 + ${rental.extra_sensors}
+                                    </div>
+                                    <div>
+                                        <strong>ARC:</strong> ${rental.arc_enabled ? '✓ Enabled' : '✗ Disabled'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${invoices.length > 0 ? `
+                                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 6px;">
+                                    <strong>Invoices (${invoices.length}):</strong>
+                                    <div style="margin-top: 10px;">
+                                        ${invoices.map(inv => `
+                                            <div style="display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee;">
+                                                <span>${new Date(inv.date).toLocaleDateString()}${inv.invoice_number ? ` - ${inv.invoice_number}` : ''}</span>
+                                                <span style="font-weight: bold;">£${inv.amount.toFixed(2)}</span>
+                                            </div>
+                                        `).join('')}
+                                        <div style="display: flex; justify-content: space-between; padding: 8px; font-weight: bold; background: #f8f9fa; margin-top: 5px;">
+                                            <span>Total Revenue:</span>
+                                            <span style="color: #27ae60;">£${totalRevenue.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : '<div style="margin-top: 10px; color: #95a5a6; font-style: italic;">No invoices recorded</div>'}
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (error) {
+                console.error('Error loading history:', error);
+                document.getElementById('historyContent').innerHTML = '<p style="color: #e74c3c;">Error loading rental history.</p>';
+            }
+        }
+
+        window.showHistoryModal = showHistoryModal;
+
+        // Close history modal
+        function closeHistoryModal() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+
+        window.closeHistoryModal = closeHistoryModal;
+
+        // ===== INVOICE TRACKING =====
+
+        // Helper function to log an invoice to rental history
+        // Call this when you generate invoices for scaffold systems
+        async function logInvoiceToHistory(systemId, invoiceDate, amount, invoiceNumber = null) {
+            try {
+                const invoice = {
+                    date: invoiceDate,
+                    amount: parseFloat(amount),
+                    invoice_number: invoiceNumber,
+                    created_at: new Date().toISOString()
+                };
+
+                const success = await addInvoiceToRentalHistory(systemId, invoice);
+
+                if (success) {
+                    console.log(`Invoice logged to history for system ${systemId}`);
+                    return true;
+                } else {
+                    console.warn(`No active rental found for system ${systemId}`);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error logging invoice to history:', error);
+                return false;
+            }
+        }
+
+        window.logInvoiceToHistory = logInvoiceToHistory;
+
+        // Example usage when updating last invoice date:
+        // When the user updates the lastInvoiceDate field, also log it to history
+        // You can hook this into your existing invoice generation workflow
 
         // Render scaffold systems
         function renderScaffoldSystems() {
@@ -2538,17 +3048,21 @@
                 const weeklyCost = calculateWeeklyCostBeforeVAT(system.extraSensors);
                 const monthlyCost = calculateMonthlyCostBeforeVAT(system.extraSensors);
 
+                const rowBgColor = system.hireStatus === 'on-hire' ? '#d4edda' : '#f8d7da';
+
                 return `
-                    <tr>
-                        <td><strong>${system.pNumber}</strong></td>
+                    <tr style="background-color: ${rowBgColor};">
+                        <td>
+                            <strong>${system.pNumber}</strong>${system.address1 ? ` ${system.address1}` : ''}
+                        </td>
                         <td>4 + ${system.extraSensors}</td>
                         <td>£${weeklyCost.toFixed(2)}</td>
                         <td>£${monthlyCost.toFixed(2)}</td>
                         <td>
                             <div style="font-size: 14px;">${nextInvoiceDate.toDateString()}</div>
                             <span class="status-badge ${invoiceStatus.class}">
-                                ${daysUntilInvoice < 0 ? `${Math.abs(daysUntilInvoice)} days overdue` : 
-                                  daysUntilInvoice === 0 ? 'Due today' : 
+                                ${daysUntilInvoice < 0 ? `${Math.abs(daysUntilInvoice)} days overdue` :
+                                  daysUntilInvoice === 0 ? 'Due today' :
                                   `${daysUntilInvoice} days`}
                             </span>
                         </td>
@@ -2565,13 +3079,17 @@
                             </div>
                         </td>
                         <td>
-                            ${system.arcEnabled ? 
+                            ${system.arcEnabled ?
                                 `<div style="font-size: 14px;"><span style="color: #27ae60;">✓ Enabled</span><br><span style="color: #666;">${system.arcContact}</span></div>` :
                                 `<span style="color: #e74c3c;">✗ Disabled</span>`
                             }
                         </td>
                         <td>
-                            <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Scaffold System">✏️</button>
+                            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Scaffold System">✏️</button>
+                                <button class="btn" onclick="changeHireStatus(${system.id})" style="background: #34495e; color: white; padding: 8px; font-size: 12px;" title="Change Hire Status">Change</button>
+                                <button class="btn" onclick="showHistoryModal(${system.id})" style="background: #95a5a6; color: white; padding: 8px; width: 32px;" title="View History">📋</button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -2586,11 +3104,13 @@
                     const weeklyCost = calculateWeeklyCostBeforeVAT(system.extraSensors);
                     const monthlyCost = calculateMonthlyCostBeforeVAT(system.extraSensors);
 
+                    const cardBgColor = system.hireStatus === 'on-hire' ? '#d4edda' : '#f8d7da';
+
                     return `
-                        <div class="customer-card">
+                        <div class="customer-card" style="background-color: ${cardBgColor};">
                             <div class="customer-card-header">
                                 <div>
-                                    <div class="customer-name">${system.pNumber}</div>
+                                    <div class="customer-name">${system.pNumber}${system.address1 ? ` ${system.address1}` : ''}</div>
                                     <div class="customer-details">
                                         Sensors: 4 + ${system.extraSensors}<br>
                                         Weekly: £${weeklyCost.toFixed(2)}<br>
@@ -2599,17 +3119,26 @@
                                 </div>
                                 <div>
                                     <span class="status-badge ${invoiceStatus.class}">
-                                        ${daysUntilInvoice < 0 ? `${Math.abs(daysUntilInvoice)} days overdue` : 
-                                          daysUntilInvoice === 0 ? 'Due today' : 
+                                        ${daysUntilInvoice < 0 ? `${Math.abs(daysUntilInvoice)} days overdue` :
+                                          daysUntilInvoice === 0 ? 'Due today' :
                                           `${daysUntilInvoice} days`}
                                     </span>
                                 </div>
                             </div>
-                            
+
                             <div style="margin: 10px 0;">
                                 <div><strong>Next Invoice:</strong> ${nextInvoiceDate.toDateString()}</div>
                             </div>
-                            
+
+                            ${(system.address1 || system.address2 || system.postcode) ? `
+                                <div style="padding: 10px; background: #fff3cd; border-radius: 6px; margin: 10px 0; font-size: 14px;">
+                                    <strong>📍 Address:</strong><br>
+                                    ${system.address1 || ''}<br>
+                                    ${system.address2 ? `${system.address2}<br>` : ''}
+                                    ${system.postcode || ''}
+                                </div>
+                            ` : ''}
+
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
                                 <div style="padding: 10px; background: #e8f4fd; border-radius: 6px; font-size: 14px;">
                                     <strong>Site Contact:</strong><br>
@@ -2622,7 +3151,7 @@
                                     ${system.appPhone}
                                 </div>
                             </div>
-                            
+
                             ${system.arcEnabled ? `
                                 <div style="padding: 10px; background: #d4edda; border-radius: 6px; margin: 15px 0; font-size: 14px;">
                                     <strong>ARC: ✓ Enabled</strong><br>
@@ -2634,17 +3163,21 @@
                                     <strong>ARC: ✗ Disabled</strong>
                                 </div>
                             `}
-                            
-                            <div class="customer-actions">
-                                <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Scaffold System">✏️</button>
+
+                            <div class="customer-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 40px;" title="Edit Scaffold System">✏️</button>
+                                <button class="btn" onclick="changeHireStatus(${system.id})" style="background: #34495e; color: white; padding: 8px; flex: 1;" title="Change Hire Status">Change</button>
+                                <button class="btn" onclick="showHistoryModal(${system.id})" style="background: #95a5a6; color: white; padding: 8px; width: 40px;" title="View History">📋</button>
                             </div>
                         </div>
                     `;
                 }).join('');
             }
 
-            // Apply current filters
-            filterScaffTable();
+            // Apply filters after DOM has fully updated
+            setTimeout(() => {
+                filterScaffTable();
+            }, 10);
         }
 
         // Update scaffold statistics
@@ -2671,19 +3204,46 @@
             const searchInput = document.getElementById('scaffSearchInput');
             const statusFilter = document.getElementById('scaffStatusFilter');
             const hireFilter = document.getElementById('scaffHireFilter');
-            
+
             if (!searchInput || !statusFilter || !hireFilter) return;
-            
-            const searchTerm = searchInput.value.toLowerCase();
+
+            const searchInputValue = searchInput.value.toLowerCase();
+            const hasTrailingSpace = searchInputValue.endsWith(' ');
+            const searchTerm = searchInputValue.trim();  // Trim for processing
             const statusFilterValue = statusFilter.value;
             const hireFilterValue = hireFilter.value;
             const rows = document.querySelectorAll('#scaffTableBody tr');
             const mobileCards = document.querySelectorAll('#mobileScaffCards .customer-card');
 
+            console.log('🔍 FILTER DEBUG - Search term:', searchTerm, 'Has trailing space:', hasTrailingSpace);
+
             // Filter desktop table
-            rows.forEach(row => {
+            rows.forEach((row, index) => {
                 const text = row.textContent.toLowerCase();
-                const matchesSearch = text.includes(searchTerm);
+
+                let matchesSearch;
+
+                // If there's a trailing space after a P number, do EXACT match only
+                if (hasTrailingSpace && searchTerm.match(/^p\d+$/i)) {
+                    const firstCell = row.cells[0];
+                    const rowPNumber = firstCell ? firstCell.textContent.trim().split(' ')[0].toLowerCase() : '';
+
+                    // Try exact match with and without leading zero
+                    const pNumberOnly = searchTerm.substring(1);
+                    const paddedPNumber = 'p' + pNumberOnly.padStart(2, '0');
+
+                    matchesSearch = (rowPNumber === searchTerm || rowPNumber === paddedPNumber);
+                } else {
+                    // Normal partial matching
+                    matchesSearch = text.includes(searchTerm);
+
+                    // If search term looks like a P number, also try with leading zero
+                    if (searchTerm.match(/^p\d+$/i)) {
+                        const pNumberOnly = searchTerm.substring(1);
+                        const paddedPNumber = 'p' + pNumberOnly.padStart(2, '0');
+                        matchesSearch = matchesSearch || text.includes(paddedPNumber);
+                    }
+                }
                 
                 // Get system status from the row
                 let matchesStatus = true;
@@ -2725,7 +3285,31 @@
             // Filter mobile cards
             mobileCards.forEach(card => {
                 const text = card.textContent.toLowerCase();
-                const matchesSearch = text.includes(searchTerm);
+
+                let matchesSearch;
+
+                // If there's a trailing space after a P number, do EXACT match only
+                if (hasTrailingSpace && searchTerm.match(/^p\d+$/i)) {
+                    // Extract P number from card
+                    const cardNameDiv = card.querySelector('.customer-name');
+                    const cardPNumber = cardNameDiv ? cardNameDiv.textContent.trim().split(' ')[0].toLowerCase() : '';
+
+                    // Try exact match with and without leading zero
+                    const pNumberOnly = searchTerm.substring(1);
+                    const paddedPNumber = 'p' + pNumberOnly.padStart(2, '0');
+
+                    matchesSearch = (cardPNumber === searchTerm || cardPNumber === paddedPNumber);
+                } else {
+                    // Normal partial matching
+                    matchesSearch = text.includes(searchTerm);
+
+                    // If search term looks like a P number, also try with leading zero
+                    if (searchTerm.match(/^p\d+$/i)) {
+                        const pNumberOnly = searchTerm.substring(1);
+                        const paddedPNumber = 'p' + pNumberOnly.padStart(2, '0');
+                        matchesSearch = matchesSearch || text.includes(paddedPNumber);
+                    }
+                }
                 
                 let matchesStatus = true;
                 if (statusFilterValue) {

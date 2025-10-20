@@ -6,6 +6,15 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 
 ## 🚀 Features
 
+### 🎤 **Voice Control (NEW!)**
+- **Full two-way voice interaction** powered by AI
+- **Natural language queries** - "How many systems on hire?"
+- **Voice-activated updates** - "Change P1 to off hire"
+- **Premium voice responses** with ElevenLabs
+- **Hands-free operation** for field work
+- **Context-aware conversations** that remember what you said
+- **See [VOICE-CONTROL-GUIDE.md](VOICE-CONTROL-GUIDE.md) for full details**
+
 ### 📱 **Mobile-First PWA Experience**
 - **Animated Splash Screen** with branded logo on app launch
 - **Clean White Login Screen** with professional branding
@@ -23,14 +32,23 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 
 ### 📋 **NSI Compliance Tracking**
 - **Complaints Management** with status tracking
-- **ID Badge Management** with expiration monitoring  
+- **ID Badge Management** with expiration monitoring
 - **Test Equipment Calibration** tracking
 - **First Aid Requirements** monitoring
 - **Image attachments** for documentation
 - **Mobile-optimized cards** for easy field use
 
+### 📝 **Activity Logging**
+- **Voice Command History** - Track all voice interactions
+- **Command success/failure monitoring**
+- **Timestamp tracking** for audit trail
+- **Export logs** for analysis
+
 ### 🏗️ **Scaffold System Management**
 - **System tracking** with P-numbers and contact details
+- **Full address management** for installation locations
+- **Rental history tracking** - Complete audit trail of all hires
+- **On/Off hire management** with date tracking
 - **Revenue calculations** with weekly/monthly projections
 - **Invoice management** with overdue tracking
 - **ARC integration** for enhanced monitoring
@@ -62,10 +80,19 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 
 ### **Data Management**
 - **Supabase integration** for real-time data
+- **PostgreSQL database** with Row Level Security (RLS)
+- **Rental history tracking** with complete audit trails
 - **Export/Import functionality** for data backup
 - **Search and filtering** across all modules
 - **Sortable tables** with multiple criteria
 - **Mobile card layouts** for small screens
+
+### **AI & Voice Technology Stack**
+- **OpenAI GPT-4** for natural language understanding
+- **Browser Speech Recognition** for voice input (Web Speech API)
+- **ElevenLabs** for premium text-to-speech (with browser fallback)
+- **Real-time command parsing** and execution
+- **Context-aware conversations** with memory
 
 ## 📊 **Statistics & Reporting**
 
@@ -77,6 +104,18 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 - **Interactive drill-down** for detailed analysis
 
 ## 🎯 **Recent Enhancements**
+
+### **v2024.2 - Voice Control & Scaffold Updates**
+- ✅ **Full voice control system** with browser speech recognition & GPT-4
+- ✅ **Premium text-to-speech** with ElevenLabs integration (or browser fallback)
+- ✅ **Natural language understanding** for complex queries
+- ✅ **Voice-activated data modifications** with confirmations
+- ✅ **Hands-free operation** perfect for mobile field work
+- ✅ **Conversation context** for multi-turn interactions
+- ✅ **Scaffold rental history tracking** - Complete audit trail
+- ✅ **Address management** for scaffold systems
+- ✅ **Voice command logs tab** for activity monitoring
+- ✅ **Enhanced error handling** with automatic TTS fallback
 
 ### **v2024.1 - Mobile & Branding Update**
 - ✅ **Added animated splash screen** with company logo
@@ -93,6 +132,19 @@ A professional Progressive Web App (PWA) for managing customer inspections, NSI 
 1. Visit the dashboard URL in your mobile browser
 2. Tap "Add to Home Screen" or "Install App"
 3. Launch from your home screen for full PWA experience
+
+### **Voice Control Setup**
+1. Copy `voice-config.example.js` to `voice-config.js`
+2. Add your API keys:
+   - `OPENAI_API_KEY` (required for AI understanding)
+   - `ELEVENLABS_API_KEY` (optional - for premium voice responses)
+3. Optional: Copy `.env.example` to `.env` for additional settings
+4. Refresh the page
+5. Look for the purple microphone button (bottom right)
+6. Click and hold to speak, release to process
+7. See [VOICE-CONTROL-GUIDE.md](VOICE-CONTROL-GUIDE.md) for complete instructions
+
+**Note:** Voice control works in modern browsers (Chrome, Safari, Edge). The app uses browser speech recognition by default (`USE_BROWSER_STT: true`) to avoid OpenAI API costs for transcription.
 
 ### **Login**
 - Enter your password on the clean login screen

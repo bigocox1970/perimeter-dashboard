@@ -119,6 +119,7 @@
             <button class="tab-button active" onclick="showTab('maint')">Maint</button>
             <button class="tab-button" onclick="showTab('nsi')">NSI</button>
             <button class="tab-button" onclick="showTab('scaff')">Scaff</button>
+            <button class="tab-button" onclick="showTab('logs')">Logs</button>
         </div>
 
         <!-- Tab Contents -->
@@ -520,7 +521,14 @@
                 <div class="mobile-customer-cards" id="mobileFirstAidCards">
                     <!-- Mobile cards will be generated here -->
                 </div>
-                
+
+            </div>
+        </div>
+
+        <!-- Logs Tab Content -->
+        <div id="logsTab" class="tab-content">
+            <div id="voiceLogContainer">
+                <!-- Voice log content will be injected here by voice-log-ui.js -->
             </div>
         </div>
 
@@ -711,6 +719,22 @@
                         <input type="tel" id="scaffSitePhone">
                     </div>
                 </div>
+
+                <div class="form-group">
+                    <label for="scaffAddress1">Address Line 1</label>
+                    <input type="text" id="scaffAddress1" placeholder="e.g., St Marys Church">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="scaffAddress2">Address Line 2</label>
+                        <input type="text" id="scaffAddress2" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label for="scaffPostcode">Postcode</label>
+                        <input type="text" id="scaffPostcode" placeholder="e.g., SW1A 1AA">
+                    </div>
+                </div>
                 
                 <div class="form-row">
                     <div class="form-group">
@@ -772,6 +796,89 @@
                     <button type="submit" class="btn btn-primary">Save System</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Off Hire Modal -->
+    <div class="modal" id="offHireModal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2>Off Hire System <span id="offHirePNumber"></span></h2>
+            <p>This will mark the system as off-hire and save the current rental to history.</p>
+
+            <div class="form-group">
+                <label for="offHireDate">Off Hire Date *</label>
+                <input type="date" id="offHireDate" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeOffHireModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                <button type="button" class="btn" onclick="confirmOffHire()" style="background: #e74c3c; color: white;">Confirm Off Hire</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- On Hire Modal -->
+    <div class="modal" id="onHireModal" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2>On Hire System <span id="onHirePNumber"></span></h2>
+            <p>This will mark the system as on-hire and create a new rental history record.</p>
+
+            <form id="onHireForm">
+                <div class="form-group">
+                    <label for="onHireDate">Hire Date *</label>
+                    <input type="date" id="onHireDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onHireCustomer">Customer Name *</label>
+                    <input type="text" id="onHireCustomer" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="onHireAddress1">Site Address Line 1 *</label>
+                    <input type="text" id="onHireAddress1" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="onHireAddress2">Address Line 2</label>
+                        <input type="text" id="onHireAddress2">
+                    </div>
+                    <div class="form-group">
+                        <label for="onHirePostcode">Postcode</label>
+                        <input type="text" id="onHirePostcode">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="onHireSiteContact">Site Contact</label>
+                        <input type="text" id="onHireSiteContact">
+                    </div>
+                    <div class="form-group">
+                        <label for="onHireSitePhone">Site Phone</label>
+                        <input type="tel" id="onHireSitePhone">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeOnHireModal()" style="background: #95a5a6; color: white;">Cancel</button>
+                    <button type="submit" class="btn" style="background: #27ae60; color: white;">Confirm On Hire</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div class="modal" id="historyModal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+            <h2>Rental History - <span id="historyPNumber"></span></h2>
+            <div id="historyContent" style="margin-top: 20px;">
+                <!-- History will be loaded here -->
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn" onclick="closeHistoryModal()" style="background: #95a5a6; color: white;">Close</button>
+            </div>
         </div>
     </div>
 
@@ -1130,6 +1237,49 @@
         const NSI_FIRST_AID_TABLE = 'perim_nsi_first_aid';
     </script>
     <script src="app.js"></script>
+
+    <!-- Voice Control System -->
+    <link rel="stylesheet" href="voice-control.css">
+    <link rel="stylesheet" href="voice-log.css">
+    <script src="voice-config.js"></script>
+    <script src="env-config.js"></script>
+    <script src="voice-system-knowledge.js"></script>
+    <script src="voice-command-logger.js"></script>
+    <script src="voice-control.js"></script>
+    <script src="voice-ui.js"></script>
+    <script src="voice-log-ui.js"></script>
+    <script src="voice-dashboard-bridge.js"></script>
+    <script>
+        // Initialize voice control when dashboard is ready
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Wait a moment for dashboard to initialize
+            setTimeout(async () => {
+                try {
+                    console.log('🎤 Starting voice control initialization...');
+
+                    // Initialize voice control
+                    const voiceInitialized = await voiceControl.initialize();
+
+                    if (voiceInitialized) {
+                        // Initialize UI
+                        voiceUI.initialize();
+
+                        // Initialize log UI
+                        voiceLogUI.initialize();
+
+                        // Initialize dashboard bridge
+                        await voiceDashboardBridge.initialize();
+
+                        console.log('✅ Voice control system ready!');
+                        console.log('💡 Click the microphone button to speak');
+                    } else {
+                        console.warn('⚠️ Voice control initialization failed');
+                    }
+                } catch (error) {
+                    console.error('❌ Voice control error:', error);
+                }
+            }, 1000);
+        });
     </script>
 
     <!-- Mobile Footer Navigation -->
@@ -1157,6 +1307,14 @@
                 </svg>
             </div>
             <div class="mobile-tab-label">Scaff</div>
+        </button>
+        <button class="mobile-tab-button" onclick="showTab('logs')" data-tab="logs">
+            <div class="mobile-tab-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                </svg>
+            </div>
+            <div class="mobile-tab-label">Logs</div>
         </button>
     </div>
 

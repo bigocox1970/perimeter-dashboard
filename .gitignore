@@ -7,3 +7,4 @@ Thumbs.db
 *.log
 node_modules/
 .env
+voice-config.js
