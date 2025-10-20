@@ -1,4 +1,4 @@
-const CACHE_NAME = 'perim-maint-v2';
+const CACHE_NAME = 'perim-maint-v3';
 const urlsToCache = [
   '/',
   '/index.html',
