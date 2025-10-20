@@ -13,8 +13,8 @@ const config = {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY || '',
     ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',
 
-    // Use browser speech recognition by default
-    USE_BROWSER_STT: process.env.USE_BROWSER_STT !== 'false', // default true
+    // Use OpenAI Whisper by default (more reliable than browser)
+    USE_BROWSER_STT: process.env.USE_BROWSER_STT === 'true', // default false
 
     // OpenAI Settings
     OPENAI_MODEL: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
