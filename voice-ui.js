@@ -70,50 +70,21 @@ class VoiceUI {
     }
 
     setupEventListeners() {
-        // Microphone button - push to talk
-        this.micButton.addEventListener('mousedown', () => {
-            if (!voiceControl.isListening && !voiceControl.isProcessing) {
-                // Unlock audio context on user interaction
-                if (voiceControl.unlockAudio) {
-                    voiceControl.unlockAudio();
-                }
-                voiceControl.startListening();
-            }
-        });
-
-        this.micButton.addEventListener('mouseup', () => {
-            if (voiceControl.isListening) {
-                voiceControl.stopListening();
-            }
-        });
-
-        // Also support touch events for mobile
-        this.micButton.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (!voiceControl.isListening && !voiceControl.isProcessing) {
-                voiceControl.startListening();
-            }
-        });
-
-        this.micButton.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            if (voiceControl.isListening) {
-                voiceControl.stopListening();
-            }
-        });
-
-        // Optional: Click to toggle (instead of hold)
-        // Uncomment if you prefer click-to-toggle behavior
-        /*
+        // Microphone button - click to toggle (more reliable than hold)
         this.micButton.addEventListener('click', (e) => {
             e.preventDefault();
+
+            // Unlock audio context on user interaction
+            if (voiceControl.unlockAudio) {
+                voiceControl.unlockAudio();
+            }
+
             if (voiceControl.isListening) {
                 voiceControl.stopListening();
             } else if (!voiceControl.isProcessing) {
                 voiceControl.startListening();
             }
         });
-        */
 
         // Connect to voice control callbacks
         voiceControl.onStatusChange((status, message) => {
