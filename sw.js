@@ -1,10 +1,8 @@
-const CACHE_NAME = 'perim-maint-v1';
+const CACHE_NAME = 'perim-maint-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  'https://unpkg.com/@supabase/supabase-js@2',
-  'https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600&display=swap'
+  '/manifest.json'
 ];
 
 // Install event - cache resources
@@ -13,9 +11,15 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Opened cache');
+        // Cache local resources only - external resources cause CORS issues
         return cache.addAll(urlsToCache);
       })
+      .catch(err => {
+        console.error('Cache installation failed:', err);
+      })
   );
+  // Skip waiting to activate immediately
+  self.skipWaiting();
 });
 
 // Fetch event - serve from cache when offline
