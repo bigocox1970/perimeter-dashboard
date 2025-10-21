@@ -30,7 +30,7 @@ class VoiceLogUI {
         this.panel.className = 'voice-log-panel-tab'; // Changed class for tab view
         this.panel.innerHTML = `
             <div class="voice-log-header">
-                <h3>🎤 Voice Command Log</h3>
+                <h3>Voice Command Log</h3>
                 <div class="voice-log-actions">
                     <button class="voice-log-btn" onclick="voiceLogUI.exportLogs()" title="Export logs" style="padding: 10px 20px; font-size: 16px;">
                         📥 Export
