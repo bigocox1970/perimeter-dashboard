@@ -129,14 +129,16 @@ class VoiceControl {
             return;
         }
 
-        // CRITICAL: Create audio element NOW during user interaction
+        // CRITICAL: Create NEW audio element EVERY TIME during user interaction
         // This "unlocks" audio playback for later use
+        // Must recreate each time because it gets cleared after use
         try {
             this.preUnlockedAudio = new Audio();
             this.preUnlockedAudio.volume = 1.0;
-            console.log('✅ Pre-created audio element during user interaction');
+            console.log('✅ Pre-created NEW audio element during user interaction');
         } catch (e) {
             console.warn('⚠️ Failed to pre-create audio:', e);
+            this.preUnlockedAudio = null;
         }
 
         // ALWAYS use OpenAI Whisper - browser STT disabled
