@@ -73,14 +73,9 @@ class VoiceCommandLogger {
 
     // Log successful command (simple version for backwards compatibility)
     logSuccess(transcript, action, result) {
-        // If part of conversation, add as step
+        // If part of conversation, just end it with the result
+        // Don't add a success step - that would duplicate the final result
         if (this.currentConversation) {
-            this.addConversationStep({
-                type: 'success',
-                transcript,
-                action,
-                result: result?.message
-            });
             this.endConversation({ success: true, message: result?.message });
         } else {
             // Standalone success
@@ -94,16 +89,10 @@ class VoiceCommandLogger {
 
     // Log unhandled command (simple version for backwards compatibility)
     logUnhandled(transcript, action, intent, parameters) {
-        // If part of conversation, add as step
+        // If part of conversation, just end it as unhandled
+        // Don't add an unhandled step - that would duplicate the info
         if (this.currentConversation) {
-            this.addConversationStep({
-                type: 'unhandled',
-                transcript,
-                action,
-                intent,
-                parameters
-            });
-            this.endConversation({ success: false, unhandled: true, action });
+            this.endConversation({ success: false, unhandled: true, action, reason: 'Command not implemented' });
         } else {
             // Standalone unhandled
             this.log('unhandled', {
@@ -118,13 +107,9 @@ class VoiceCommandLogger {
 
     // Log error (simple version for backwards compatibility)
     logError(transcript, error) {
-        // If part of conversation, add as step
+        // If part of conversation, just end it with the error
+        // Don't add an error step - that would duplicate the error message
         if (this.currentConversation) {
-            this.addConversationStep({
-                type: 'error',
-                transcript,
-                error: error.message || error
-            });
             this.endConversation({ success: false, error: error.message || error });
         } else {
             // Standalone error

@@ -22,6 +22,9 @@ class VoiceLogUI {
             return;
         }
 
+        // Prevent duplicate panels - clear container first
+        container.innerHTML = '';
+
         this.panel = document.createElement('div');
         this.panel.id = 'voiceLogPanel';
         this.panel.className = 'voice-log-panel-tab'; // Changed class for tab view
