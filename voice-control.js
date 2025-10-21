@@ -601,6 +601,7 @@ Examples:
 - "How many systems outside Oxford?" → {"intent":"query","action":"search_systems","parameters":{"searchTerm":"oxford","exclude":true},"response":"Let me find systems outside Oxford."}
 - "What's my busiest month for maintenances?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's my busiest month for maintenances?"},"response":"Let me analyze your maintenance schedule."}
 - "What's the average revenue per scaffold system?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's the average revenue per scaffold system?"},"response":"Calculating average revenue now."}
+- "How many maintenance do I have to do each year for NSI approved systems?" → {"intent":"query","action":"analyze_data","parameters":{"question":"How many maintenance do I have to do each year for NSI approved systems?"},"response":"Let me calculate the total annual maintenance tasks for NSI approved systems."}
 - "Change P1 to off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
 - "The one at Royal Close Chippenham has come off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"Royal Close Chippenham","status":"off-hire"},"response":""}
 - "The scaffold alarm at Royal Close Chippenham came off hire last Thursday" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"Royal Close Chippenham","status":"off-hire","offHireDate":"last Thursday"},"response":""}

@@ -286,6 +286,24 @@ class VoiceDashboardBridge {
                     };
                 }
 
+                // NSI maintenance analysis
+                if (question.includes('nsi') && (question.includes('maintenance') || question.includes('inspection'))) {
+                    // Make sure we have customer data loaded
+                    if (typeof loadCustomerData === 'function') {
+                        await loadCustomerData();
+                    }
+
+                    const nsiCustomers = customers.filter(c => c.nsi_status === 'NSI');
+                    const count = nsiCustomers.length;
+                    const totalInspections = nsiCustomers.reduce((sum, c) => sum + (c.inspections_per_year || 0), 0);
+
+                    return {
+                        success: true,
+                        message: `You have ${count} NSI approved ${count === 1 ? 'customer' : 'customers'}, requiring a total of ${totalInspections} ${totalInspections === 1 ? 'inspection' : 'inspections'} per year.`,
+                        data: { count, totalInspections, customers: nsiCustomers }
+                    };
+                }
+
                 // Default: Can't answer this question
                 return {
                     success: false,
