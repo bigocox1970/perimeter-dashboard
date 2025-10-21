@@ -225,8 +225,13 @@ class VoiceControl {
         }
     }
 
-    // Browser-based speech recognition (free, no API needed)
+    // Browser-based speech recognition - DISABLED BY USER REQUEST
     startBrowserSpeechRecognition() {
+        console.error('❌ Browser STT DISABLED - this should never be called');
+        alert('ERROR: Browser speech recognition is DISABLED. Only OpenAI Whisper allowed.');
+        throw new Error('Browser STT disabled by user request');
+
+        /* DISABLED CODE BELOW - DO NOT USE
         if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
             this.updateStatus('error', 'Browser speech recognition not supported');
             this.speak('Sorry, your browser does not support speech recognition.');
@@ -339,6 +344,7 @@ class VoiceControl {
             console.error('❌ Failed to start recognition:', error);
             this.updateStatus('error', 'Failed to start speech recognition');
         }
+        */
     }
 
     // Stop listening
