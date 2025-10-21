@@ -516,8 +516,8 @@ Scaffold Queries:
 - search_systems: Find systems by location/building type (requires searchTerm, optional exclude boolean)
 
 Maintenance Queries:
-- check_maintenance_due: Check maintenance due this month
-- list_due_maintenances: List maintenance tasks due (same as check_maintenance_due)
+- check_maintenance_due: Check maintenance due (optional timeframe parameter: "this month", "next month", "November", etc.)
+- list_due_maintenances: List maintenance tasks due (optional timeframe parameter, same as check_maintenance_due)
 - count_overdue_inspections: Count overdue inspections
 - count_total_customers: Total number of customers
 - count_nsi_customers: Count NSI certified customers
@@ -593,6 +593,8 @@ Examples:
 - "How many scaffold alarms in stock?" → {"intent":"query","action":"count_in_stock","parameters":{},"response":"Checking the current stock of scaffold alarms now."}
 - "What systems are in stock?" → {"intent":"query","action":"list_in_stock","parameters":{},"response":"I'll list all systems currently in stock."}
 - "Have I got any maintenance due this month?" → {"intent":"query","action":"check_maintenance_due","parameters":{},"response":"Let me check the maintenance schedule for this month."}
+- "How many maintenance do I have due next month?" → {"intent":"query","action":"check_maintenance_due","parameters":{"timeframe":"next month"},"response":"Let me check the maintenance schedule for next month."}
+- "How many maintenance in November?" → {"intent":"query","action":"check_maintenance_due","parameters":{"timeframe":"November"},"response":"Let me check the maintenance schedule for November."}
 - "Where is P20?" → {"intent":"query","action":"locate_system","parameters":{"pNumber":"P20"},"response":"Let me find where P20 is located."}
 - "How many scaffold alarms on church buildings?" → {"intent":"query","action":"search_systems","parameters":{"searchTerm":"church"},"response":"Let me search for scaffold systems at church locations."}
 - "How many systems in Oxford?" → {"intent":"query","action":"search_systems","parameters":{"searchTerm":"oxford"},"response":"Searching for systems in Oxford now."}

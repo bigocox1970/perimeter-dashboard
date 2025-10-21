@@ -539,14 +539,71 @@ class VoiceDashboardBridge {
         voiceControl.checkMaintenanceDue = async (params) => {
             try {
                 const today = new Date();
-                const currentMonthNumber = today.getMonth() + 1; // 1-12
-                const currentYear = today.getFullYear();
+                let targetMonthNumber = today.getMonth() + 1; // 1-12, default to current month
+                let targetYear = today.getFullYear();
+                let timeframeDescription = 'this month';
+
+                // Parse timeframe from parameters
+                if (params && params.timeframe) {
+                    const timeframe = params.timeframe.toLowerCase();
+
+                    if (timeframe.includes('next month')) {
+                        targetMonthNumber = today.getMonth() + 2; // getMonth() is 0-indexed
+                        if (targetMonthNumber > 12) {
+                            targetMonthNumber = 1;
+                            targetYear++;
+                        }
+                        timeframeDescription = 'next month';
+                    } else if (timeframe.includes('november') || timeframe.includes('nov')) {
+                        targetMonthNumber = 11;
+                        timeframeDescription = 'in November';
+                        // If November already passed this year, assume next year
+                        if (today.getMonth() >= 10) { // October or later
+                            targetYear++;
+                        }
+                    } else if (timeframe.includes('december') || timeframe.includes('dec')) {
+                        targetMonthNumber = 12;
+                        timeframeDescription = 'in December';
+                        if (today.getMonth() >= 11) targetYear++;
+                    } else if (timeframe.includes('january') || timeframe.includes('jan')) {
+                        targetMonthNumber = 1;
+                        timeframeDescription = 'in January';
+                        if (today.getMonth() >= 0 && today.getMonth() < 11) targetYear++;
+                    } else if (timeframe.includes('february') || timeframe.includes('feb')) {
+                        targetMonthNumber = 2;
+                        timeframeDescription = 'in February';
+                    } else if (timeframe.includes('march') || timeframe.includes('mar')) {
+                        targetMonthNumber = 3;
+                        timeframeDescription = 'in March';
+                    } else if (timeframe.includes('april') || timeframe.includes('apr')) {
+                        targetMonthNumber = 4;
+                        timeframeDescription = 'in April';
+                    } else if (timeframe.includes('may')) {
+                        targetMonthNumber = 5;
+                        timeframeDescription = 'in May';
+                    } else if (timeframe.includes('june') || timeframe.includes('jun')) {
+                        targetMonthNumber = 6;
+                        timeframeDescription = 'in June';
+                    } else if (timeframe.includes('july') || timeframe.includes('jul')) {
+                        targetMonthNumber = 7;
+                        timeframeDescription = 'in July';
+                    } else if (timeframe.includes('august') || timeframe.includes('aug')) {
+                        targetMonthNumber = 8;
+                        timeframeDescription = 'in August';
+                    } else if (timeframe.includes('september') || timeframe.includes('sep')) {
+                        targetMonthNumber = 9;
+                        timeframeDescription = 'in September';
+                    } else if (timeframe.includes('october') || timeframe.includes('oct')) {
+                        targetMonthNumber = 10;
+                        timeframeDescription = 'in October';
+                    }
+                }
 
                 const dueMaintenances = [];
 
                 customers.forEach(customer => {
-                    // Check if Inspection 1 is due this month
-                    if (customer.first_inspection_month === currentMonthNumber) {
+                    // Check if Inspection 1 is due in target month
+                    if (customer.first_inspection_month === targetMonthNumber) {
                         const history = customer.inspection_history?.inspection1 || [];
                         const dueMonth = customer.first_inspection_month;
 
@@ -554,10 +611,10 @@ class VoiceDashboardBridge {
                         const monthBeforeDue = dueMonth - 1 <= 0 ? 12 + (dueMonth - 1) : dueMonth - 1;
                         const monthAfterDue = dueMonth + 1 > 12 ? (dueMonth + 1) - 12 : dueMonth + 1;
 
-                        let yearBeforeDue = currentYear;
-                        let yearAfterDue = currentYear;
-                        if (dueMonth === 1 && monthBeforeDue === 12) yearBeforeDue = currentYear - 1;
-                        if (dueMonth === 12 && monthAfterDue === 1) yearAfterDue = currentYear + 1;
+                        let yearBeforeDue = targetYear;
+                        let yearAfterDue = targetYear;
+                        if (dueMonth === 1 && monthBeforeDue === 12) yearBeforeDue = targetYear - 1;
+                        if (dueMonth === 12 && monthAfterDue === 1) yearAfterDue = targetYear + 1;
 
                         const windowStart = new Date(yearBeforeDue, monthBeforeDue - 1, 1);
                         const windowEnd = new Date(yearAfterDue, monthAfterDue, 0);
@@ -572,13 +629,13 @@ class VoiceDashboardBridge {
                             dueMaintenances.push({
                                 customer: customer.name,
                                 type: 'Inspection 1',
-                                dueMonth: currentMonthNumber
+                                dueMonth: targetMonthNumber
                             });
                         }
                     }
 
-                    // Check if Inspection 2 is due this month
-                    if (customer.inspections_per_year === 2 && customer.second_inspection_month === currentMonthNumber) {
+                    // Check if Inspection 2 is due in target month
+                    if (customer.inspections_per_year === 2 && customer.second_inspection_month === targetMonthNumber) {
                         const history = customer.inspection_history?.inspection2 || [];
                         const dueMonth = customer.second_inspection_month;
 
@@ -586,10 +643,10 @@ class VoiceDashboardBridge {
                         const monthBeforeDue = dueMonth - 1 <= 0 ? 12 + (dueMonth - 1) : dueMonth - 1;
                         const monthAfterDue = dueMonth + 1 > 12 ? (dueMonth + 1) - 12 : dueMonth + 1;
 
-                        let yearBeforeDue = currentYear;
-                        let yearAfterDue = currentYear;
-                        if (dueMonth === 1 && monthBeforeDue === 12) yearBeforeDue = currentYear - 1;
-                        if (dueMonth === 12 && monthAfterDue === 1) yearAfterDue = currentYear + 1;
+                        let yearBeforeDue = targetYear;
+                        let yearAfterDue = targetYear;
+                        if (dueMonth === 1 && monthBeforeDue === 12) yearBeforeDue = targetYear - 1;
+                        if (dueMonth === 12 && monthAfterDue === 1) yearAfterDue = targetYear + 1;
 
                         const windowStart = new Date(yearBeforeDue, monthBeforeDue - 1, 1);
                         const windowEnd = new Date(yearAfterDue, monthAfterDue, 0);
@@ -604,7 +661,7 @@ class VoiceDashboardBridge {
                             dueMaintenances.push({
                                 customer: customer.name,
                                 type: 'Inspection 2',
-                                dueMonth: currentMonthNumber
+                                dueMonth: targetMonthNumber
                             });
                         }
                     }
@@ -615,14 +672,14 @@ class VoiceDashboardBridge {
                 if (count === 0) {
                     return {
                         success: true,
-                        message: 'You have no maintenance tasks due this month.',
+                        message: `You have no maintenance tasks due ${timeframeDescription}.`,
                         data: { count: 0, maintenances: [] }
                     };
                 }
 
                 // Build list of customers with due maintenance
                 const customerList = dueMaintenances.map(m => m.customer).join(', ');
-                let message = `You have ${count} maintenance ${count === 1 ? 'task' : 'tasks'} due this month for: ${customerList}.`;
+                let message = `You have ${count} maintenance ${count === 1 ? 'task' : 'tasks'} due ${timeframeDescription} for: ${customerList}.`;
 
                 return {
                     success: true,
