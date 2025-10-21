@@ -164,12 +164,16 @@ class VoiceDashboardBridge {
         // Get NSI customer count
         voiceControl.queryNSICustomers = async () => {
             try {
-                const nsiCustomers = customers.filter(c => c.nsiStatus === 'NSI');
+                const nsiCustomers = customers.filter(c => c.nsi_status === 'NSI');
                 const count = nsiCustomers.length;
+
+                // Calculate total inspections per year
+                const totalInspections = nsiCustomers.reduce((sum, c) => sum + (c.inspections_per_year || 0), 0);
+
                 return {
                     success: true,
-                    message: `You have ${count} NSI ${count === 1 ? 'customer' : 'customers'}.`,
-                    data: { count, customers: nsiCustomers }
+                    message: `You have ${count} NSI ${count === 1 ? 'customer' : 'customers'}, with a total of ${totalInspections} ${totalInspections === 1 ? 'inspection' : 'inspections'} per year.`,
+                    data: { count, customers: nsiCustomers, totalInspections }
                 };
             } catch (error) {
                 return { success: false, message: 'Sorry, I couldn\'t retrieve that information.' };
