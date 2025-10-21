@@ -245,7 +245,8 @@ class VoiceLogUI {
                     ${log.errorDetails ? `<div style="color: #e74c3c"><strong>Details:</strong> ${log.errorDetails}</div>` : ''}
                     ${log.error ? `<div style="color: #e74c3c"><strong>Error:</strong> ${log.error}</div>` : ''}
                     ${log.blobUrl ? `<div style="font-size: 11px; color: #7f8c8d"><strong>URL:</strong> ${log.blobUrl.substring(0, 50)}...</div>` : ''}
-                    ${log.willFallback ? `<div style="color: #f39c12"><strong>⚠️ Falling back to Browser TTS</strong></div>` : ''}
+                    ${log.attemptingDataURI ? `<div style="color: #f39c12"><strong>→ Trying data URI fallback...</strong></div>` : ''}
+                    ${log.note ? `<div style="color: #95a5a6; font-style: italic">${log.note}</div>` : ''}
                     ${log.voice ? `<div><strong>Voice:</strong> ${log.voice}</div>` : ''}
                     ${log.status === 'api_success' ? `<div style="color: #27ae60">✓ Audio received from API</div>` : ''}
                     ${log.status === 'success' ? `<div style="color: #27ae60">✓ Playback completed successfully</div>` : ''}

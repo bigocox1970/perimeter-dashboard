@@ -1075,21 +1075,20 @@ Be conversational but concise. UK English spelling and phrasing.`
             console.log('▶️ Attempting to play audio...');
             audio.play().catch((error) => {
                 console.error('❌ Audio play() failed:', error.name, error.message);
-                this.showDebugOverlay(`ELEVENLABS BLOCKED!\n${error.name}\nUsing browser TTS`);
+                this.showDebugOverlay(`ELEVENLABS BLOCKED!\n${error.name}\nTrying data URI`);
 
                 // Log the block
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.logTTS('elevenlabs', 'blocked', {
                         reason: error.name,
                         message: error.message,
-                        willFallback: true
+                        attemptingDataURI: true
                     });
                 }
 
                 cleanup();
 
-                // IMPORTANT: Reject on ANY error so we fall back to browser TTS
-                // Don't silently continue - user wants to hear audio!
+                // Reject so we can try data URI fallback
                 reject(error);
             });
         });
@@ -1134,13 +1133,13 @@ Be conversational but concise. UK English spelling and phrasing.`
                     const mediaError = audio.error;
                     let errorCode = mediaError ? mediaError.code : 'UNKNOWN';
                     console.error('❌ Data URI playback also failed:', errorCode);
-                    this.showDebugOverlay('DATA URI FAILED!\nUsing browser TTS');
+                    this.showDebugOverlay('DATA URI FAILED!\nNo audio');
 
                     if (typeof voiceLogger !== 'undefined') {
                         voiceLogger.logTTS('elevenlabs', 'failed', {
                             method: 'data_uri_fallback',
                             errorCode: errorCode,
-                            willFallback: true
+                            note: 'Both blob and data URI failed - no audio playback'
                         });
                     }
 
@@ -1149,13 +1148,13 @@ Be conversational but concise. UK English spelling and phrasing.`
 
                 audio.play().catch((error) => {
                     console.error('❌ Data URI play() failed:', error.name, error.message);
-                    this.showDebugOverlay('DATA URI BLOCKED!\nUsing browser TTS');
+                    this.showDebugOverlay('DATA URI BLOCKED!\nNo audio');
 
                     if (typeof voiceLogger !== 'undefined') {
                         voiceLogger.logTTS('elevenlabs', 'blocked', {
                             method: 'data_uri_fallback',
                             reason: error.name,
-                            willFallback: true
+                            note: 'Browser autoplay policy blocking all audio'
                         });
                     }
 
