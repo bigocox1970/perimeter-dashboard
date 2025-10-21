@@ -120,6 +120,12 @@ class VoiceControl {
         if (envConfig.getBool('VOICE_DEBUG_MODE')) {
             console.log(`🎙️ Status: ${status}${message ? ' - ' + message : ''}`);
         }
+
+        // Clear pre-unlocked audio when returning to idle (conversation finished)
+        if (status === 'idle' && this.preUnlockedAudio) {
+            console.log('🔄 Conversation ended - clearing pre-unlocked audio');
+            this.preUnlockedAudio = null;
+        }
     }
 
     // Start listening for voice input
@@ -975,15 +981,18 @@ Be conversational but concise. UK English spelling and phrasing.`
 
         // Use pre-unlocked audio element if available (created during button press)
         // This bypasses autoplay restrictions on mobile
-        const audio = this.preUnlockedAudio || new Audio();
-        audio.src = audioUrl; // Set source on existing element
-        audio.volume = 1.0; // Ensure volume is max
-
+        // If preUnlockedAudio exists, reuse it for all responses in this conversation
         if (this.preUnlockedAudio) {
-            console.log('✅ Using pre-unlocked audio element (bypassing autoplay policy)');
+            console.log('✅ Reusing pre-unlocked audio element (bypassing autoplay policy)');
+            this.preUnlockedAudio.src = audioUrl;
+            this.preUnlockedAudio.volume = 1.0;
         } else {
-            console.warn('⚠️ No pre-unlocked audio, may be blocked by autoplay');
+            console.warn('⚠️ No pre-unlocked audio, creating new (may be blocked by autoplay)');
+            this.preUnlockedAudio = new Audio(audioUrl);
+            this.preUnlockedAudio.volume = 1.0;
         }
+
+        const audio = this.preUnlockedAudio;
 
         return new Promise((resolve, reject) => {
             let timeoutId = null;
@@ -1017,7 +1026,10 @@ Be conversational but concise. UK English spelling and phrasing.`
                         usedPreUnlocked: !!this.preUnlockedAudio
                     });
                 }
-                cleanup();
+                // DON'T clear preUnlockedAudio yet - keep it for second response
+                if (timeoutId) clearTimeout(timeoutId);
+                URL.revokeObjectURL(audioUrl);
+                // Note: preUnlockedAudio NOT set to null - reuse for next speak()
                 resolve();
             };
             audio.onerror = (event) => {
@@ -1107,13 +1119,17 @@ Be conversational but concise. UK English spelling and phrasing.`
                 console.log('✅ Created data URI, length:', dataUri.length);
 
                 // Try to use pre-unlocked audio for data URI too
-                const audio = this.preUnlockedAudio || new Audio();
-                audio.src = dataUri;
-                audio.volume = 1.0;
-
                 if (this.preUnlockedAudio) {
-                    console.log('✅ Using pre-unlocked audio for data URI');
+                    console.log('✅ Reusing pre-unlocked audio for data URI');
+                    this.preUnlockedAudio.src = dataUri;
+                    this.preUnlockedAudio.volume = 1.0;
+                } else {
+                    console.warn('⚠️ No pre-unlocked audio for data URI, creating new');
+                    this.preUnlockedAudio = new Audio(dataUri);
+                    this.preUnlockedAudio.volume = 1.0;
                 }
+
+                const audio = this.preUnlockedAudio;
 
                 audio.onended = () => {
                     console.log('✅ Data URI audio playback ended successfully');
@@ -1125,7 +1141,8 @@ Be conversational but concise. UK English spelling and phrasing.`
                             usedPreUnlocked: !!this.preUnlockedAudio
                         });
                     }
-                    this.preUnlockedAudio = null; // Clear for next use
+                    // DON'T clear preUnlockedAudio - keep for next speak() call
+                    // Will be cleared when status goes to 'idle'
                     resolve();
                 };
 
