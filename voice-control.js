@@ -77,16 +77,14 @@ class VoiceControl {
             console.log('   Mobile:', isMobile);
             console.log('   MediaRecorder supported:', hasMediaRecorder);
 
-            // Disable TTS on mobile (autoplay policy blocks everything)
-            if (isMobile) {
-                console.log('📱 Mobile device detected - disabling TTS');
-                console.log('   Responses will be shown on screen only (no audio)');
-                envConfig.config.ENABLE_VOICE_FEEDBACK = false;
-            }
-
-            // FORCE OpenAI Whisper - do NOT use browser STT even if MediaRecorder missing
-            console.log('🔒 FORCING OpenAI Whisper - browser STT disabled');
+            // FORCE OpenAI Whisper - NEVER use browser STT
+            console.log('🔒 FORCING OpenAI Whisper - browser STT DISABLED');
             envConfig.config.USE_BROWSER_STT = false;
+
+            // FORCE ElevenLabs TTS - NEVER use browser TTS
+            console.log('🔒 FORCING ElevenLabs TTS - browser TTS DISABLED');
+            envConfig.config.TTS_PROVIDER = 'elevenlabs';
+            envConfig.config.ENABLE_VOICE_FEEDBACK = true;
 
             const useBrowserSTT = envConfig.getBool('USE_BROWSER_STT', false);
             const ttsProvider = envConfig.get('TTS_PROVIDER', 'elevenlabs');
@@ -141,19 +139,8 @@ class VoiceControl {
             console.warn('⚠️ Failed to pre-create audio:', e);
         }
 
-        // Check if we should use browser Web Speech API as fallback
-        const useBrowserSTT = envConfig.getBool('USE_BROWSER_STT', false);
-
-        console.log('🎤 STT PROVIDER CHECK:');
-        console.log('   USE_BROWSER_STT config:', useBrowserSTT);
-        console.log('   Will use:', useBrowserSTT ? 'BROWSER (INACCURATE)' : 'OPENAI WHISPER (ACCURATE)');
-
-        if (useBrowserSTT) {
-            console.log('⚠️ Using browser speech recognition');
-            this.startBrowserSpeechRecognition();
-            return;
-        }
-
+        // ALWAYS use OpenAI Whisper - browser STT disabled
+        console.log('🎤 STT PROVIDER: OpenAI Whisper (browser STT DISABLED)');
         console.log('✅ Using OpenAI Whisper for transcription');
 
         try {
@@ -161,16 +148,15 @@ class VoiceControl {
 
             // Check if MediaRecorder is supported
             if (!window.MediaRecorder) {
-                console.error('❌ MediaRecorder not supported - falling back to browser STT');
-                this.showDebugOverlay('MediaRecorder\nNOT SUPPORTED!\nUsing browser STT');
+                console.error('❌ MediaRecorder not supported - OpenAI Whisper WILL NOT WORK');
+                this.showDebugOverlay('MediaRecorder\nNOT SUPPORTED!\nWhisper will fail');
                 if (typeof voiceLogger !== 'undefined') {
                     voiceLogger.log('error', {
-                        error: 'MediaRecorder not supported on this browser',
-                        fallback: 'Using browser speech recognition instead'
+                        error: 'MediaRecorder not supported - OpenAI Whisper cannot be used',
+                        note: 'Browser STT fallback disabled by user request'
                     });
                 }
-                this.startBrowserSpeechRecognition();
-                return;
+                // Don't fallback - let it fail if MediaRecorder missing
             }
 
             const stream = await navigator.mediaDevices.getUserMedia({
@@ -191,11 +177,13 @@ class VoiceControl {
                     mimeType = 'audio/mp4';
                 } else if (MediaRecorder.isTypeSupported('audio/ogg')) {
                     mimeType = 'audio/ogg';
+                } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+                    mimeType = 'audio/wav';
                 } else {
-                    console.error('❌ No supported audio format - falling back to browser STT');
+                    console.error('❌ No supported audio format - OpenAI Whisper will fail');
+                    console.error('   Browser STT fallback DISABLED by user request');
                     stream.getTracks().forEach(track => track.stop());
-                    this.startBrowserSpeechRecognition();
-                    return;
+                    throw new Error('No supported audio format for recording');
                 }
             }
 
@@ -906,7 +894,7 @@ Be conversational but concise. UK English spelling and phrasing.`
         }
     }
 
-    // Text-to-Speech using ElevenLabs or Browser API
+    // Text-to-Speech using ElevenLabs ONLY
     async speak(text) {
         if (!text || !envConfig.getBool('ENABLE_VOICE_FEEDBACK')) {
             return;
@@ -916,22 +904,17 @@ Be conversational but concise. UK English spelling and phrasing.`
             this.isSpeaking = true;
             this.updateStatus('speaking', text);
 
-            const ttsProvider = envConfig.get('TTS_PROVIDER', 'browser');
-
-            if (ttsProvider === 'elevenlabs' && envConfig.get('ELEVENLABS_API_KEY')) {
+            // ONLY use ElevenLabs - browser TTS disabled
+            if (envConfig.get('ELEVENLABS_API_KEY')) {
                 await this.speakElevenLabs(text);
             } else {
-                await this.speakBrowser(text);
+                console.error('❌ No ELEVENLABS_API_KEY - cannot speak (browser TTS disabled)');
             }
 
         } catch (error) {
-            console.error('❌ Failed to speak:', error);
-            // Fallback to browser TTS
-            try {
-                await this.speakBrowser(text);
-            } catch (fallbackError) {
-                console.error('❌ Browser TTS also failed:', fallbackError);
-            }
+            console.error('❌ ElevenLabs TTS failed:', error);
+            console.error('   Browser TTS fallback DISABLED by user request');
+            // No fallback - browser TTS disabled
         } finally {
             this.isSpeaking = false;
         }
