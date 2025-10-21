@@ -77,17 +77,16 @@ class VoiceControl {
             console.log('   Mobile:', isMobile);
             console.log('   MediaRecorder supported:', hasMediaRecorder);
 
-            // Force browser TTS on mobile (autoplay policy too strict for ElevenLabs)
+            // Disable TTS on mobile (autoplay policy blocks everything)
             if (isMobile) {
-                console.log('📱 Mobile device detected - using Browser TTS to avoid autoplay issues');
-                envConfig.config.TTS_PROVIDER = 'browser';
+                console.log('📱 Mobile device detected - disabling TTS');
+                console.log('   Responses will be shown on screen only (no audio)');
+                envConfig.config.ENABLE_VOICE_FEEDBACK = false;
             }
 
-            // If no MediaRecorder, must use browser STT
-            if (!hasMediaRecorder) {
-                console.warn('⚠️ MediaRecorder not supported - must use browser speech recognition');
-                envConfig.config.USE_BROWSER_STT = true;
-            }
+            // FORCE OpenAI Whisper - do NOT use browser STT even if MediaRecorder missing
+            console.log('🔒 FORCING OpenAI Whisper - browser STT disabled');
+            envConfig.config.USE_BROWSER_STT = false;
 
             const useBrowserSTT = envConfig.getBool('USE_BROWSER_STT', false);
             const ttsProvider = envConfig.get('TTS_PROVIDER', 'elevenlabs');
