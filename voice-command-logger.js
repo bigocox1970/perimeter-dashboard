@@ -144,13 +144,12 @@ class VoiceCommandLogger {
             ...details
         };
 
-        // Add to current conversation if active
+        // ONLY add to conversation steps if active - don't create standalone logs
+        // This prevents duplicate TTS entries in the logs
         if (this.currentConversation) {
             this.addConversationStep(entry);
         }
-
-        // Also log standalone for visibility
-        this.log('tts_debug', entry);
+        // Don't log standalone - causes duplicates
 
         console.log(`🔊 TTS Log [${provider}] ${status}:`, details);
     }
