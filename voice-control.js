@@ -280,15 +280,8 @@ class VoiceControl {
                 // Stop listening after getting final result
                 this.stopListening();
 
-                // Log which STT provider was used
-                if (typeof voiceLogger !== 'undefined') {
-                    voiceLogger.log('stt_used', {
-                        provider: 'Browser Speech Recognition',
-                        transcript: transcript,
-                        accurate: false,
-                        confidence: confidence
-                    });
-                }
+                // Don't log STT standalone - creates duplicate entries
+                // STT info is already visible in console logs
 
                 if (this.transcriptCallback) {
                     this.transcriptCallback(transcript);
@@ -439,14 +432,8 @@ class VoiceControl {
 
             console.log('✅ Transcript:', transcript);
 
-            // Log which STT provider was used
-            if (typeof voiceLogger !== 'undefined') {
-                voiceLogger.log('stt_used', {
-                    provider: 'OpenAI Whisper',
-                    transcript: transcript,
-                    accurate: true
-                });
-            }
+            // Don't log STT standalone - creates duplicate entries
+            // STT info is already visible in console logs
 
             if (this.transcriptCallback) {
                 this.transcriptCallback(transcript);
