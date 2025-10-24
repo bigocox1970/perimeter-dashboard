@@ -238,7 +238,8 @@
                     const formData = {
                         p_number: document.getElementById('scaffPNumber').value,
                         extra_sensors: parseInt(document.getElementById('scaffExtraSensors').value) || 0,
-                        site_contact: document.getElementById('scaffSiteContact').value,
+                        customer_name: document.getElementById('scaffCustomerName').value,
+                        site_contact: document.getElementById('scaffSiteContact').value || '',
                         location: document.getElementById('scaffLocation').value || '',
                         address1: document.getElementById('scaffAddress1').value || '',
                         address2: document.getElementById('scaffAddress2').value || '',
@@ -2258,7 +2259,9 @@
                     id: system.id,
                     pNumber: system.p_number,
                     extraSensors: system.extra_sensors,
-                    siteContact: system.site_contact,
+                    customerName: system.customer_name || system.site_contact || '',
+                    siteContact: system.site_contact || '',
+                    location: system.location || '',
                     address1: system.address1 || '',
                     address2: system.address2 || '',
                     postcode: system.postcode || '',
@@ -2633,7 +2636,8 @@
             // Populate form with system data
             document.getElementById('scaffPNumber').value = system.pNumber;
             document.getElementById('scaffExtraSensors').value = system.extraSensors;
-            document.getElementById('scaffSiteContact').value = system.siteContact;
+            document.getElementById('scaffCustomerName').value = system.customerName || system.siteContact || '';
+            document.getElementById('scaffSiteContact').value = system.siteContact || '';
             document.getElementById('scaffLocation').value = system.location || '';
             document.getElementById('scaffAddress1').value = system.address1 || '';
             document.getElementById('scaffAddress2').value = system.address2 || '';
@@ -2854,7 +2858,8 @@
                             .from(SCAFF_TABLE_NAME)
                             .update({
                                 hire_status: 'on-hire',
-                                site_contact: customerName,
+                                customer_name: customerName,
+                                site_contact: siteContact || '',
                                 address1: address1,
                                 address2: address2,
                                 postcode: postcode,

@@ -731,7 +731,8 @@ class VoiceDashboardBridge {
                 .from(SCAFF_TABLE_NAME)
                 .update({
                     hire_status: 'on-hire',
-                    site_contact: state.data.customerName,
+                    customer_name: state.data.customerName,
+                    site_contact: '',
                     address1: state.data.address,
                     address2: '',
                     postcode: '',
