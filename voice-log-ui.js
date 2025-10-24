@@ -190,11 +190,11 @@ class VoiceLogUI {
     // Render STT provider entry
     renderSTTProviderEntry(log) {
         const isAccurate = log.accurate !== false;
-        const color = isAccurate ? '#27ae60' : '#e74c3c';
+        const color = isAccurate ? '#27ae60' : '#c0392b';
         const icon = isAccurate ? '✅' : '⚠️';
 
         return `
-            <div class="voice-log-entry stt-provider" style="border-left: 4px solid ${color}; background: ${isAccurate ? '#f0f9f4' : '#fff5f5'}">
+            <div class="voice-log-entry stt-provider" style="border-left: 4px solid ${color}; background: ${isAccurate ? '#d5edda' : '#f8d7da'}">
                 <div class="log-entry-header">
                     <span class="log-entry-icon">${icon}</span>
                     <span class="log-entry-transcript"><strong style="color: ${color}">${log.provider}</strong> - "${log.transcript}"</span>
@@ -217,9 +217,9 @@ class VoiceLogUI {
     renderTTSDebugEntry(log) {
         const statusColors = {
             attempting: '#3498db',
-            api_success: '#2ecc71',
+            api_success: '#27ae60',
             success: '#27ae60',
-            blocked: '#e74c3c',
+            blocked: '#c0392b',
             failed: '#c0392b'
         };
 
@@ -231,7 +231,7 @@ class VoiceLogUI {
             failed: '❌'
         };
 
-        const statusColor = statusColors[log.status] || '#95a5a6';
+        const statusColor = statusColors[log.status] || '#aeb6bf';
         const statusIcon = statusIcons[log.status] || '🔊';
         const providerName = log.provider === 'elevenlabs' ? 'ElevenLabs' : 'Browser TTS';
 
@@ -244,21 +244,21 @@ class VoiceLogUI {
                 </div>
                 <div class="log-entry-details">
                     ${log.method ? `<div><strong>Method:</strong> ${log.method}</div>` : ''}
-                    ${log.usedPreUnlocked !== undefined ? `<div style="color: ${log.usedPreUnlocked ? '#27ae60' : '#e74c3c'}"><strong>Pre-unlocked audio:</strong> ${log.usedPreUnlocked ? 'YES ✓' : 'NO (may fail autoplay)'}</div>` : ''}
+                    ${log.usedPreUnlocked !== undefined ? `<div style="color: ${log.usedPreUnlocked ? '#27ae60' : '#c0392b'}"><strong>Pre-unlocked audio:</strong> ${log.usedPreUnlocked ? 'YES ✓' : 'NO (may fail autoplay)'}</div>` : ''}
                     ${log.text ? `<div><strong>Text:</strong> "${log.text}"</div>` : ''}
                     ${log.blobSize ? `<div><strong>Audio size:</strong> ${(log.blobSize / 1024).toFixed(1)} KB (${log.blobType || 'unknown'})</div>` : ''}
                     ${log.reason ? `<div><strong>Reason:</strong> ${log.reason}</div>` : ''}
                     ${log.message ? `<div><strong>Message:</strong> ${log.message}</div>` : ''}
-                    ${log.errorCode ? `<div style="color: #e74c3c"><strong>Error Code:</strong> ${log.errorCode}</div>` : ''}
-                    ${log.errorDetails ? `<div style="color: #e74c3c"><strong>Details:</strong> ${log.errorDetails}</div>` : ''}
-                    ${log.error ? `<div style="color: #e74c3c"><strong>Error:</strong> ${log.error}</div>` : ''}
+                    ${log.errorCode ? `<div style="color: #c0392b"><strong>Error Code:</strong> ${log.errorCode}</div>` : ''}
+                    ${log.errorDetails ? `<div style="color: #c0392b"><strong>Details:</strong> ${log.errorDetails}</div>` : ''}
+                    ${log.error ? `<div style="color: #c0392b"><strong>Error:</strong> ${log.error}</div>` : ''}
                     ${log.blobUrl ? `<div style="font-size: 11px; color: #7f8c8d"><strong>URL:</strong> ${log.blobUrl.substring(0, 50)}...</div>` : ''}
-                    ${log.attemptingDataURI ? `<div style="color: #f39c12"><strong>→ Trying data URI fallback...</strong></div>` : ''}
+                    ${log.attemptingDataURI ? `<div style="color: #3498db"><strong>→ Trying data URI fallback...</strong></div>` : ''}
                     ${log.note ? `<div style="color: #95a5a6; font-style: italic">${log.note}</div>` : ''}
                     ${log.voice ? `<div><strong>Voice:</strong> ${log.voice}</div>` : ''}
                     ${log.status === 'api_success' ? `<div style="color: #27ae60">✓ Audio received from API</div>` : ''}
                     ${log.status === 'success' ? `<div style="color: #27ae60">✓ Playback completed successfully</div>` : ''}
-                    ${log.status === 'blocked' ? `<div style="color: #e74c3c">⚠️ Audio playback blocked - likely autoplay policy</div>` : ''}
+                    ${log.status === 'blocked' ? `<div style="color: #c0392b">⚠️ Audio playback blocked - likely autoplay policy</div>` : ''}
                 </div>
             </div>
         `;
@@ -392,7 +392,7 @@ class VoiceLogUI {
         if (btn) {
             const originalText = btn.textContent;
             btn.textContent = '✓';
-            btn.style.background = '#43e97b';
+            btn.style.background = '#27ae60';
             btn.style.color = 'white';
 
             setTimeout(() => {

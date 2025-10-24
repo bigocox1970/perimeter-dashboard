@@ -788,7 +788,7 @@
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             text-align: center;
-            min-width: 200px;
+            min-width: 350px;
             flex-shrink: 0;
         }
 
@@ -1737,9 +1737,9 @@
 
         /* Help Tab Styles */
         .help-container {
-            max-width: 900px;
-            margin: 0 auto;
+            width: 100%;
             padding: 20px;
+            text-align: center;
         }
 
         .help-subtabs {
@@ -1764,14 +1764,14 @@
         }
 
         .help-subtab-button:hover {
-            border-color: #ff6b35;
-            color: #ff6b35;
+            border-color: #3498db;
+            color: #3498db;
         }
 
         .help-subtab-button.active {
-            background: #ff6b35;
+            background: #3498db;
             color: white;
-            border-color: #ff6b35;
+            border-color: #3498db;
         }
 
         .help-subtab-content {
@@ -1788,6 +1788,7 @@
             padding: 25px;
             margin-bottom: 25px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            text-align: center;
         }
 
         .help-section h3 {
@@ -1795,7 +1796,7 @@
             font-size: 1.5rem;
             margin-bottom: 20px;
             padding-bottom: 10px;
-            border-bottom: 2px solid #ff6b35;
+            border-bottom: 2px solid #3498db;
         }
 
         .help-intro {
@@ -1804,12 +1805,14 @@
             margin-bottom: 20px;
             padding: 15px;
             background: #f8f9fa;
-            border-left: 4px solid #ff6b35;
+            border-left: 4px solid #3498db;
             border-radius: 4px;
+            text-align: center;
         }
 
         .help-category {
             margin-bottom: 25px;
+            text-align: center;
         }
 
         .help-category h4 {
@@ -1818,11 +1821,14 @@
             margin-bottom: 12px;
             display: flex;
             align-items: center;
+            justify-content: center;
         }
 
         .help-category ul {
             list-style: none;
             padding-left: 0;
+            display: inline-block;
+            text-align: left;
         }
 
         .help-category > ul > li {
@@ -1834,7 +1840,7 @@
 
         .help-category > ul > li:before {
             content: "•";
-            color: #ff6b35;
+            color: #3498db;
             font-weight: bold;
             font-size: 1.5rem;
             position: absolute;
@@ -1917,14 +1923,14 @@
         }
 
         .logs-subtab-button:hover {
-            border-color: #ff6b35;
-            color: #ff6b35;
+            border-color: #3498db;
+            color: #3498db;
         }
 
         .logs-subtab-button.active {
-            background: #ff6b35;
+            background: #3498db;
             color: white;
-            border-color: #ff6b35;
+            border-color: #3498db;
         }
 
         .logs-subtab-content {
@@ -1961,21 +1967,24 @@
         .activity-log-item {
             padding: 15px;
             margin-bottom: 12px;
-            border-left: 4px solid #ff6b35;
+            border-left: 4px solid #3498db;
             background: #f8f9fa;
             border-radius: 6px;
         }
 
         .activity-log-item.success {
             border-left-color: #27ae60;
+            background: #d5edda;
         }
 
         .activity-log-item.warning {
-            border-left-color: #f39c12;
+            border-left-color: #c0392b;
+            background: #f8d7da;
         }
 
         .activity-log-item.error {
-            border-left-color: #e74c3c;
+            border-left-color: #c0392b;
+            background: #f8d7da;
         }
 
         .activity-log-time {

@@ -251,18 +251,63 @@
         // Activity Logger
         const ActivityLogger = {
             storageKey: 'perim_activity_logs',
+            unsyncedKey: 'perim_activity_logs_unsynced',
             maxLogs: 100,
+            unsyncedLogs: [],
+            isOnline: navigator.onLine,
+            initialized: false,
 
-            log(action, details, type = 'success') {
-                const logs = this.getLogs();
+            // Initialize the logger
+            async init() {
+                if (this.initialized) return;
+                this.initialized = true;
+
+                // Set up online/offline listeners
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    console.log('🟢 Back online - syncing activity logs...');
+                    this.syncUnsavedLogs();
+                });
+
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    console.log('🔴 Offline - activity logs will queue for sync');
+                });
+
+                // Load logs from database
+                await this.loadFromSupabase();
+
+                // Load any unsynced logs
+                try {
+                    const unsynced = localStorage.getItem(this.unsyncedKey);
+                    if (unsynced) {
+                        this.unsyncedLogs = JSON.parse(unsynced);
+                        console.log(`⏳ ${this.unsyncedLogs.length} activity logs waiting to sync`);
+                    }
+                } catch (error) {
+                    console.error('Error loading unsynced activity logs:', error);
+                }
+
+                // Try to sync any unsynced logs
+                if (this.isOnline && this.unsyncedLogs.length > 0) {
+                    this.syncUnsavedLogs();
+                }
+            },
+
+            log(action, details, type = 'success', entityType = null, entityId = null, changes = null) {
                 const logEntry = {
                     id: Date.now(),
                     timestamp: new Date().toISOString(),
                     action: action,
                     details: details,
-                    type: type // success, warning, error
+                    type: type, // success, warning, error
+                    entityType: entityType,
+                    entityId: entityId,
+                    changes: changes,
+                    synced: false
                 };
 
+                const logs = this.getLogs();
                 logs.unshift(logEntry); // Add to beginning
 
                 // Keep only last maxLogs entries
@@ -270,7 +315,162 @@
                     logs.splice(this.maxLogs);
                 }
 
+                // Save to localStorage immediately
                 localStorage.setItem(this.storageKey, JSON.stringify(logs));
+
+                // Save to Supabase (async)
+                this.saveToSupabase(logEntry);
+            },
+
+            async saveToSupabase(entry) {
+                if (!window.supabase) {
+                    console.warn('Supabase not initialized - activity log saved to localStorage only');
+                    this.unsyncedLogs.push(entry);
+                    this.saveUnsyncedQueue();
+                    return;
+                }
+
+                if (!this.isOnline) {
+                    console.log('📴 Offline - queuing activity log for sync');
+                    this.unsyncedLogs.push(entry);
+                    this.saveUnsyncedQueue();
+                    return;
+                }
+
+                try {
+                    const dbEntry = {
+                        timestamp: entry.timestamp,
+                        action: entry.action,
+                        details: entry.details,
+                        type: entry.type,
+                        entity_type: entry.entityType,
+                        entity_id: entry.entityId,
+                        changes: entry.changes,
+                        synced: true
+                    };
+
+                    const { error } = await window.supabase
+                        .from('perim_activity_logs')
+                        .insert([dbEntry]);
+
+                    if (error) {
+                        console.error('Failed to save activity log to Supabase:', error);
+                        this.unsyncedLogs.push(entry);
+                        this.saveUnsyncedQueue();
+                    } else {
+                        // Mark as synced in localStorage
+                        entry.synced = true;
+                        const logs = this.getLogs();
+                        const index = logs.findIndex(l => l.id === entry.id);
+                        if (index !== -1) {
+                            logs[index].synced = true;
+                            localStorage.setItem(this.storageKey, JSON.stringify(logs));
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error saving activity log to Supabase:', error);
+                    this.unsyncedLogs.push(entry);
+                    this.saveUnsyncedQueue();
+                }
+            },
+
+            async syncUnsavedLogs() {
+                if (!window.supabase || !this.isOnline || this.unsyncedLogs.length === 0) {
+                    return;
+                }
+
+                console.log(`🔄 Syncing ${this.unsyncedLogs.length} activity logs to Supabase...`);
+
+                const logsToSync = [...this.unsyncedLogs];
+                this.unsyncedLogs = [];
+
+                for (const entry of logsToSync) {
+                    try {
+                        const dbEntry = {
+                            timestamp: entry.timestamp,
+                            action: entry.action,
+                            details: entry.details,
+                            type: entry.type,
+                            entity_type: entry.entityType,
+                            entity_id: entry.entityId,
+                            changes: entry.changes,
+                            synced: true
+                        };
+
+                        const { error } = await window.supabase
+                            .from('perim_activity_logs')
+                            .insert([dbEntry]);
+
+                        if (error) {
+                            console.error('Failed to sync activity log:', error);
+                            this.unsyncedLogs.push(entry);
+                        } else {
+                            // Mark as synced in localStorage
+                            const logs = this.getLogs();
+                            const index = logs.findIndex(l => l.id === entry.id);
+                            if (index !== -1) {
+                                logs[index].synced = true;
+                                localStorage.setItem(this.storageKey, JSON.stringify(logs));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error syncing activity log:', error);
+                        this.unsyncedLogs.push(entry);
+                    }
+                }
+
+                this.saveUnsyncedQueue();
+
+                if (this.unsyncedLogs.length === 0) {
+                    console.log('✅ All activity logs synced successfully');
+                } else {
+                    console.warn(`⚠️ ${this.unsyncedLogs.length} activity logs failed to sync`);
+                }
+            },
+
+            async loadFromSupabase() {
+                if (!window.supabase || !this.isOnline) {
+                    return;
+                }
+
+                try {
+                    console.log('📥 Loading activity logs from Supabase...');
+                    const { data, error } = await window.supabase
+                        .from('perim_activity_logs')
+                        .select('*')
+                        .order('timestamp', { ascending: false })
+                        .limit(this.maxLogs);
+
+                    if (!error && data) {
+                        // Convert DB format to app format
+                        const logs = data.map(log => ({
+                            id: new Date(log.timestamp).getTime(),
+                            timestamp: log.timestamp,
+                            action: log.action,
+                            details: log.details,
+                            type: log.type,
+                            entityType: log.entity_type,
+                            entityId: log.entity_id,
+                            changes: log.changes,
+                            synced: true
+                        }));
+
+                        localStorage.setItem(this.storageKey, JSON.stringify(logs));
+                        console.log(`✅ Loaded ${data.length} activity logs from Supabase`);
+                    } else if (error) {
+                        console.error('Failed to load activity logs from Supabase:', error);
+                    }
+                } catch (error) {
+                    console.error('Error loading activity logs from Supabase:', error);
+                }
+            },
+
+            saveUnsyncedQueue() {
+                try {
+                    localStorage.setItem(this.unsyncedKey, JSON.stringify(this.unsyncedLogs));
+                } catch (error) {
+                    console.error('Failed to save unsynced queue:', error);
+                }
             },
 
             getLogs() {
@@ -283,8 +483,28 @@
                 }
             },
 
-            clearLogs() {
+            async clearLogs() {
                 localStorage.removeItem(this.storageKey);
+                this.unsyncedLogs = [];
+                localStorage.removeItem(this.unsyncedKey);
+
+                // Also clear from Supabase if online
+                if (window.supabase && this.isOnline) {
+                    try {
+                        const { error } = await window.supabase
+                            .from('perim_activity_logs')
+                            .delete()
+                            .gte('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+                        if (error) {
+                            console.error('Failed to clear activity logs from Supabase:', error);
+                        } else {
+                            console.log('✅ Cleared all activity logs from Supabase');
+                        }
+                    } catch (error) {
+                        console.error('Error clearing activity logs from Supabase:', error);
+                    }
+                }
             },
 
             formatTimestamp(isoString) {
@@ -368,6 +588,9 @@
             }
 
             // PWA install prompt disabled - users can install via browser menu
+
+            // Initialize activity logger
+            ActivityLogger.init();
 
                     // Handle splash screen timing
         setTimeout(() => {
