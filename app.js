@@ -288,7 +288,7 @@
             }
 
             // Initialize first tab as active
-            showTab('maint');
+            showTab('scaff');
         });
 
         // Handle window resize to adjust statistics visibility (but respect user's manual toggle)
