@@ -3189,9 +3189,11 @@
 
         // Update scaffold statistics
         function updateScaffoldStats() {
-            const totalActiveSystems = scaffSystems.length;
-            const totalWeeklyRevenue = scaffSystems.reduce((sum, sys) => sum + calculateWeeklyCostBeforeVAT(sys.extraSensors), 0);
-            const overdueSystems = scaffSystems.filter(sys => getDaysUntilInvoice(sys.lastInvoiceDate) < 0).length;
+            // Only count on-hire systems as active
+            const onHireSystems = scaffSystems.filter(sys => sys.hireStatus === 'on-hire');
+            const totalActiveSystems = onHireSystems.length;
+            const totalWeeklyRevenue = onHireSystems.reduce((sum, sys) => sum + calculateWeeklyCostBeforeVAT(sys.extraSensors), 0);
+            const overdueSystems = onHireSystems.filter(sys => getDaysUntilInvoice(sys.lastInvoiceDate) < 0).length;
 
             const elements = {
                 totalScaffSystems: document.getElementById('totalScaffSystems'),
