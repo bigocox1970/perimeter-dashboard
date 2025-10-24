@@ -80,6 +80,11 @@
         <div class="splash-subtitle">Admin Dashboard</div>
     </div>
 
+    <!-- Alex Message Screen -->
+    <div class="alex-message-screen" id="alexMessageScreen">
+        <div class="alex-message">Grumpy really does love you, you know! 💕</div>
+    </div>
+
     <!-- Login Screen -->
     <div class="login-screen" id="loginScreen" style="display: none;">
         <div class="login-container">
@@ -123,6 +128,7 @@
             <button class="tab-button" onclick="showTab('nsi')">NSI</button>
             <button class="tab-button active" onclick="showTab('scaff')">Scaff</button>
             <button class="tab-button" onclick="showTab('logs')">Logs</button>
+            <button class="tab-button" onclick="showTab('help')">Help</button>
         </div>
 
         <!-- Tab Contents -->
@@ -532,6 +538,178 @@
         <div id="logsTab" class="tab-content">
             <div id="voiceLogContainer">
                 <!-- Voice log content will be injected here by voice-log-ui.js -->
+            </div>
+        </div>
+
+        <!-- Help Tab Content -->
+        <div id="helpTab" class="tab-content">
+            <div class="help-container">
+                <!-- Help Sub-tabs -->
+                <div class="help-subtabs">
+                    <button class="help-subtab-button active" onclick="showHelpSubTab('appFeatures')">🛠️ App Features</button>
+                    <button class="help-subtab-button" onclick="showHelpSubTab('voiceCommands')">🎤 Voice Commands</button>
+                </div>
+
+                <!-- App Features Sub-tab -->
+                <div id="appFeaturesHelp" class="help-subtab-content active">
+                    <div class="help-section">
+                        <h3>🛠️ What You Can Do in the App</h3>
+
+                        <div class="help-category">
+                            <h4>Scaffold Alarms (Scaff Tab)</h4>
+                            <ul>
+                                <li><strong>View Systems:</strong> See all scaffold alarm systems with hire status, customer info, and invoice details</li>
+                                <li><strong>Filter Systems:</strong> Filter by On Hire, Off Hire, or view all systems</li>
+                                <li><strong>Add New System:</strong> Click "Add Scaff System" to register a new scaffold alarm</li>
+                                <li><strong>Edit System:</strong> Click the ✏️ button to update system details including:
+                                    <ul>
+                                        <li>Company/Customer Name (who hired it)</li>
+                                        <li>Site Location (friendly name like "Royal Close")</li>
+                                        <li>Full address, postcode, and contact details</li>
+                                        <li>Extra sensors, ARC settings, and hire dates</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Change Hire Status:</strong> Click "Change" to put systems on hire or take them off hire</li>
+                                <li><strong>View History:</strong> Click 📋 to see complete rental history including all invoices and changes</li>
+                                <li><strong>Mark Invoice Sent:</strong> Click the green "📄 Sent" button to:
+                                    <ul>
+                                        <li>Record invoice sent date</li>
+                                        <li>Add ServiceM8 invoice number</li>
+                                        <li>Automatically calculate 4-week invoice amount</li>
+                                        <li>Set next invoice due date (28 days later)</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Maintenance (Maint Tab)</h4>
+                            <ul>
+                                <li><strong>View Customers:</strong> See all customers with their alarm systems</li>
+                                <li><strong>Add Customer:</strong> Register new customers with contact details</li>
+                                <li><strong>Edit Customer:</strong> Update customer information</li>
+                                <li><strong>Delete Customer:</strong> Remove customers (only if they have no active systems)</li>
+                                <li><strong>View Systems:</strong> Expand customer rows to see all their alarm systems</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>NSI Tab</h4>
+                            <ul>
+                                <li><strong>Manage Customers:</strong> Similar to Maint tab with customer management</li>
+                                <li><strong>Track NSI Systems:</strong> View and manage NSI-certified alarm systems</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Logs Tab</h4>
+                            <ul>
+                                <li><strong>Voice Command History:</strong> See all voice commands you've used</li>
+                                <li><strong>Track Actions:</strong> Review what the voice assistant did</li>
+                                <li><strong>Clear Logs:</strong> Remove old log entries</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="help-section">
+                        <h3>💡 Quick Tips</h3>
+                        <ul>
+                            <li><strong>Invoice Tracking:</strong> Systems show "Due in X days" or "Overdue by X days" for easy tracking</li>
+                            <li><strong>Weekly Costs:</strong> £10/week base + £2/week per extra sensor</li>
+                            <li><strong>4-Week Billing:</strong> Invoices are automatically calculated for 4-week periods</li>
+                            <li><strong>Color Coding:</strong> On-hire systems are green, off-hire are gray</li>
+                            <li><strong>Statistics:</strong> The top of the Scaff page shows total active systems, weekly/monthly revenue, and overdue count</li>
+                            <li><strong>Mobile Friendly:</strong> All features work on phone and tablet</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Voice Commands Sub-tab -->
+                <div id="voiceCommandsHelp" class="help-subtab-content">
+                    <div class="help-section">
+                        <h3>🎤 Voice Control Commands</h3>
+                        <p class="help-intro">You can control the app using voice commands. Click the microphone icon to start speaking, then click it again to send your command.</p>
+
+                        <div class="help-category">
+                            <h4>Counting Systems</h4>
+                            <ul>
+                                <li>"How many systems are on hire?"</li>
+                                <li>"How many scaffold alarms in stock?"</li>
+                                <li>"How many systems are off hire?"</li>
+                                <li>"What systems are in stock?"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Finding Systems</h4>
+                            <ul>
+                                <li>"Where is P20?" - Find a system's location</li>
+                                <li>"How many scaffold alarms on church buildings?"</li>
+                                <li>"How many systems in Oxford?"</li>
+                                <li>"How many systems outside Oxford?"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Revenue Information</h4>
+                            <ul>
+                                <li>"What's the total monthly revenue?"</li>
+                                <li>"Calculate weekly revenue"</li>
+                                <li>"What's the average revenue per scaffold system?"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Changing Hire Status</h4>
+                            <ul>
+                                <li>"Change P1 to off hire"</li>
+                                <li>"Put P13 on hire"</li>
+                                <li>"The one at Royal Close Chippenham has come off hire"</li>
+                                <li>"The scaffold alarm at the church came off hire last Thursday"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Installing & Updating Systems</h4>
+                            <ul>
+                                <li>"I've installed P7 at St Margarets Church for 1st Choice Scaffolding"</li>
+                                <li>"Update P9 site contact to Mark Murphy"</li>
+                                <li>"Change P9 customer to First Choice Scaffolding"</li>
+                                <li>"Update the site contact for the one at Oxford"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Maintenance Queries</h4>
+                            <ul>
+                                <li>"Have I got any maintenance due this month?"</li>
+                                <li>"How many maintenance do I have due next month?"</li>
+                                <li>"How many maintenance in November?"</li>
+                                <li>"How many customers do I have?"</li>
+                                <li>"How many NSI customers?"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Analysis Questions</h4>
+                            <ul>
+                                <li>"What's my busiest month for maintenances?"</li>
+                                <li>"How many maintenance do I have to do each year for NSI approved systems?"</li>
+                            </ul>
+                        </div>
+
+                        <div class="help-category">
+                            <h4>Voice Control Tips</h4>
+                            <ul>
+                                <li>Speak clearly and at a normal pace</li>
+                                <li>Use system numbers like "P13" or "P16"</li>
+                                <li>You can ask natural questions like "How many on hire?"</li>
+                                <li>The assistant will confirm actions before making changes</li>
+                                <li>Check the Logs tab to see what commands you've used</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1336,6 +1514,14 @@
                 </svg>
             </div>
             <div class="mobile-tab-label">Logs</div>
+        </button>
+        <button class="mobile-tab-button" onclick="showTab('help')" data-tab="help">
+            <div class="mobile-tab-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+                </svg>
+            </div>
+            <div class="mobile-tab-label">Help</div>
         </button>
     </div>
 

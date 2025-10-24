@@ -183,6 +183,36 @@
             }
         }
 
+        // Help sub-tab switching functionality
+        function showHelpSubTab(subtabName) {
+            // Hide all help subtab contents
+            const helpSubtabs = document.querySelectorAll('.help-subtab-content');
+            helpSubtabs.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all help subtab buttons
+            const helpButtons = document.querySelectorAll('.help-subtab-button');
+            helpButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected help subtab content
+            const selectedContent = document.getElementById(subtabName + 'Help');
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            const selectedButton = document.querySelector(`[onclick="showHelpSubTab('${subtabName}')"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('active');
+            }
+        }
+
+        // Make showHelpSubTab globally available
+        window.showHelpSubTab = showHelpSubTab;
+
         // Handle Enter key in password field
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && document.getElementById('loginScreen').style.display === 'flex') {
@@ -3047,7 +3077,7 @@
                 const today = new Date().toISOString().split('T')[0];
 
                 // Ask for optional invoice number
-                const invoiceNumber = prompt(`Mark invoice as sent for ${system.pNumber}?\n\nInvoice Amount: £${invoiceAmount.toFixed(2)} (4 weeks)\nDate: ${today}\n\nOptional: Enter invoice number (or leave blank):`);
+                const invoiceNumber = prompt(`Mark invoice as sent for ${system.pNumber}?\n\nInvoice Amount: £${invoiceAmount.toFixed(2)} (4 weeks)\nDate: ${today}\n\nOptional: Enter ServiceM8 invoice number (or leave blank):`);
 
                 if (invoiceNumber === null) return; // User cancelled
 
