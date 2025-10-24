@@ -536,8 +536,32 @@
 
         <!-- Logs Tab Content -->
         <div id="logsTab" class="tab-content">
-            <div id="voiceLogContainer">
-                <!-- Voice log content will be injected here by voice-log-ui.js -->
+            <div class="logs-container">
+                <!-- Logs Sub-tabs -->
+                <div class="logs-subtabs">
+                    <button class="logs-subtab-button active" onclick="showLogsSubTab('voice')">🎤 Voice Logs</button>
+                    <button class="logs-subtab-button" onclick="showLogsSubTab('activity')">📝 Activity Logs</button>
+                </div>
+
+                <!-- Voice Logs Sub-tab -->
+                <div id="voiceLogsContent" class="logs-subtab-content active">
+                    <div id="voiceLogContainer">
+                        <!-- Voice log content will be injected here by voice-log-ui.js -->
+                    </div>
+                </div>
+
+                <!-- Activity Logs Sub-tab -->
+                <div id="activityLogsContent" class="logs-subtab-content">
+                    <div id="activityLogContainer">
+                        <div class="activity-log-header">
+                            <h3>Recent Activity</h3>
+                            <button class="btn" onclick="clearActivityLogs()" style="background: #e74c3c;">Clear Logs</button>
+                        </div>
+                        <div id="activityLogList">
+                            <!-- Activity logs will be displayed here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 

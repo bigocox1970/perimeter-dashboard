@@ -213,6 +213,140 @@
         // Make showHelpSubTab globally available
         window.showHelpSubTab = showHelpSubTab;
 
+        // Logs sub-tab switching functionality
+        function showLogsSubTab(subtabName) {
+            // Hide all logs subtab contents
+            const logsSubtabs = document.querySelectorAll('.logs-subtab-content');
+            logsSubtabs.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all logs subtab buttons
+            const logsButtons = document.querySelectorAll('.logs-subtab-button');
+            logsButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+
+            // Show selected logs subtab content
+            const selectedContent = document.getElementById(subtabName + 'LogsContent');
+            if (selectedContent) {
+                selectedContent.classList.add('active');
+            }
+
+            // Add active class to clicked button
+            const selectedButton = document.querySelector(`[onclick="showLogsSubTab('${subtabName}')"]`);
+            if (selectedButton) {
+                selectedButton.classList.add('active');
+            }
+
+            // Load activity logs if switching to activity tab
+            if (subtabName === 'activity') {
+                displayActivityLogs();
+            }
+        }
+
+        // Make showLogsSubTab globally available
+        window.showLogsSubTab = showLogsSubTab;
+
+        // Activity Logger
+        const ActivityLogger = {
+            storageKey: 'perim_activity_logs',
+            maxLogs: 100,
+
+            log(action, details, type = 'success') {
+                const logs = this.getLogs();
+                const logEntry = {
+                    id: Date.now(),
+                    timestamp: new Date().toISOString(),
+                    action: action,
+                    details: details,
+                    type: type // success, warning, error
+                };
+
+                logs.unshift(logEntry); // Add to beginning
+
+                // Keep only last maxLogs entries
+                if (logs.length > this.maxLogs) {
+                    logs.splice(this.maxLogs);
+                }
+
+                localStorage.setItem(this.storageKey, JSON.stringify(logs));
+            },
+
+            getLogs() {
+                try {
+                    const logs = localStorage.getItem(this.storageKey);
+                    return logs ? JSON.parse(logs) : [];
+                } catch (error) {
+                    console.error('Error reading activity logs:', error);
+                    return [];
+                }
+            },
+
+            clearLogs() {
+                localStorage.removeItem(this.storageKey);
+            },
+
+            formatTimestamp(isoString) {
+                const date = new Date(isoString);
+                const now = new Date();
+                const diff = now - date;
+                const seconds = Math.floor(diff / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                const days = Math.floor(hours / 24);
+
+                if (days > 0) {
+                    return `${days} day${days > 1 ? 's' : ''} ago - ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                } else if (hours > 0) {
+                    return `${hours} hour${hours > 1 ? 's' : ''} ago - ${date.toLocaleTimeString()}`;
+                } else if (minutes > 0) {
+                    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+                } else {
+                    return 'Just now';
+                }
+            }
+        };
+
+        // Display activity logs
+        function displayActivityLogs() {
+            const container = document.getElementById('activityLogList');
+            if (!container) return;
+
+            const logs = ActivityLogger.getLogs();
+
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="activity-log-empty">No activity logged yet. Actions you take will appear here.</div>';
+                return;
+            }
+
+            let html = '';
+            logs.forEach(log => {
+                html += `
+                    <div class="activity-log-item ${log.type}">
+                        <div class="activity-log-time">${ActivityLogger.formatTimestamp(log.timestamp)}</div>
+                        <div class="activity-log-action">${log.action}</div>
+                        <div class="activity-log-details">${log.details}</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Clear activity logs
+        function clearActivityLogs() {
+            if (confirm('Are you sure you want to clear all activity logs?')) {
+                ActivityLogger.clearLogs();
+                displayActivityLogs();
+            }
+        }
+
+        // Make functions globally available
+        window.displayActivityLogs = displayActivityLogs;
+        window.clearActivityLogs = clearActivityLogs;
+        window.ActivityLogger = ActivityLogger;
+
         // Handle Enter key in password field
         document.addEventListener('keypress', function(e) {
             if (e.key === 'Enter' && document.getElementById('loginScreen').style.display === 'flex') {
@@ -294,6 +428,14 @@
                                 .eq('id', editingScaffId);
 
                             if (error) throw error;
+
+                            // Log the edit activity
+                            ActivityLogger.log(
+                                `Edited ${formData.p_number}`,
+                                `Updated system details for ${formData.p_number}. Location: ${formData.customer_name || formData.site_contact || 'Unknown'}`,
+                                'success'
+                            );
+
                             showScaffoldMessage('Scaffold system updated successfully!', 'success');
                         } else {
                             // Add new system
@@ -307,6 +449,14 @@
                                 .insert([newSystemData]);
 
                             if (error) throw error;
+
+                            // Log the add activity
+                            ActivityLogger.log(
+                                `Added new system ${formData.p_number}`,
+                                `Created new scaffold system ${formData.p_number}. Status: ${formData.hire_status}`,
+                                'success'
+                            );
+
                             showScaffoldMessage('Scaffold system added successfully!', 'success');
                         }
 
@@ -2821,6 +2971,13 @@
 
                 if (error) throw error;
 
+                // Log the activity
+                ActivityLogger.log(
+                    `Off-hired ${system.pNumber}`,
+                    `System ${system.pNumber} marked as off-hire on ${new Date(offHireDate).toLocaleDateString()}. Previous location: ${system.customerName || system.siteContact || 'Unknown'}`,
+                    'success'
+                );
+
                 showScaffoldMessage('System marked as off-hire and saved to history!', 'success');
                 closeOffHireModal();
                 await loadScaffoldData();
@@ -2909,6 +3066,13 @@
 
                         // Create rental history record
                         await createRentalHistory(updatedSystem);
+
+                        // Log the activity
+                        ActivityLogger.log(
+                            `On-hired ${system.pNumber}`,
+                            `System ${system.pNumber} hired to ${customerName} at ${address1} on ${new Date(hireDate).toLocaleDateString()}`,
+                            'success'
+                        );
 
                         showScaffoldMessage('System marked as on-hire and rental history created!', 'success');
                         closeOnHireModal();
@@ -3100,6 +3264,13 @@
                 );
 
                 if (invoiceLogged) {
+                    // Log the activity
+                    ActivityLogger.log(
+                        `Invoice sent for ${system.pNumber}`,
+                        `Logged invoice of £${invoiceAmount.toFixed(2)} for ${system.pNumber}${invoiceNumber.trim() ? ` (ServiceM8 #${invoiceNumber.trim()})` : ''}. Customer: ${system.customerName || system.siteContact || 'Unknown'}`,
+                        'success'
+                    );
+
                     showScaffoldMessage(`Invoice marked as sent! Next invoice due: ${new Date(new Date(today).setDate(new Date(today).getDate() + 28)).toDateString()}`, 'success');
                 } else {
                     showScaffoldMessage('Invoice date updated, but could not log to history (no active rental found)', 'warning');
