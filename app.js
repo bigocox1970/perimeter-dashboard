@@ -239,6 +239,7 @@
                         p_number: document.getElementById('scaffPNumber').value,
                         extra_sensors: parseInt(document.getElementById('scaffExtraSensors').value) || 0,
                         site_contact: document.getElementById('scaffSiteContact').value,
+                        location: document.getElementById('scaffLocation').value || '',
                         address1: document.getElementById('scaffAddress1').value || '',
                         address2: document.getElementById('scaffAddress2').value || '',
                         postcode: document.getElementById('scaffPostcode').value || '',
@@ -2633,6 +2634,7 @@
             document.getElementById('scaffPNumber').value = system.pNumber;
             document.getElementById('scaffExtraSensors').value = system.extraSensors;
             document.getElementById('scaffSiteContact').value = system.siteContact;
+            document.getElementById('scaffLocation').value = system.location || '';
             document.getElementById('scaffAddress1').value = system.address1 || '';
             document.getElementById('scaffAddress2').value = system.address2 || '';
             document.getElementById('scaffPostcode').value = system.postcode || '';
