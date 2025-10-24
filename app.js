@@ -3026,9 +3026,62 @@
 
         window.logInvoiceToHistory = logInvoiceToHistory;
 
-        // Example usage when updating last invoice date:
-        // When the user updates the lastInvoiceDate field, also log it to history
-        // You can hook this into your existing invoice generation workflow
+        // Mark invoice as sent - updates last invoice date and logs to history
+        async function markInvoiceSent(systemId) {
+            try {
+                const system = scaffSystems.find(s => s.id === systemId);
+                if (!system) {
+                    showScaffoldMessage('System not found', 'error');
+                    return;
+                }
+
+                // Calculate the invoice amount (4 weeks of cost)
+                const weeklyCost = calculateWeeklyCostBeforeVAT(system.extraSensors);
+                const invoiceAmount = weeklyCost * 4; // 4 weeks
+
+                const today = new Date().toISOString().split('T')[0];
+
+                // Ask for optional invoice number
+                const invoiceNumber = prompt(`Mark invoice as sent for ${system.pNumber}?\n\nInvoice Amount: £${invoiceAmount.toFixed(2)} (4 weeks)\nDate: ${today}\n\nOptional: Enter invoice number (or leave blank):`);
+
+                if (invoiceNumber === null) return; // User cancelled
+
+                showScaffoldLoading(true);
+
+                // Update last invoice date in database
+                const { error: updateError } = await supabase
+                    .from(SCAFF_TABLE_NAME)
+                    .update({ last_invoice_date: today })
+                    .eq('id', systemId);
+
+                if (updateError) throw updateError;
+
+                // Log invoice to rental history
+                const invoiceLogged = await logInvoiceToHistory(
+                    systemId,
+                    today,
+                    invoiceAmount,
+                    invoiceNumber.trim() || null
+                );
+
+                if (invoiceLogged) {
+                    showScaffoldMessage(`Invoice marked as sent! Next invoice due: ${new Date(new Date(today).setDate(new Date(today).getDate() + 28)).toDateString()}`, 'success');
+                } else {
+                    showScaffoldMessage('Invoice date updated, but could not log to history (no active rental found)', 'warning');
+                }
+
+                // Reload data to refresh display
+                await loadScaffoldData();
+
+            } catch (error) {
+                console.error('Error marking invoice as sent:', error);
+                showScaffoldMessage('Error marking invoice as sent: ' + error.message, 'error');
+            } finally {
+                showScaffoldLoading(false);
+            }
+        }
+
+        window.markInvoiceSent = markInvoiceSent;
 
         // Render scaffold systems
         function renderScaffoldSystems() {
@@ -3098,6 +3151,7 @@
                                 <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 32px;" title="Edit Scaffold System">✏️</button>
                                 <button class="btn" onclick="changeHireStatus(${system.id})" style="background: #34495e; color: white; padding: 8px; font-size: 12px;" title="Change Hire Status">Change</button>
                                 <button class="btn" onclick="showHistoryModal(${system.id})" style="background: #95a5a6; color: white; padding: 8px; width: 32px;" title="View History">📋</button>
+                                ${system.hireStatus === 'on-hire' ? `<button class="btn" onclick="markInvoiceSent(${system.id})" style="background: #27ae60; color: white; padding: 8px; font-size: 11px;" title="Mark Invoice as Sent">📄 Sent</button>` : ''}
                             </div>
                         </td>
                     </tr>
@@ -3177,6 +3231,7 @@
                                 <button class="btn" onclick="editScaffoldSystem(${system.id})" style="background: #3498db; color: white; padding: 8px; width: 40px;" title="Edit Scaffold System">✏️</button>
                                 <button class="btn" onclick="changeHireStatus(${system.id})" style="background: #34495e; color: white; padding: 8px; flex: 1;" title="Change Hire Status">Change</button>
                                 <button class="btn" onclick="showHistoryModal(${system.id})" style="background: #95a5a6; color: white; padding: 8px; width: 40px;" title="View History">📋</button>
+                                ${system.hireStatus === 'on-hire' ? `<button class="btn" onclick="markInvoiceSent(${system.id})" style="background: #27ae60; color: white; padding: 8px; flex: 1;" title="Mark Invoice as Sent">📄 Invoice Sent</button>` : ''}
                             </div>
                         </div>
                     `;
