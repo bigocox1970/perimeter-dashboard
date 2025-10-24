@@ -10,6 +10,11 @@ class VoiceLogUI {
 
     // Initialize the log UI
     initialize() {
+        // Prevent multiple initializations
+        if (this.panel) {
+            console.log('⚠️ Voice Log UI already initialized, skipping...');
+            return;
+        }
         this.createPanel();
         console.log('✅ Voice Log UI initialized');
     }

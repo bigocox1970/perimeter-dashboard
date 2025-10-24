@@ -1254,7 +1254,14 @@
     <script src="voice-dashboard-bridge.js?t=1761001746"></script>
     <script>
         // Voice control initialization function (called after login)
+        let voiceControlInitialized = false;
         window.initializeVoiceControl = async function() {
+            // Prevent multiple initializations
+            if (voiceControlInitialized) {
+                console.log('⚠️ Voice control already initialized, skipping...');
+                return;
+            }
+
             try {
                 console.log('🎤 Starting voice control initialization...');
 
@@ -1271,6 +1278,7 @@
                     // Initialize dashboard bridge
                     await voiceDashboardBridge.initialize();
 
+                    voiceControlInitialized = true;
                     console.log('✅ Voice control system ready!');
                     console.log('💡 Hold the microphone button to speak');
                 } else {
