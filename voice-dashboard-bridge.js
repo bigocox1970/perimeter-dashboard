@@ -77,13 +77,13 @@ class VoiceDashboardBridge {
                     const baseWeekly = 100;
                     const sensorWeekly = extraSensors * 15;
                     const weeklyTotal = baseWeekly + sensorWeekly;
-                    const monthlyWithVat = (weeklyTotal * 4) * 1.2;
-                    total += monthlyWithVat;
+                    const monthly = weeklyTotal * 4;
+                    total += monthly;
                 });
 
                 return {
                     success: true,
-                    message: `Your total monthly revenue is £${total.toFixed(2)}.`,
+                    message: `Your total monthly revenue is £${total.toFixed(2)} (excluding VAT).`,
                     data: { total, systemCount: onHireSystems.length }
                 };
             } catch (error) {
@@ -102,13 +102,12 @@ class VoiceDashboardBridge {
                     const baseWeekly = 100;
                     const sensorWeekly = extraSensors * 15;
                     const weeklyTotal = baseWeekly + sensorWeekly;
-                    const weeklyWithVat = weeklyTotal * 1.2;
-                    total += weeklyWithVat;
+                    total += weeklyTotal;
                 });
 
                 return {
                     success: true,
-                    message: `Your total weekly revenue is £${total.toFixed(2)}.`,
+                    message: `Your total weekly revenue is £${total.toFixed(2)} (excluding VAT).`,
                     data: { total, systemCount: onHireSystems.length }
                 };
             } catch (error) {
