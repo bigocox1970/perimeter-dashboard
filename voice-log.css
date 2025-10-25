@@ -71,16 +71,18 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
     border-bottom: 2px solid #f0f0f0;
-    background: linear-gradient(135deg, #3498db 0%, #5dade2 100%);
-    color: white;
+    background: transparent;
+    color: #2c3e50;
 }
 
 .voice-log-header h3 {
     margin: 0;
-    font-size: 18px;
+    font-size: 1.5rem;
     font-weight: 600;
+    color: #2c3e50;
 }
 
 .voice-log-actions {
@@ -89,18 +91,31 @@
 }
 
 .voice-log-btn {
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 8px 16px;
+    background: #ecf0f1;
+    border: 1px solid #bdc3c7;
     border-radius: 6px;
-    color: white;
-    font-size: 12px;
+    color: #2c3e50;
+    font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
 }
 
 .voice-log-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: #bdc3c7;
+    border-color: #95a5a6;
+}
+
+.voice-log-btn-danger {
+    background: #e74c3c;
+    border-color: #c0392b;
+    color: white;
+}
+
+.voice-log-btn-danger:hover {
+    background: #c0392b;
+    color: white;
 }
 
 .voice-log-close {
@@ -476,12 +491,45 @@
         height: 45px;
     }
 
-    .voice-log-stats {
+    .voice-log-header {
+        padding: 15px;
         flex-wrap: wrap;
     }
 
+    .voice-log-header h3 {
+        font-size: 16px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .voice-log-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .voice-log-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        flex: 1;
+    }
+
+    .voice-log-stats {
+        flex-wrap: wrap;
+        padding: 10px;
+        gap: 5px;
+    }
+
     .voice-log-stat {
-        flex: 0 0 calc(50% - 5px);
+        flex: 0 0 calc(50% - 2.5px);
+        padding: 8px;
+    }
+
+    .voice-log-stat .stat-value {
+        font-size: 18px;
+    }
+
+    .voice-log-stat .stat-label {
+        font-size: 10px;
     }
 }
 
@@ -546,6 +594,80 @@
 /* Remove fixed positioning and sliding animations for tab view */
 .voice-log-panel-tab .voice-log-header {
     position: relative;
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #2c3e50 !important;
+}
+
+.voice-log-panel-tab .voice-log-header h3 {
+    color: #2c3e50 !important;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.voice-log-panel-tab .voice-log-header .voice-log-actions {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+.voice-log-panel-tab .voice-log-header .voice-log-actions .voice-log-btn {
+    background: #ecf0f1 !important;
+    background-color: #ecf0f1 !important;
+}
+
+/* Override any blue background for voice log header in logs tab */
+#voiceLogsContent .voice-log-header,
+#voiceLogsContent .voice-log-header *,
+#voiceLogsContent .voice-log-panel-tab .voice-log-header,
+#voiceLogsContent .voice-log-panel-tab .voice-log-header * {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Ensure buttons maintain proper styling */
+#voiceLogsContent .voice-log-header .voice-log-actions .voice-log-btn {
+    background: #ecf0f1 !important;
+    background-color: #ecf0f1 !important;
+}
+
+#voiceLogsContent .voice-log-header .voice-log-actions .voice-log-btn-danger {
+    background: #e74c3c !important;
+    background-color: #e74c3c !important;
+}
+
+/* Force transparent background for voice log header - highest specificity */
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header,
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header h3,
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header .voice-log-actions {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* Ensure logs tab content doesn't inherit blue background */
+#voiceLogsContent,
+#voiceLogsContent .logs-subtab-content,
+#voiceLogsContent .logs-subtab-content.active {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* ULTRA SPECIFIC - Force transparent background for voice log header */
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header,
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header *,
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header h3,
+#voiceLogsContent #voiceLogContainer .voice-log-panel-tab .voice-log-header .voice-log-actions {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+/* NUCLEAR OPTION - Target the exact element structure */
+#voiceLogsContent #voiceLogContainer #voiceLogPanel .voice-log-header,
+#voiceLogsContent #voiceLogContainer #voiceLogPanel .voice-log-header * {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
 }
 
 .voice-log-panel-tab .voice-log-content {

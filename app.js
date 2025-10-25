@@ -107,17 +107,27 @@
         // Show dashboard
         function showDashboard() {
             document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainDashboard').style.display = 'block';
-            loadCustomerData();
-            // Initialize statistics visibility based on screen size
-            initializeStatsVisibility();
 
-            // Initialize voice control after login
-            if (typeof window.initializeVoiceControl === 'function') {
-                setTimeout(() => {
-                    window.initializeVoiceControl();
-                }, 500);
+            // Trigger Alex message animation only after login
+            const alexMessageScreen = document.getElementById('alexMessageScreen');
+            if (alexMessageScreen) {
+                alexMessageScreen.classList.add('play-animation');
             }
+
+            // Show dashboard after animation completes (6 seconds)
+            setTimeout(() => {
+                document.getElementById('mainDashboard').style.display = 'block';
+                loadCustomerData();
+                // Initialize statistics visibility based on screen size
+                initializeStatsVisibility();
+
+                // Initialize voice control after login
+                if (typeof window.initializeVoiceControl === 'function') {
+                    setTimeout(() => {
+                        window.initializeVoiceControl();
+                    }, 500);
+                }
+            }, 6000);
         }
 
         // Check password
@@ -457,6 +467,11 @@
 
                         localStorage.setItem(this.storageKey, JSON.stringify(logs));
                         console.log(`✅ Loaded ${data.length} activity logs from Supabase`);
+
+                        // Refresh UI if displayActivityLogs function exists
+                        if (typeof window.displayActivityLogs === 'function') {
+                            window.displayActivityLogs();
+                        }
                     } else if (error) {
                         console.error('Failed to load activity logs from Supabase:', error);
                     }

@@ -34,13 +34,13 @@ class VoiceLogUI {
         this.panel.id = 'voiceLogPanel';
         this.panel.className = 'voice-log-panel-tab'; // Changed class for tab view
         this.panel.innerHTML = `
-            <div class="voice-log-header">
-                <h3>Voice Command Log</h3>
-                <div class="voice-log-actions">
-                    <button class="voice-log-btn" onclick="voiceLogUI.exportLogs()" title="Export logs" style="padding: 10px 20px; font-size: 16px;">
+            <div class="voice-log-header" style="background: transparent !important; background-color: transparent !important;">
+                <h3 style="background: transparent !important; background-color: transparent !important;">Voice Command Log</h3>
+                <div class="voice-log-actions" style="background: transparent !important; background-color: transparent !important;">
+                    <button class="voice-log-btn voice-log-btn-export" onclick="voiceLogUI.exportLogs()" title="Export logs" style="background: #ecf0f1 !important; background-color: #ecf0f1 !important; color: #2c3e50 !important;">
                         📥 Export
                     </button>
-                    <button class="voice-log-btn" onclick="voiceLogUI.clearLogs()" title="Clear all logs" style="padding: 10px 20px; font-size: 16px; background: #e74c3c; color: white;">
+                    <button class="voice-log-btn voice-log-btn-danger" onclick="voiceLogUI.clearLogs()" title="Clear all logs" style="background: #e74c3c !important; background-color: #e74c3c !important; color: white !important;">
                         🗑️ Clear Logs
                     </button>
                 </div>
