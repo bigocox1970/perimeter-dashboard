@@ -1541,7 +1541,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #0a0e27 0%, #1a1a3e 50%, #0a0e27 100%);
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 25%, #ffa8cc 50%, #fcb7af 75%, #ffecd2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1556,6 +1556,7 @@
             animation: alexScreenSequence 6s ease-in-out forwards;
         }
 
+        /* Floating orbs */
         .alex-message-screen::before {
             content: '';
             position: absolute;
@@ -1564,29 +1565,82 @@
             width: 100%;
             height: 100%;
             background-image:
-                radial-gradient(2px 2px at 20% 30%, white, transparent),
-                radial-gradient(2px 2px at 60% 70%, white, transparent),
-                radial-gradient(1px 1px at 50% 50%, white, transparent),
-                radial-gradient(1px 1px at 80% 10%, white, transparent),
-                radial-gradient(2px 2px at 90% 60%, white, transparent),
-                radial-gradient(1px 1px at 33% 80%, white, transparent),
-                radial-gradient(1px 1px at 15% 90%, white, transparent),
-                radial-gradient(2px 2px at 75% 40%, white, transparent),
-                radial-gradient(1px 1px at 40% 20%, white, transparent),
-                radial-gradient(1px 1px at 95% 85%, white, transparent);
-            background-size: 200% 200%;
-            background-position: 0% 0%;
-            animation: stars 120s linear infinite;
-            opacity: 0.8;
+                radial-gradient(circle at 20% 20%, rgba(255, 182, 193, 0.7) 0%, transparent 25%),
+                radial-gradient(circle at 80% 30%, rgba(255, 105, 180, 0.5) 0%, transparent 20%),
+                radial-gradient(circle at 40% 70%, rgba(255, 192, 203, 0.6) 0%, transparent 30%),
+                radial-gradient(circle at 70% 80%, rgba(255, 20, 147, 0.4) 0%, transparent 25%),
+                radial-gradient(circle at 10% 60%, rgba(255, 228, 225, 0.7) 0%, transparent 20%),
+                radial-gradient(circle at 90% 50%, rgba(219, 112, 147, 0.5) 0%, transparent 22%),
+                radial-gradient(circle at 50% 10%, rgba(255, 182, 193, 0.6) 0%, transparent 18%),
+                radial-gradient(circle at 30% 90%, rgba(255, 105, 180, 0.5) 0%, transparent 25%);
+            animation: floatOrbs 8s ease-in-out infinite;
+        }
+
+        /* Wavy lines overlay */
+        .alex-message-screen::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background:
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0px,
+                    transparent 80px,
+                    rgba(255, 255, 255, 0.1) 80px,
+                    rgba(255, 255, 255, 0.1) 82px
+                );
+            animation: waveSlide 12s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes floatOrbs {
+            0%, 100% {
+                transform: scale(1) translateY(0);
+                opacity: 0.8;
+            }
+            25% {
+                transform: scale(1.1) translateY(-10px);
+            }
+            50% {
+                transform: scale(1) translateY(5px);
+                opacity: 1;
+            }
+            75% {
+                transform: scale(1.05) translateY(-5px);
+            }
+        }
+
+        @keyframes waveSlide {
+            0% { transform: translateX(0) skewX(-5deg); }
+            100% { transform: translateX(-50%) skewX(-5deg); }
+        }
+
+        /* Sparkle particles */
+        .alex-message-screen .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.8);
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
         }
 
         .alex-message {
             font-size: 2rem;
             font-weight: 600;
-            color: #ff69b4;
+            color: white;
             text-align: center;
             padding: 40px;
-            text-shadow: 0 0 10px rgba(255, 105, 180, 0.5), 0 0 20px rgba(255, 105, 180, 0.3);
+            text-shadow: 2px 2px 4px rgba(150, 50, 80, 0.6), 0 0 20px rgba(255, 255, 255, 0.5);
             animation: messageGlow 2s ease-in-out infinite, messageFloat 3s ease-in-out infinite;
             position: relative;
             z-index: 1;
@@ -1594,38 +1648,38 @@
             line-height: 1.4;
         }
 
-        /* Alex Message Color Themes */
-        .alex-message.color-pink {
-            color: #ff69b4;
-            text-shadow: 0 0 10px rgba(255, 105, 180, 0.5), 0 0 20px rgba(255, 105, 180, 0.3);
+        /* Alex Message Color Themes - colors that pop on pink background */
+        .alex-message.color-white {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(150, 50, 80, 0.6), 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+        .alex-message.color-burgundy {
+            color: #800020;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(128, 0, 32, 0.3);
+        }
+        .alex-message.color-purple {
+            color: #4a0080;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(74, 0, 128, 0.3);
+        }
+        .alex-message.color-deeprose {
+            color: #c21e56;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(194, 30, 86, 0.3);
+        }
+        .alex-message.color-cream {
+            color: #fffdd0;
+            text-shadow: 2px 2px 4px rgba(150, 50, 80, 0.7), 0 0 15px rgba(255, 253, 208, 0.5);
         }
         .alex-message.color-gold {
-            color: #ffd700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+            color: #daa520;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(218, 165, 32, 0.4);
         }
-        .alex-message.color-coral {
-            color: #ff7f50;
-            text-shadow: 0 0 10px rgba(255, 127, 80, 0.5), 0 0 20px rgba(255, 127, 80, 0.3);
+        .alex-message.color-navy {
+            color: #1a1a4e;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.9), 0 0 15px rgba(26, 26, 78, 0.3);
         }
-        .alex-message.color-lavender {
-            color: #e6b3ff;
-            text-shadow: 0 0 10px rgba(230, 179, 255, 0.5), 0 0 20px rgba(230, 179, 255, 0.3);
-        }
-        .alex-message.color-mint {
-            color: #98ff98;
-            text-shadow: 0 0 10px rgba(152, 255, 152, 0.5), 0 0 20px rgba(152, 255, 152, 0.3);
-        }
-        .alex-message.color-peach {
-            color: #ffb899;
-            text-shadow: 0 0 10px rgba(255, 184, 153, 0.5), 0 0 20px rgba(255, 184, 153, 0.3);
-        }
-        .alex-message.color-skyblue {
-            color: #87ceeb;
-            text-shadow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3);
-        }
-        .alex-message.color-rose {
-            color: #ffb6c1;
-            text-shadow: 0 0 10px rgba(255, 182, 193, 0.5), 0 0 20px rgba(255, 182, 193, 0.3);
+        .alex-message.color-forest {
+            color: #228b22;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8), 0 0 15px rgba(34, 139, 34, 0.3);
         }
 
         /* Alex Message Font Styles */

@@ -16,36 +16,36 @@
         // Password protection
         const CORRECT_PASSWORD = 'Perimeter2999';
 
-        // Alex's random love messages
+        // Alex's random love messages - Grumpy style (not too sickly!)
         const ALEX_MESSAGES = [
             "Grumpy really does love you, you know! 💕",
-            "You make every day brighter, beautiful 🌟",
-            "Still falling for you, every single day 💖",
-            "You're my favourite person in the whole world 🌍",
-            "My heart belongs to you, always 💝",
-            "You're the best thing that ever happened to me ✨",
-            "I love you more than words can say 💗",
-            "You're my sunshine on cloudy days ☀️",
-            "Forever grateful you're in my life 🙏💕",
-            "You make my heart skip a beat 💓",
-            "I'm so lucky to have you 🍀",
-            "You're absolutely wonderful, you know that? 🌹",
-            "Every moment with you is precious 💎",
-            "You light up my world 🌟",
-            "My love for you grows stronger every day 💪💕",
-            "You're the answer to all my prayers 🙏",
-            "Thinking of you always makes me smile 😊",
-            "You complete me in every way 💑",
-            "I'd choose you again and again 💍",
-            "You're my happily ever after 👑",
-            "Being with you feels like home 🏠💕",
-            "You're my person, my soulmate 💞",
-            "I love you to the moon and back 🌙",
-            "You make everything better just by existing 🦋",
-            "My heart is yours, forever and always 💖"
+            "Grumpy loves you... even when you're annoying 😏",
+            "Grumpy thinks you're pretty great 💕",
+            "Grumpy loves you more than coffee ☕ (and that's saying something)",
+            "Grumpy's favourite person? That would be you 💕",
+            "Just so you know... Grumpy loves you 💕",
+            "Grumpy loves you. Don't let it go to your head 😉",
+            "You're stuck with Grumpy. He loves you 💕",
+            "Grumpy loves you... most of the time 😏💕",
+            "Grumpy wouldn't trade you for anything 💕",
+            "Hey gorgeous. Grumpy loves you 💕",
+            "Grumpy's still here, still loving you 💕",
+            "Grumpy loves you. Yes, really 💕",
+            "You make Grumpy less grumpy 💕",
+            "Grumpy loves you. Deal with it 😉",
+            "Just Grumpy, reminding you he loves you 💕",
+            "Grumpy's proud of you, you know 💕",
+            "Grumpy thinks you're doing brilliantly 💕",
+            "Have a great day. Grumpy loves you 💕",
+            "Grumpy's always got your back 💕",
+            "You're Grumpy's favourite. Don't tell anyone 😉",
+            "Grumpy loves you. That is all 💕",
+            "Keep being you. Grumpy loves it 💕",
+            "Grumpy's lucky to have you 💕",
+            "You put up with Grumpy. He loves you for it 💕"
         ];
 
-        const ALEX_COLORS = ['color-pink', 'color-gold', 'color-coral', 'color-lavender', 'color-mint', 'color-peach', 'color-skyblue', 'color-rose'];
+        const ALEX_COLORS = ['color-white', 'color-burgundy', 'color-purple', 'color-deeprose', 'color-cream', 'color-gold', 'color-navy', 'color-forest'];
         const ALEX_FONTS = ['font-dancing', 'font-pacifico', 'font-quicksand', 'font-satisfy', 'font-caveat', 'font-kalam'];
         const ALEX_ANIMATIONS = ['anim-float', 'anim-pulse', 'anim-swing', 'anim-bounce', 'anim-twinkle', 'anim-heartbeat'];
 
