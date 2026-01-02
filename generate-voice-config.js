@@ -25,22 +25,24 @@ const supabaseFileContent = `// Supabase Configuration
 // AUTO-GENERATED during build from environment variables
 // DO NOT EDIT - Changes will be overwritten on next build
 
-const SUPABASE_URL = '${supabaseConfig.SUPABASE_URL}';
-const SUPABASE_ANON_KEY = '${supabaseConfig.SUPABASE_ANON_KEY}';
-const TABLE_NAME = '${supabaseConfig.TABLE_NAME}';
-const SCAFF_TABLE_NAME = '${supabaseConfig.SCAFF_TABLE_NAME}';
-const NSI_COMPLAINTS_TABLE = '${supabaseConfig.NSI_COMPLAINTS_TABLE}';
-const NSI_ID_BADGES_TABLE = '${supabaseConfig.NSI_ID_BADGES_TABLE}';
-const NSI_TEST_EQUIPMENT_TABLE = '${supabaseConfig.NSI_TEST_EQUIPMENT_TABLE}';
-const NSI_FIRST_AID_TABLE = '${supabaseConfig.NSI_FIRST_AID_TABLE}';
+(function() {
+    const SUPABASE_URL = '${supabaseConfig.SUPABASE_URL}';
+    const SUPABASE_ANON_KEY = '${supabaseConfig.SUPABASE_ANON_KEY}';
 
-// Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Initialize Supabase client (window.supabase is the CDN library)
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Export for use in dashboard
-window.supabaseClient = supabase;
-window.TABLE_NAME = TABLE_NAME;
-window.SCAFF_TABLE_NAME = SCAFF_TABLE_NAME;
+    // Export for use in dashboard - override window.supabase with the client instance
+    window.supabase = supabaseClient;
+
+    // Table names
+    window.TABLE_NAME = '${supabaseConfig.TABLE_NAME}';
+    window.SCAFF_TABLE_NAME = '${supabaseConfig.SCAFF_TABLE_NAME}';
+    window.NSI_COMPLAINTS_TABLE = '${supabaseConfig.NSI_COMPLAINTS_TABLE}';
+    window.NSI_ID_BADGES_TABLE = '${supabaseConfig.NSI_ID_BADGES_TABLE}';
+    window.NSI_TEST_EQUIPMENT_TABLE = '${supabaseConfig.NSI_TEST_EQUIPMENT_TABLE}';
+    window.NSI_FIRST_AID_TABLE = '${supabaseConfig.NSI_FIRST_AID_TABLE}';
+})();
 `;
 
 const supabaseOutputPath = path.join(__dirname, 'supabase-config-generated.js');
