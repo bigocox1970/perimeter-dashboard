@@ -28,6 +28,11 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Google Fonts for Alex Messages -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Pacifico&family=Quicksand:wght@500&family=Satisfy&family=Caveat:wght@600&family=Kalam:wght@400&display=swap" rel="stylesheet">
     <style>
         /* Emergency mobile override - ensure consistent portrait mode support */
         @media (max-width: 900px), (max-height: 900px), (orientation: portrait) {
@@ -82,7 +87,7 @@
 
     <!-- Alex Message Screen -->
     <div class="alex-message-screen" id="alexMessageScreen">
-        <div class="alex-message">Grumpy really does love you, you know! 💕</div>
+        <div class="alex-message" id="alexMessage"></div>
     </div>
 
     <!-- Login Screen -->

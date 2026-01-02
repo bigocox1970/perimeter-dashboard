@@ -15,7 +15,58 @@
 
         // Password protection
         const CORRECT_PASSWORD = 'Perimeter2999';
-        
+
+        // Alex's random love messages
+        const ALEX_MESSAGES = [
+            "Grumpy really does love you, you know! 💕",
+            "You make every day brighter, beautiful 🌟",
+            "Still falling for you, every single day 💖",
+            "You're my favourite person in the whole world 🌍",
+            "My heart belongs to you, always 💝",
+            "You're the best thing that ever happened to me ✨",
+            "I love you more than words can say 💗",
+            "You're my sunshine on cloudy days ☀️",
+            "Forever grateful you're in my life 🙏💕",
+            "You make my heart skip a beat 💓",
+            "I'm so lucky to have you 🍀",
+            "You're absolutely wonderful, you know that? 🌹",
+            "Every moment with you is precious 💎",
+            "You light up my world 🌟",
+            "My love for you grows stronger every day 💪💕",
+            "You're the answer to all my prayers 🙏",
+            "Thinking of you always makes me smile 😊",
+            "You complete me in every way 💑",
+            "I'd choose you again and again 💍",
+            "You're my happily ever after 👑",
+            "Being with you feels like home 🏠💕",
+            "You're my person, my soulmate 💞",
+            "I love you to the moon and back 🌙",
+            "You make everything better just by existing 🦋",
+            "My heart is yours, forever and always 💖"
+        ];
+
+        const ALEX_COLORS = ['color-pink', 'color-gold', 'color-coral', 'color-lavender', 'color-mint', 'color-peach', 'color-skyblue', 'color-rose'];
+        const ALEX_FONTS = ['font-dancing', 'font-pacifico', 'font-quicksand', 'font-satisfy', 'font-caveat', 'font-kalam'];
+        const ALEX_ANIMATIONS = ['anim-float', 'anim-pulse', 'anim-swing', 'anim-bounce', 'anim-twinkle', 'anim-heartbeat'];
+
+        function initializeAlexMessage() {
+            const messageEl = document.getElementById('alexMessage');
+            if (!messageEl) return;
+
+            // Pick random message, color, font, and animation
+            const message = ALEX_MESSAGES[Math.floor(Math.random() * ALEX_MESSAGES.length)];
+            const color = ALEX_COLORS[Math.floor(Math.random() * ALEX_COLORS.length)];
+            const font = ALEX_FONTS[Math.floor(Math.random() * ALEX_FONTS.length)];
+            const animation = ALEX_ANIMATIONS[Math.floor(Math.random() * ALEX_ANIMATIONS.length)];
+
+            // Apply to element
+            messageEl.textContent = message;
+            messageEl.classList.add(color, font, animation);
+        }
+
+        // Initialize Alex message on page load
+        document.addEventListener('DOMContentLoaded', initializeAlexMessage);
+
         // Check if user is already logged in
         function checkLoginStatus() {
             const isLoggedIn = sessionStorage.getItem('perimLoggedIn');
