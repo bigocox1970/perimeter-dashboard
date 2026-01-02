@@ -53,6 +53,11 @@
             const messageEl = document.getElementById('alexMessage');
             if (!messageEl) return;
 
+            // Clear any previous classes (for logout/login cycles)
+            ALEX_COLORS.forEach(c => messageEl.classList.remove(c));
+            ALEX_FONTS.forEach(f => messageEl.classList.remove(f));
+            ALEX_ANIMATIONS.forEach(a => messageEl.classList.remove(a));
+
             // Pick random message, color, font, and animation
             const message = ALEX_MESSAGES[Math.floor(Math.random() * ALEX_MESSAGES.length)];
             const color = ALEX_COLORS[Math.floor(Math.random() * ALEX_COLORS.length)];
@@ -62,10 +67,15 @@
             // Apply to element
             messageEl.textContent = message;
             messageEl.classList.add(color, font, animation);
-        }
 
-        // Initialize Alex message on page load
-        document.addEventListener('DOMContentLoaded', initializeAlexMessage);
+            // Reset the animation on the screen container for re-login
+            const screenEl = document.getElementById('alexMessageScreen');
+            if (screenEl) {
+                screenEl.classList.remove('play-animation');
+                // Force reflow to restart animation
+                void screenEl.offsetWidth;
+            }
+        }
 
         // Check if user is already logged in
         function checkLoginStatus() {
@@ -158,6 +168,9 @@
         // Show dashboard
         function showDashboard() {
             document.getElementById('loginScreen').style.display = 'none';
+
+            // Initialize Alex's message right before showing
+            initializeAlexMessage();
 
             // Trigger Alex message animation only after login
             const alexMessageScreen = document.getElementById('alexMessageScreen');
