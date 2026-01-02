@@ -1,9 +1,67 @@
 #!/usr/bin/env node
-// Build script to generate voice-config.js from environment variables
+// Build script to generate config files from environment variables
 // This runs during Netlify build to inject env vars into the frontend
 
 const fs = require('fs');
 const path = require('path');
+
+// ============================================
+// SUPABASE CONFIG GENERATION
+// ============================================
+console.log('🔧 Generating supabase-config.js from environment variables...');
+
+const supabaseConfig = {
+    SUPABASE_URL: process.env.VITE_SUPABASE_URL || '',
+    SUPABASE_ANON_KEY: process.env.VITE_SUPABASE_ANON_KEY || '',
+    TABLE_NAME: 'perim_customers',
+    SCAFF_TABLE_NAME: 'perim_scaff_systems',
+    NSI_COMPLAINTS_TABLE: 'perim_nsi_complaints',
+    NSI_ID_BADGES_TABLE: 'perim_nsi_id_badges',
+    NSI_TEST_EQUIPMENT_TABLE: 'perim_nsi_test_equipment',
+    NSI_FIRST_AID_TABLE: 'perim_nsi_first_aid'
+};
+
+const supabaseFileContent = `// Supabase Configuration
+// AUTO-GENERATED during build from environment variables
+// DO NOT EDIT - Changes will be overwritten on next build
+
+const SUPABASE_URL = '${supabaseConfig.SUPABASE_URL}';
+const SUPABASE_ANON_KEY = '${supabaseConfig.SUPABASE_ANON_KEY}';
+const TABLE_NAME = '${supabaseConfig.TABLE_NAME}';
+const SCAFF_TABLE_NAME = '${supabaseConfig.SCAFF_TABLE_NAME}';
+const NSI_COMPLAINTS_TABLE = '${supabaseConfig.NSI_COMPLAINTS_TABLE}';
+const NSI_ID_BADGES_TABLE = '${supabaseConfig.NSI_ID_BADGES_TABLE}';
+const NSI_TEST_EQUIPMENT_TABLE = '${supabaseConfig.NSI_TEST_EQUIPMENT_TABLE}';
+const NSI_FIRST_AID_TABLE = '${supabaseConfig.NSI_FIRST_AID_TABLE}';
+
+// Initialize Supabase client
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Export for use in dashboard
+window.supabaseClient = supabase;
+window.TABLE_NAME = TABLE_NAME;
+window.SCAFF_TABLE_NAME = SCAFF_TABLE_NAME;
+`;
+
+const supabaseOutputPath = path.join(__dirname, 'supabase-config-generated.js');
+fs.writeFileSync(supabaseOutputPath, supabaseFileContent);
+
+// Log Supabase config (redacted)
+const safeSupabaseUrl = supabaseConfig.SUPABASE_URL || '(not set)';
+const safeSupabaseKey = supabaseConfig.SUPABASE_ANON_KEY
+    ? supabaseConfig.SUPABASE_ANON_KEY.substring(0, 15) + '...(redacted)'
+    : '(not set)';
+console.log('✅ supabase-config-generated.js created');
+console.log(`   URL: ${safeSupabaseUrl}`);
+console.log(`   Key: ${safeSupabaseKey}`);
+
+if (!supabaseConfig.SUPABASE_URL || !supabaseConfig.SUPABASE_ANON_KEY) {
+    console.warn('⚠️  WARNING: VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not set!');
+}
+
+// ============================================
+// VOICE CONFIG GENERATION
+// ============================================
 
 console.log('🔧 Generating voice-config.js from environment variables...');
 

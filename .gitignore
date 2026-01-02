@@ -8,3 +8,4 @@ Thumbs.db
 node_modules/
 .env
 voice-config.js
+supabase-config-generated.js
