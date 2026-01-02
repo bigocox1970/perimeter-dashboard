@@ -1687,11 +1687,10 @@
         }
 
         @keyframes alexScreenSequence {
-            0% { opacity: 0; visibility: hidden; }
-            41.6% { opacity: 0; visibility: hidden; }  /* 2.5s delay */
-            50% { opacity: 1; visibility: visible; }    /* 0.5s fade in (at 3s) */
-            91.6% { opacity: 1; visibility: visible; }  /* stays until 5.5s */
-            100% { opacity: 0; visibility: hidden; }    /* 0.5s fade out */
+            0% { opacity: 0; visibility: visible; }
+            8% { opacity: 1; visibility: visible; }      /* 0.5s fade in */
+            92% { opacity: 1; visibility: visible; }     /* stay visible */
+            100% { opacity: 0; visibility: hidden; }     /* 0.5s fade out */
         }
 
         @keyframes stars {
