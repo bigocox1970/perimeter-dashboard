@@ -16,33 +16,38 @@
         // Password protection
         const CORRECT_PASSWORD = 'Perimeter2999';
 
-        // Alex's random love messages - Grumpy style (not too sickly!)
+        // Alex's random love messages - Grumpy style (personal & authentic)
         const ALEX_MESSAGES = [
             "Grumpy really does love you, you know! 💕",
             "Grumpy loves you... even when you're annoying 😏",
-            "Grumpy thinks you're pretty great 💕",
+            "Off to the gym again? Grumpy loves how driven you are 💪",
             "Grumpy loves you more than coffee ☕ (and that's saying something)",
-            "Grumpy's favourite person? That would be you 💕",
+            "India, Vietnam, wherever... Grumpy just wants to be with you 🌏",
             "Just so you know... Grumpy loves you 💕",
             "Grumpy loves you. Don't let it go to your head 😉",
-            "You're stuck with Grumpy. He loves you 💕",
+            "You're stuck with this old man. He loves you 💕",
             "Grumpy loves you... most of the time 😏💕",
-            "Grumpy wouldn't trade you for anything 💕",
+            "Work hard today. Grumpy's proud of you 💕",
             "Hey gorgeous. Grumpy loves you 💕",
-            "Grumpy's still here, still loving you 💕",
+            "Still can't believe you picked this grumpy old git 💕",
             "Grumpy loves you. Yes, really 💕",
             "You make Grumpy less grumpy 💕",
             "Grumpy loves you. Deal with it 😉",
-            "Just Grumpy, reminding you he loves you 💕",
+            "Smash it at work today. Grumpy loves you 💕",
             "Grumpy's proud of you, you know 💕",
-            "Grumpy thinks you're doing brilliantly 💕",
+            "You work harder than anyone Grumpy knows 💕",
             "Have a great day. Grumpy loves you 💕",
-            "Grumpy's always got your back 💕",
+            "Need tech help later? Grumpy's got you 😉💕",
             "You're Grumpy's favourite. Don't tell anyone 😉",
-            "Grumpy loves you. That is all 💕",
-            "Keep being you. Grumpy loves it 💕",
+            "15 years older and still punching above his weight 😏💕",
+            "Grumpy loves everything about you. Everything 😏💕",
             "Grumpy's lucky to have you 💕",
-            "You put up with Grumpy. He loves you for it 💕"
+            "You put up with Grumpy. He loves you for it 💕",
+            "Go smash that gym session. Grumpy loves you 💪",
+            "Planning our next adventure. Grumpy loves you 🌏",
+            "This old man thinks you're incredible 💕",
+            "Grumpy can't fix your tech problems from here... but he loves you 😉",
+            "Best decision Grumpy ever made was you 💕"
         ];
 
         const ALEX_COLORS = ['color-white', 'color-burgundy', 'color-purple', 'color-deeprose', 'color-cream', 'color-gold', 'color-navy', 'color-forest'];
