@@ -524,7 +524,7 @@ Maintenance Queries:
 
 Data Analysis:
 - analyze_data: Analyze data to answer analytical questions (requires question parameter with the full user question)
-- query_recent_changes: Check what has changed in the last 24 hours or 7 days (optional timeframe: "24 hours", "7 days", "today", "this week")
+- query_recent_changes: Check what has changed in the last 24 hours or 7 days. Use this for ANY question about recent activity, changes, or hire status updates. Examples: "has anything changed?", "any new hires?", "come off hire", "anything new this week", "any updates", "any activity"
 
 Scaffold Modifications:
 - add_scaffold_system: Add new scaffold system
@@ -604,6 +604,10 @@ Examples:
 - "What's the average revenue per scaffold system?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's the average revenue per scaffold system?"},"response":"Calculating average revenue now."}
 - "How many maintenance do I have to do each year for NSI approved systems?" → {"intent":"query","action":"analyze_data","parameters":{"question":"How many maintenance do I have to do each year for NSI approved systems?"},"response":"Let me calculate the total annual maintenance tasks for NSI approved systems."}
 - "What's changed in the last 24 hours?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"24 hours"},"response":"Checking what's changed in the last 24 hours."}
+- "Has anything changed?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"24 hours"},"response":"Let me check for any recent changes."}
+- "Has anything changed this week?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking for changes this week."}
+- "Have any scaffold alarms come on or off hire?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Let me check for any recent hire activity."}
+- "Anything new on the scaffold hire?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking for recent activity."}
 - "What's changed today?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"today"},"response":"Let me check what has changed today."}
 - "What's changed in the last week?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking all the changes this week."}
 - "What's changed in the last 7 days?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Let me see what has changed in the last 7 days."}
