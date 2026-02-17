@@ -1,63 +1,61 @@
-# Voice Control Issues - Analysis & Fix Plan
+# Perimeter Dashboard - Improvements Plan
 
-## Current Problem
-Voice control says "Sorry, I had trouble understanding that" even with API keys configured.
+## Current Problems
 
-## Root Causes Identified
+### Voice Control (Priority 1)
+- Says "Sorry, I had trouble understanding" - external API calls fail
+- Fix: Use browser-native Web Speech API instead of OpenAI Whisper
 
-### 1. API Keys Not Being Read
-The code tries to read from `voice-config.js` file, but:
-- On Netlify, environment variables should be used
-- The `env-config.js` loads defaults, not the actual Netlify env vars
+### Natural Language Understanding
+- Can't handle phrases like "I've just collected P1 from High Street"
+- Fix: Improve prompt with more real-world examples
 
-### 2. Code Issue in voice-control.js
-The code has TWO error messages - one was fixed but the main error happens earlier in the flow when:
-- Audio recording starts but fails to get transcript
-- The error "Sorry, I had trouble understanding that" is a fallback when transcription fails
+### Missing "What's Changed" Feature
+- Alex wants: "What's changed in the last 24 hours?"
+- Returns: "Systems gone ON hire: P1 to X, Systems OFF hire: P3 from Y"
 
-## What Needs Fixing
+## Proposed Improvements
 
-### Option A: Debug why API calls are failing
-1. Add console.log statements to see if OPENAI_API_KEY is being read
-2. Check if the fetch calls to OpenAI are actually happening
-3. Check browser DevTools → Console for errors
-
-### Option B: Simplify the voice stack
-Use browser-native APIs instead of external APIs:
-- Use **Web Speech API** (built into Chrome/Safari) for speech-to-text
-- Use **browser SpeechSynthesis** for voice output
-
-This removes dependency on OpenAI/ElevenLabs entirely and should work immediately.
-
-## Recommended Fix (Option B)
-
-Replace the external API calls with browser-native alternatives:
-
-### For Speech-to-Text:
+### 1. Voice - Browser-Native (No API Keys Needed)
+Replace OpenAI Whisper with Web Speech API:
 ```javascript
-// Use browser's built-in speech recognition
+// In voice-control.js
 const recognition = new webkitSpeechRecognition();
 recognition.lang = 'en-GB';
+recognition.continuous = false;
+recognition.interimResults = true;
+
 recognition.onresult = (event) => {
     const transcript = event.results[0][0].transcript;
-    // Process transcript...
+    // Process with GPT-4...
 };
 recognition.start();
 ```
 
-### For Text-to-Speech:
-```javascript
-// Use browser's built-in TTS
-const utterance = new SpeechSynthesisUtterance(text);
-utterance.lang = 'en-GB';
-speechSynthesis.speak(utterance);
-```
+Keep ElevenLabs for TTS (already works).
 
-## Next Steps
-1. Ask Claude in Cursor to implement browser-native voice
-2. This will work without any API keys
-3. Test and verify
+### 2. Better Natural Language Parsing
+Add more examples to the GPT prompt:
+- "I've collected P1 from Oxford" → update_hire_status
+- "P1's back in stock" → update_hire_status
+- "What's changed this week?" → query_recent_changes
+
+### 3. Add "What's Changed" Feature (Already Implemented in kit-dev)
+- New function: query_recent_changes
+- Queries scaffold_rental_history table
+- Returns summary: "P1 came off hire, P2 went on hire..."
+
+### 4. Better Error Messages
+Instead of "I didn't understand", say:
+"I'm not sure what you meant. I can help with: checking systems on hire, what's changed recently, updating status like 'P1 is back', or finding info like 'where is P7?'"
+
+### 5. Conversation Memory
+Store last 5-10 interactions so user can say "that one" or reference previous context.
 
 ## Files to Modify
-- `voice-control.js` - Replace Whisper with Web Speech API
-- Keep ElevenLabs for TTS (works fine)
+- voice-control.js - Browser-native STT, improved prompts
+- voice-dashboard-bridge.js - query_recent_changes function (already done)
+- env-config.js - Remove API key dependencies
+
+## Testing
+Deploy to kit-dev branch → Compare with main branch
