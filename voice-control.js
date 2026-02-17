@@ -82,7 +82,7 @@ class VoiceControl {
             const ttsProvider = envConfig.get('TTS_PROVIDER', 'elevenlabs');
 
             console.log('🔧 VOICE CONFIG:');
-            console.log('   STT:', useBrowserSTT ? 'BROWSER (inaccurate)' : 'GEMINI (accurate)');
+            console.log('   STT:', useBrowserSTT ? 'BROWSER (inaccurate)' : 'OPENAI WHISPER (accurate)');
             console.log('   TTS:', ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER');
 
             this.showDebugOverlay(`STT: ${useBrowserSTT ? 'BROWSER' : 'WHISPER'}\nTTS: ${ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER'}\nMediaRecorder: ${hasMediaRecorder ? 'YES' : 'NO'}`);
@@ -380,61 +380,51 @@ class VoiceControl {
                 throw new Error('Audio recording is too short. Please speak for longer.');
             }
 
-            // Using Google Gemini for transcription instead of Whisper
-            console.log('🚀 Sending to Gemini API for transcription...');
+            // Convert webm to a format Whisper accepts better
+            // Try to use mp3 extension for better compatibility
+            const formData = new FormData();
 
-            // Convert blob to base64
-            const reader = new FileReader();
-            const base64Audio = await new Promise((resolve, reject) => {
-                reader.onload = () => {
-                    const result = reader.result;
-                    // Remove data URL prefix to get just the base64
-                    const base64 = result.toString().split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(audioBlob);
-            });
+            // Whisper accepts various formats, let's try with the original format
+            const fileName = audioBlob.type.includes('webm') ? 'audio.webm' :
+                            audioBlob.type.includes('mp4') ? 'audio.mp4' :
+                            audioBlob.type.includes('ogg') ? 'audio.ogg' :
+                            'audio.webm';
 
-            const geminiApiKey = envConfig.get('VITE_GEMINI_API_KEY');
-            if (!geminiApiKey || geminiApiKey.includes('your_')) {
-                throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to voice-config.js or Netlify');
-            }
+            formData.append('file', audioBlob, fileName);
+            formData.append('model', envConfig.get('OPENAI_WHISPER_MODEL', 'whisper-1'));
+            formData.append('language', envConfig.get('VOICE_LANGUAGE', 'en-GB').split('-')[0]);
 
-            // Use Gemini 2.0 Flash with audio input
-            const geminiModel = envConfig.get('GEMINI_MODEL', 'gemini-2.0-flash');
-            
-            const transcriptionResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
+            console.log('🚀 Sending to Whisper API...');
+
+            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${envConfig.get('OPENAI_API_KEY')}`
                 },
-                body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            inline_data: {
-                                mime_type: audioBlob.type || 'audio/webm',
-                                data: base64Audio
-                            }
-                        }, {
-                            text: 'Transcribe this audio exactly. Just return the text spoken.'
-                        }]
-                    }]
-                })
+                body: formData
             });
 
-            console.log('📡 Gemini transcription response status:', transcriptionResponse.status);
+            console.log('📡 Whisper API response status:', response.status);
 
-            if (!transcriptionResponse.ok) {
-                const errorText = await transcriptionResponse.text();
-                console.error('❌ Gemini transcription error:', errorText);
-                throw new Error('Transcription failed: ' + errorText);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Whisper API error:', errorText);
+
+                let errorMessage = 'Transcription failed';
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMessage = errorJson.error?.message || errorMessage;
+                } catch (e) {
+                    errorMessage = errorText;
+                }
+
+                throw new Error(errorMessage);
             }
 
-            const transcriptionData = await transcriptionResponse.json();
-            console.log('📝 Gemini transcription response:', transcriptionData);
+            const data = await response.json();
+            console.log('📝 Whisper response:', data);
 
-            const transcript = transcriptionData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+            const transcript = data.text.trim();
 
             if (!transcript) {
                 throw new Error('No speech detected. Please try again.');
@@ -457,7 +447,7 @@ class VoiceControl {
             console.error('Error details:', error.message);
             this.updateStatus('error', 'Failed to process speech');
 
-            let errorMessage = "I'm not sure what you meant. I can help you check what's changed recently (say 'what's changed this week?'), find out about systems on hire, or update a status like 'P1 is back'.";
+            let errorMessage = 'Sorry, I had trouble understanding that. Could you please try again?';
             if (error.message.includes('API key')) {
                 errorMessage = 'API key error. Please check your OpenAI API key.';
             } else if (error.message.includes('empty') || error.message.includes('short')) {
@@ -534,7 +524,6 @@ Maintenance Queries:
 
 Data Analysis:
 - analyze_data: Analyze data to answer analytical questions (requires question parameter with the full user question)
-- query_recent_changes: Check what has changed in the last 24 hours or 7 days. Use this for ANY question about recent activity, changes, or hire status updates. Examples: "has anything changed?", "any new hires?", "come off hire", "anything new this week", "any updates", "any activity"
 
 Scaffold Modifications:
 - add_scaffold_system: Add new scaffold system
@@ -613,21 +602,7 @@ Examples:
 - "What's my busiest month for maintenances?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's my busiest month for maintenances?"},"response":"Let me analyze your maintenance schedule."}
 - "What's the average revenue per scaffold system?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's the average revenue per scaffold system?"},"response":"Calculating average revenue now."}
 - "How many maintenance do I have to do each year for NSI approved systems?" → {"intent":"query","action":"analyze_data","parameters":{"question":"How many maintenance do I have to do each year for NSI approved systems?"},"response":"Let me calculate the total annual maintenance tasks for NSI approved systems."}
-- "What's changed in the last 24 hours?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"24 hours"},"response":"Checking what's changed in the last 24 hours."}
-- "Has anything changed?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"24 hours"},"response":"Let me check for any recent changes."}
-- "Has anything changed this week?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking for changes this week."}
-- "Have any scaffold alarms come on or off hire?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Let me check for any recent hire activity."}
-- "Anything new on the scaffold hire?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking for recent activity."}
-- "What's changed today?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"today"},"response":"Let me check what has changed today."}
-- "What's changed in the last week?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking all the changes this week."}
-- "What's changed in the last 7 days?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Let me see what has changed in the last 7 days."}
-- "Show me this week's activity" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Summarising this week's activity."}
-- "Anything new since yesterday?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"yesterday"},"response":"Let me check for any changes since yesterday."}
 - "Change P1 to off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
-- "P1's done, take it off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
-- "I've just collected P1 from High Street, Oxford" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
-- "Just picked up P2 from the site" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P2","status":"off-hire"},"response":""}
-- "P3's back in stock" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P3","status":"off-hire"},"response":""}
 - "The one at Royal Close Chippenham has come off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"Royal Close Chippenham","status":"off-hire"},"response":""}
 - "The scaffold alarm at Royal Close Chippenham came off hire last Thursday" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"Royal Close Chippenham","status":"off-hire","offHireDate":"last Thursday"},"response":""}
 - "Put the church one back on hire" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"church","status":"on-hire"},"response":""}
@@ -686,63 +661,29 @@ Be conversational but concise. UK English spelling and phrasing.`
                 content: transcript
             });
 
-            // Call Google Gemini instead of GPT-4
-            const geminiApiKey = envConfig.get('VITE_GEMINI_API_KEY');
-            if (!geminiApiKey || geminiApiKey.includes('your_')) {
-                throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to voice-config.js or Netlify');
-            }
-
-            const geminiModel = envConfig.get('GEMINI_MODEL', 'gemini-2.0-flash');
-            
-            // Build the prompt with system message and conversation history
-            const systemMessage = messages[0]?.content || '';
-            const conversationContext = messages.slice(1, -1).map(m => `${m.role}: ${m.content}`).join('\n');
-            const currentQuery = messages[messages.length - 1]?.content || '';
-            
-            const fullPrompt = `${systemMessage}
-
-Previous conversation:
-${conversationContext}
-
-User: ${currentQuery}
-
-Respond with JSON only (no markdown):`;
-
-            const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
+            // Call OpenAI GPT-4
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${envConfig.get('OPENAI_API_KEY')}`
                 },
                 body: JSON.stringify({
-                    contents: [{
-                        parts: [{
-                            text: fullPrompt
-                        }]
-                    }],
-                    generationConfig: {
-                        responseMimeType: 'application/json',
-                        temperature: 0.7,
-                        maxOutputTokens: 500
-                    }
+                    model: envConfig.get('OPENAI_MODEL', 'gpt-4-turbo-preview'),
+                    messages: messages,
+                    response_format: { type: "json_object" },
+                    temperature: 0.7,
+                    max_tokens: 500
                 })
             });
 
-            if (!geminiResponse.ok) {
-                const error = await geminiResponse.text();
-                throw new Error('AI processing failed: ' + error);
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error?.message || 'AI processing failed');
             }
 
-            const data = await geminiResponse.json();
-            const commandText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-            
-            // Parse the JSON response
-            let commandData;
-            try {
-                commandData = JSON.parse(commandText);
-            } catch (e) {
-                console.error('Failed to parse Gemini response as JSON:', commandText);
-                throw new Error('AI returned invalid response format');
-            }
+            const data = await response.json();
+            const commandData = JSON.parse(data.choices[0].message.content);
 
             if (envConfig.getBool('VOICE_DEBUG_MODE')) {
                 console.log('🤖 Command parsed:', commandData);
@@ -864,9 +805,6 @@ Respond with JSON only (no markdown):`;
                 case 'analyze_data':
                     result = await this.analyzeData(parameters);
                     break;
-                case 'query_recent_changes':
-                    result = await this.queryRecentChanges(parameters);
-                    break;
 
                 // Modifications
                 case 'add_scaffold_system':
@@ -888,12 +826,7 @@ Respond with JSON only (no markdown):`;
                     break;
 
                 default:
-                    // More helpful conversational error message
-                    const userName = envConfig.get('USER_NAME', 'there');
-                    result = { 
-                        success: false, 
-                        message: `I'm not sure what you meant, ${userName}. I can help you with things like: checking how many systems are on hire, finding out what's changed recently (try "what's changed this week?"), updating a system status (say "P1 is back" or "take P2 off hire"), or getting info about a specific system (say "where is P7?"). What would you like to do?` 
-                    };
+                    result = { success: false, message: 'I\'m not sure how to do that yet.' };
                     handled = false;
 
                     // Log unhandled command
@@ -1340,21 +1273,6 @@ Respond with JSON only (no markdown):`;
     async queryOnHireCount() {
         // Will be implemented to connect to dashboard data
         return { success: true, message: 'Query not yet connected to dashboard data' };
-    }
-
-    // Query recent changes - NEW feature for Alex
-    async queryRecentChanges(parameters) {
-        // This function is implemented in voice-dashboard-bridge.js
-        // We just pass through to that implementation
-        if (typeof voiceControl !== 'undefined' && voiceControl.queryRecentChanges) {
-            return await voiceControl.queryRecentChanges(parameters);
-        }
-        
-        // Fallback if bridge not loaded
-        return { 
-            success: false, 
-            message: 'The recent changes feature is not available. Please ensure the dashboard is fully loaded.' 
-        };
     }
 
     async queryMonthlyRevenue() {

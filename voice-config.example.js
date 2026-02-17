@@ -3,15 +3,16 @@
 
 const VOICE_CONFIG = {
     // ============================================
-    // API KEYS (Required) - Using Google Gemini
+    // API KEYS (Required)
     // ============================================
-    VITE_GEMINI_API_KEY: 'your_google_gemini_api_key_here',
+    OPENAI_API_KEY: 'your_openai_api_key_here',
     ELEVENLABS_API_KEY: 'your_elevenlabs_api_key_here',
 
     // ============================================
-    // Gemini Settings
+    // OpenAI Settings
     // ============================================
-    GEMINI_MODEL: 'gemini-2.0-flash',
+    OPENAI_MODEL: 'gpt-4-turbo-preview',
+    OPENAI_WHISPER_MODEL: 'whisper-1',
 
     // ============================================
     // ElevenLabs Settings
@@ -44,7 +45,7 @@ const VOICE_CONFIG = {
     // ============================================
     // NLP Settings
     // ============================================
-    NLP_PROVIDER: 'gemini',
+    NLP_PROVIDER: 'openai',
     ENABLE_CONVERSATION_CONTEXT: true,
     MAX_CONVERSATION_HISTORY: 10,
 
@@ -53,7 +54,7 @@ const VOICE_CONFIG = {
     // ============================================
     ENABLE_WAKE_WORD: false,
     ENABLE_CONTINUOUS_LISTENING: false,
-    ENABLE_MOICE_VOICE: true,
+    ENABLE_MOBILE_VOICE: true,
     ENABLE_VOICE_FEEDBACK: true,
     VOICE_DEBUG_MODE: true // Set to false in production
 };
