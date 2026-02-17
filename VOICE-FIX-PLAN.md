@@ -1,61 +1,64 @@
-# Perimeter Dashboard - Improvements Plan
+# Perimeter Dashboard & Phona - Improvements Plan
 
-## Current Problems
+## Part 1: Perimeter Dashboard (Voice Control)
 
-### Voice Control (Priority 1)
-- Says "Sorry, I had trouble understanding" - external API calls fail
-- Fix: Use browser-native Web Speech API instead of OpenAI Whisper
+### Current Problems
 
-### Natural Language Understanding
-- Can't handle phrases like "I've just collected P1 from High Street"
-- Fix: Improve prompt with more real-world examples
+1. **Voice Control** - Says "Sorry, I had trouble understanding" 
+   - Fix: Use browser-native Web Speech API instead of OpenAI Whisper
 
-### Missing "What's Changed" Feature
-- Alex wants: "What's changed in the last 24 hours?"
-- Returns: "Systems gone ON hire: P1 to X, Systems OFF hire: P3 from Y"
+2. **Natural Language** - Can't handle "I've just collected P1 from Oxford"
+   - Fix: Add more real-world examples to GPT prompt
 
-## Proposed Improvements
+3. **"What's Changed" Feature** (already implemented in kit-dev)
+   - Query scaffold_rental_history for recent changes
+   - Returns: "P1 came off hire, P2 went on hire..."
 
-### 1. Voice - Browser-Native (No API Keys Needed)
-Replace OpenAI Whisper with Web Speech API:
-```javascript
-// In voice-control.js
-const recognition = new webkitSpeechRecognition();
-recognition.lang = 'en-GB';
-recognition.continuous = false;
-recognition.interimResults = true;
+4. **Error Messages** - Too generic
+   - Fix: Say "I can help with checking systems on hire, what's changed, updating status..."
 
-recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    // Process with GPT-4...
-};
-recognition.start();
-```
+5. **Conversation Memory** - No context between commands
+   - Fix: Store last 5-10 interactions
 
-Keep ElevenLabs for TTS (already works).
+---
 
-### 2. Better Natural Language Parsing
-Add more examples to the GPT prompt:
-- "I've collected P1 from Oxford" → update_hire_status
-- "P1's back in stock" → update_hire_status
-- "What's changed this week?" → query_recent_changes
+## Part 2: Phona Marketing Automation
 
-### 3. Add "What's Changed" Feature (Already Implemented in kit-dev)
-- New function: query_recent_changes
-- Queries scaffold_rental_history table
-- Returns summary: "P1 came off hire, P2 went on hire..."
+### Goal
+Automated marketing flow: Search businesses → Create demo → Send email → Track results
 
-### 4. Better Error Messages
-Instead of "I didn't understand", say:
-"I'm not sure what you meant. I can help with: checking systems on hire, what's changed recently, updating status like 'P1 is back', or finding info like 'where is P7?'"
+### Building Blocks Already in Codebase
+All these already exist:
+- `netlify/functions/search-nearby-places.ts` - Google Places API
+- `services/demoService.ts` - Create demo assistants
+- `services/emailService.ts` - Send emails with templates
+- `netlify/functions/get-analytics.ts` - Track views, opens, conversations
 
-### 5. Conversation Memory
-Store last 5-10 interactions so user can say "that one" or reference previous context.
+### What Needs Building
+Orchestration script to wire them together:
+1. Search for businesses (location + type)
+2. Create personalized demo for each
+3. Send outreach email
+4. Track analytics
 
-## Files to Modify
-- voice-control.js - Browser-native STT, improved prompts
-- voice-dashboard-bridge.js - query_recent_changes function (already done)
-- env-config.js - Remove API key dependencies
+### API Keys Needed
+- `GOOGLE_MAPS_API_KEY` - For business search
+- `SENDGRID_API_KEY` - For emails (already configured in Phona)
+
+---
+
+## Files & Implementation
+
+### Perimeter Dashboard (kit-dev branch)
+- voice-control.js - Browser-native STT + improved prompts
+- voice-dashboard-bridge.js - query_recent_changes (done)
+
+### Phona (phona-dev branch)
+- New script: `scripts/marketing-automation.ts`
+- Run via cron or manual trigger
+
+---
 
 ## Testing
-Deploy to kit-dev branch → Compare with main branch
+- Perimeter: Deploy kit-dev branch → Compare with main
+- Phona: Build automation script → Test end-to-end
