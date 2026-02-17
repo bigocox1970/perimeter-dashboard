@@ -447,7 +447,7 @@ class VoiceControl {
             console.error('Error details:', error.message);
             this.updateStatus('error', 'Failed to process speech');
 
-            let errorMessage = 'Sorry, I had trouble understanding that. Could you please try again?';
+            let errorMessage = "I'm not sure what you meant. I can help you check what's changed recently (say 'what's changed this week?'), find out about systems on hire, or update a status like 'P1 is back'.";
             if (error.message.includes('API key')) {
                 errorMessage = 'API key error. Please check your OpenAI API key.';
             } else if (error.message.includes('empty') || error.message.includes('short')) {
