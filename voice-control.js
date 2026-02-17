@@ -396,9 +396,9 @@ class VoiceControl {
                 reader.readAsDataURL(audioBlob);
             });
 
-            const geminiApiKey = envConfig.get('GEMINI_API_KEY');
-            if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
-                throw new Error('Gemini API key not configured. Please add your GEMINI_API_KEY to voice-config.js');
+            const geminiApiKey = envConfig.get('VITE_GEMINI_API_KEY');
+            if (!geminiApiKey || geminiApiKey.includes('your_')) {
+                throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to voice-config.js or Netlify');
             }
 
             // Use Gemini 2.0 Flash with audio input
@@ -687,9 +687,9 @@ Be conversational but concise. UK English spelling and phrasing.`
             });
 
             // Call Google Gemini instead of GPT-4
-            const geminiApiKey = envConfig.get('GEMINI_API_KEY');
-            if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
-                throw new Error('Gemini API key not configured. Please add your GEMINI_API_KEY to voice-config.js');
+            const geminiApiKey = envConfig.get('VITE_GEMINI_API_KEY');
+            if (!geminiApiKey || geminiApiKey.includes('your_')) {
+                throw new Error('Gemini API key not configured. Please add VITE_GEMINI_API_KEY to voice-config.js or Netlify');
             }
 
             const geminiModel = envConfig.get('GEMINI_MODEL', 'gemini-2.0-flash');

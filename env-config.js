@@ -50,6 +50,7 @@ class EnvConfig {
             ENABLE_MOBILE_VOICE: true,
             ENABLE_VOICE_FEEDBACK: true,
             VOICE_DEBUG_MODE: false,
+            VITE_GEMINI_API_KEY: '',
             GEMINI_MODEL: 'gemini-2.0-flash',
             ELEVENLABS_VOICE_ID: '21m00Tcm4TlvDq8ikWAM'
         };
@@ -88,8 +89,8 @@ class EnvConfig {
     validate() {
         const issues = [];
 
-        if (!this.get('GEMINI_API_KEY') || this.get('GEMINI_API_KEY').includes('your_')) {
-            issues.push('GEMINI_API_KEY is missing or not configured');
+        if (!this.get('VITE_GEMINI_API_KEY') || this.get('VITE_GEMINI_API_KEY').includes('your_')) {
+            issues.push('VITE_GEMINI_API_KEY is missing or not configured');
         }
 
         const ttsProvider = this.get('TTS_PROVIDER');
@@ -113,8 +114,8 @@ class EnvConfig {
     getAll() {
         // Redact sensitive keys
         const safe = { ...this.config };
-        if (safe.GEMINI_API_KEY) {
-            safe.GEMINI_API_KEY = safe.GEMINI_API_KEY.substring(0, 10) + '...' + safe.GEMINI_API_KEY.slice(-4);
+        if (safe.VITE_GEMINI_API_KEY) {
+            safe.VITE_GEMINI_API_KEY = safe.VITE_GEMINI_API_KEY.substring(0, 10) + '...' + safe.VITE_GEMINI_API_KEY.slice(-4);
         }
         if (safe.ELEVENLABS_API_KEY) {
             safe.ELEVENLABS_API_KEY = safe.ELEVENLABS_API_KEY.substring(0, 10) + '...' + safe.ELEVENLABS_API_KEY.slice(-4);

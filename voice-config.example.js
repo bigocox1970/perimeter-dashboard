@@ -5,7 +5,7 @@ const VOICE_CONFIG = {
     // ============================================
     // API KEYS (Required) - Using Google Gemini
     // ============================================
-    GEMINI_API_KEY: 'your_google_gemini_api_key_here',
+    VITE_GEMINI_API_KEY: 'your_google_gemini_api_key_here',
     ELEVENLABS_API_KEY: 'your_elevenlabs_api_key_here',
 
     // ============================================
