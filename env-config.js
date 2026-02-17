@@ -42,7 +42,7 @@ class EnvConfig {
             TTS_SPEECH_RATE: 1.0,
             TTS_SPEECH_PITCH: 1.0,
             TTS_SPEECH_VOLUME: 1.0,
-            NLP_PROVIDER: 'openai',
+            NLP_PROVIDER: 'gemini',
             ENABLE_CONVERSATION_CONTEXT: true,
             MAX_CONVERSATION_HISTORY: 10,
             ENABLE_WAKE_WORD: false,
@@ -50,8 +50,7 @@ class EnvConfig {
             ENABLE_MOBILE_VOICE: true,
             ENABLE_VOICE_FEEDBACK: true,
             VOICE_DEBUG_MODE: false,
-            OPENAI_MODEL: 'gpt-4-turbo-preview',
-            OPENAI_WHISPER_MODEL: 'whisper-1',
+            GEMINI_MODEL: 'gemini-2.0-flash',
             ELEVENLABS_VOICE_ID: '21m00Tcm4TlvDq8ikWAM'
         };
     }
@@ -89,8 +88,8 @@ class EnvConfig {
     validate() {
         const issues = [];
 
-        if (!this.get('OPENAI_API_KEY') || this.get('OPENAI_API_KEY').includes('your_')) {
-            issues.push('OPENAI_API_KEY is missing or not configured');
+        if (!this.get('GEMINI_API_KEY') || this.get('GEMINI_API_KEY').includes('your_')) {
+            issues.push('GEMINI_API_KEY is missing or not configured');
         }
 
         const ttsProvider = this.get('TTS_PROVIDER');
@@ -114,8 +113,8 @@ class EnvConfig {
     getAll() {
         // Redact sensitive keys
         const safe = { ...this.config };
-        if (safe.OPENAI_API_KEY) {
-            safe.OPENAI_API_KEY = safe.OPENAI_API_KEY.substring(0, 10) + '...' + safe.OPENAI_API_KEY.slice(-4);
+        if (safe.GEMINI_API_KEY) {
+            safe.GEMINI_API_KEY = safe.GEMINI_API_KEY.substring(0, 10) + '...' + safe.GEMINI_API_KEY.slice(-4);
         }
         if (safe.ELEVENLABS_API_KEY) {
             safe.ELEVENLABS_API_KEY = safe.ELEVENLABS_API_KEY.substring(0, 10) + '...' + safe.ELEVENLABS_API_KEY.slice(-4);

@@ -82,7 +82,7 @@ class VoiceControl {
             const ttsProvider = envConfig.get('TTS_PROVIDER', 'elevenlabs');
 
             console.log('🔧 VOICE CONFIG:');
-            console.log('   STT:', useBrowserSTT ? 'BROWSER (inaccurate)' : 'OPENAI WHISPER (accurate)');
+            console.log('   STT:', useBrowserSTT ? 'BROWSER (inaccurate)' : 'GEMINI (accurate)');
             console.log('   TTS:', ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER');
 
             this.showDebugOverlay(`STT: ${useBrowserSTT ? 'BROWSER' : 'WHISPER'}\nTTS: ${ttsProvider === 'elevenlabs' ? 'ELEVENLABS' : 'BROWSER'}\nMediaRecorder: ${hasMediaRecorder ? 'YES' : 'NO'}`);
@@ -380,51 +380,61 @@ class VoiceControl {
                 throw new Error('Audio recording is too short. Please speak for longer.');
             }
 
-            // Convert webm to a format Whisper accepts better
-            // Try to use mp3 extension for better compatibility
-            const formData = new FormData();
+            // Using Google Gemini for transcription instead of Whisper
+            console.log('🚀 Sending to Gemini API for transcription...');
 
-            // Whisper accepts various formats, let's try with the original format
-            const fileName = audioBlob.type.includes('webm') ? 'audio.webm' :
-                            audioBlob.type.includes('mp4') ? 'audio.mp4' :
-                            audioBlob.type.includes('ogg') ? 'audio.ogg' :
-                            'audio.webm';
-
-            formData.append('file', audioBlob, fileName);
-            formData.append('model', envConfig.get('OPENAI_WHISPER_MODEL', 'whisper-1'));
-            formData.append('language', envConfig.get('VOICE_LANGUAGE', 'en-GB').split('-')[0]);
-
-            console.log('🚀 Sending to Whisper API...');
-
-            const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${envConfig.get('OPENAI_API_KEY')}`
-                },
-                body: formData
+            // Convert blob to base64
+            const reader = new FileReader();
+            const base64Audio = await new Promise((resolve, reject) => {
+                reader.onload = () => {
+                    const result = reader.result;
+                    // Remove data URL prefix to get just the base64
+                    const base64 = result.toString().split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(audioBlob);
             });
 
-            console.log('📡 Whisper API response status:', response.status);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Whisper API error:', errorText);
-
-                let errorMessage = 'Transcription failed';
-                try {
-                    const errorJson = JSON.parse(errorText);
-                    errorMessage = errorJson.error?.message || errorMessage;
-                } catch (e) {
-                    errorMessage = errorText;
-                }
-
-                throw new Error(errorMessage);
+            const geminiApiKey = envConfig.get('GEMINI_API_KEY');
+            if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
+                throw new Error('Gemini API key not configured. Please add your GEMINI_API_KEY to voice-config.js');
             }
 
-            const data = await response.json();
-            console.log('📝 Whisper response:', data);
+            // Use Gemini 2.0 Flash with audio input
+            const geminiModel = envConfig.get('GEMINI_MODEL', 'gemini-2.0-flash');
+            
+            const transcriptionResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            inline_data: {
+                                mime_type: audioBlob.type || 'audio/webm',
+                                data: base64Audio
+                            }
+                        }, {
+                            text: 'Transcribe this audio exactly. Just return the text spoken.'
+                        }]
+                    }]
+                })
+            });
 
-            const transcript = data.text.trim();
+            console.log('📡 Gemini transcription response status:', transcriptionResponse.status);
+
+            if (!transcriptionResponse.ok) {
+                const errorText = await transcriptionResponse.text();
+                console.error('❌ Gemini transcription error:', errorText);
+                throw new Error('Transcription failed: ' + errorText);
+            }
+
+            const transcriptionData = await transcriptionResponse.json();
+            console.log('📝 Gemini transcription response:', transcriptionData);
+
+            const transcript = transcriptionData?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
 
             if (!transcript) {
                 throw new Error('No speech detected. Please try again.');
@@ -676,29 +686,63 @@ Be conversational but concise. UK English spelling and phrasing.`
                 content: transcript
             });
 
-            // Call OpenAI GPT-4
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            // Call Google Gemini instead of GPT-4
+            const geminiApiKey = envConfig.get('GEMINI_API_KEY');
+            if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
+                throw new Error('Gemini API key not configured. Please add your GEMINI_API_KEY to voice-config.js');
+            }
+
+            const geminiModel = envConfig.get('GEMINI_MODEL', 'gemini-2.0-flash');
+            
+            // Build the prompt with system message and conversation history
+            const systemMessage = messages[0]?.content || '';
+            const conversationContext = messages.slice(1, -1).map(m => `${m.role}: ${m.content}`).join('\n');
+            const currentQuery = messages[messages.length - 1]?.content || '';
+            
+            const fullPrompt = `${systemMessage}
+
+Previous conversation:
+${conversationContext}
+
+User: ${currentQuery}
+
+Respond with JSON only (no markdown):`;
+
+            const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${envConfig.get('OPENAI_API_KEY')}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    model: envConfig.get('OPENAI_MODEL', 'gpt-4-turbo-preview'),
-                    messages: messages,
-                    response_format: { type: "json_object" },
-                    temperature: 0.7,
-                    max_tokens: 500
+                    contents: [{
+                        parts: [{
+                            text: fullPrompt
+                        }]
+                    }],
+                    generationConfig: {
+                        responseMimeType: 'application/json',
+                        temperature: 0.7,
+                        maxOutputTokens: 500
+                    }
                 })
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error?.message || 'AI processing failed');
+            if (!geminiResponse.ok) {
+                const error = await geminiResponse.text();
+                throw new Error('AI processing failed: ' + error);
             }
 
-            const data = await response.json();
-            const commandData = JSON.parse(data.choices[0].message.content);
+            const data = await geminiResponse.json();
+            const commandText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            
+            // Parse the JSON response
+            let commandData;
+            try {
+                commandData = JSON.parse(commandText);
+            } catch (e) {
+                console.error('Failed to parse Gemini response as JSON:', commandText);
+                throw new Error('AI returned invalid response format');
+            }
 
             if (envConfig.getBool('VOICE_DEBUG_MODE')) {
                 console.log('🤖 Command parsed:', commandData);
