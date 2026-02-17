@@ -497,6 +497,101 @@ class VoiceDashboardBridge {
             }
         };
 
+        // Query recent changes (new feature for Alex)
+        // Returns systems that went on/off hire in last 24h or 7 days
+        voiceControl.queryRecentChanges = async (params) => {
+            try {
+                const timeframe = params.timeframe?.toLowerCase() || '24 hours';
+                
+                // Calculate the date range
+                let hoursBack;
+                if (timeframe.includes('24') || timeframe === 'today' || timeframe === 'yesterday') {
+                    hoursBack = 24;
+                } else if (timeframe.includes('7') || timeframe.includes('week')) {
+                    hoursBack = 24 * 7;
+                } else if (timeframe.includes('30') || timeframe.includes('month')) {
+                    hoursBack = 24 * 30;
+                } else {
+                    hoursBack = 24; // default to 24 hours
+                }
+                
+                const sinceDate = new Date();
+                sinceDate.setHours(sinceDate.getHours() - hoursBack);
+                
+                // Query rental history for changes in this period
+                const { data: history, error: historyError } = await supabase
+                    .from('scaffold_rental_history')
+                    .select('*')
+                    .gte('created_at', sinceDate.toISOString())
+                    .order('created_at', { ascending: false });
+                
+                if (historyError) throw historyError;
+                
+                if (!history || history.length === 0) {
+                    return {
+                        success: true,
+                        message: `No changes in the last ${timeframe}. Everything has been quiet.`,
+                        data: { onHire: [], offHire: [] }
+                    };
+                }
+                
+                // Separate into on-hire (recently hired) and off-hire (recently returned)
+                const onHire = [];
+                const offHire = [];
+                
+                for (const rental of history) {
+                    if (rental.off_hire_date) {
+                        // This rental was completed - system went off hire
+                        offHire.push({
+                            pNumber: rental.p_number,
+                            customerName: rental.customer_name,
+                            siteAddress: rental.site_address,
+                            offHireDate: rental.off_hire_date,
+                            createdAt: rental.created_at
+                        });
+                    } else if (rental.hire_date) {
+                        // This is a new hire - system went on hire
+                        onHire.push({
+                            pNumber: rental.p_number,
+                            customerName: rental.customer_name,
+                            siteAddress: rental.site_address,
+                            hireDate: rental.hire_date,
+                            createdAt: rental.created_at
+                        });
+                    }
+                }
+                
+                // Build natural language response
+                let message = '';
+                
+                if (onHire.length === 0 && offHire.length === 0) {
+                    message = `No changes in the last ${timeframe}.`;
+                } else {
+                    if (onHire.length > 0) {
+                        message += `Systems gone ON hire: ${onHire.length}. `;
+                        const onHireList = onHire.map(s => `${s.pNumber} to ${s.customerName}`).join(', ');
+                        message += `${onHireList}. `;
+                    }
+                    
+                    if (offHire.length > 0) {
+                        message += `Systems come OFF hire: ${offHire.length}. `;
+                        const offHireList = offHire.map(s => `${s.pNumber} from ${s.customerName}`).join(', ');
+                        message += `${offHireList}.`;
+                    }
+                }
+                
+                return {
+                    success: true,
+                    message: message.trim(),
+                    data: { onHire, offHire, timeframe }
+                };
+                
+            } catch (error) {
+                console.error('Error querying recent changes:', error);
+                return { success: false, message: `Sorry, I couldn't check recent changes. ${error.message}` };
+            }
+        };
+
         // Count systems in stock (off-hire)
         voiceControl.countInStock = async () => {
             try {

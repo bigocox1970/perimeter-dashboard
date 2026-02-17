@@ -524,6 +524,7 @@ Maintenance Queries:
 
 Data Analysis:
 - analyze_data: Analyze data to answer analytical questions (requires question parameter with the full user question)
+- query_recent_changes: Check what has changed in the last 24 hours or 7 days (optional timeframe: "24 hours", "7 days", "today", "this week")
 
 Scaffold Modifications:
 - add_scaffold_system: Add new scaffold system
@@ -602,7 +603,17 @@ Examples:
 - "What's my busiest month for maintenances?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's my busiest month for maintenances?"},"response":"Let me analyze your maintenance schedule."}
 - "What's the average revenue per scaffold system?" → {"intent":"query","action":"analyze_data","parameters":{"question":"What's the average revenue per scaffold system?"},"response":"Calculating average revenue now."}
 - "How many maintenance do I have to do each year for NSI approved systems?" → {"intent":"query","action":"analyze_data","parameters":{"question":"How many maintenance do I have to do each year for NSI approved systems?"},"response":"Let me calculate the total annual maintenance tasks for NSI approved systems."}
+- "What's changed in the last 24 hours?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"24 hours"},"response":"Checking what's changed in the last 24 hours."}
+- "What's changed today?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"today"},"response":"Let me check what has changed today."}
+- "What's changed in the last week?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Checking all the changes this week."}
+- "What's changed in the last 7 days?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Let me see what has changed in the last 7 days."}
+- "Show me this week's activity" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"7 days"},"response":"Summarising this week's activity."}
+- "Anything new since yesterday?" → {"intent":"query","action":"query_recent_changes","parameters":{"timeframe":"yesterday"},"response":"Let me check for any changes since yesterday."}
 - "Change P1 to off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
+- "P1's done, take it off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
+- "I've just collected P1 from High Street, Oxford" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P1","status":"off-hire"},"response":""}
+- "Just picked up P2 from the site" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P2","status":"off-hire"},"response":""}
+- "P3's back in stock" → {"intent":"modify","action":"update_hire_status","parameters":{"pNumber":"P3","status":"off-hire"},"response":""}
 - "The one at Royal Close Chippenham has come off hire" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"Royal Close Chippenham","status":"off-hire"},"response":""}
 - "The scaffold alarm at Royal Close Chippenham came off hire last Thursday" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"Royal Close Chippenham","status":"off-hire","offHireDate":"last Thursday"},"response":""}
 - "Put the church one back on hire" → {"intent":"modify","action":"update_hire_status","parameters":{"location":"church","status":"on-hire"},"response":""}
@@ -804,6 +815,9 @@ Be conversational but concise. UK English spelling and phrasing.`
                 // Data Analysis
                 case 'analyze_data':
                     result = await this.analyzeData(parameters);
+                    break;
+                case 'query_recent_changes':
+                    result = await this.queryRecentChanges(parameters);
                     break;
 
                 // Modifications
@@ -1273,6 +1287,21 @@ Be conversational but concise. UK English spelling and phrasing.`
     async queryOnHireCount() {
         // Will be implemented to connect to dashboard data
         return { success: true, message: 'Query not yet connected to dashboard data' };
+    }
+
+    // Query recent changes - NEW feature for Alex
+    async queryRecentChanges(parameters) {
+        // This function is implemented in voice-dashboard-bridge.js
+        // We just pass through to that implementation
+        if (typeof voiceControl !== 'undefined' && voiceControl.queryRecentChanges) {
+            return await voiceControl.queryRecentChanges(parameters);
+        }
+        
+        // Fallback if bridge not loaded
+        return { 
+            success: false, 
+            message: 'The recent changes feature is not available. Please ensure the dashboard is fully loaded.' 
+        };
     }
 
     async queryMonthlyRevenue() {
