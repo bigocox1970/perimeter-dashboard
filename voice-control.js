@@ -844,7 +844,12 @@ Be conversational but concise. UK English spelling and phrasing.`
                     break;
 
                 default:
-                    result = { success: false, message: 'I\'m not sure how to do that yet.' };
+                    // More helpful conversational error message
+                    const userName = envConfig.get('USER_NAME', 'there');
+                    result = { 
+                        success: false, 
+                        message: `I'm not sure what you meant, ${userName}. I can help you with things like: checking how many systems are on hire, finding out what's changed recently (try "what's changed this week?"), updating a system status (say "P1 is back" or "take P2 off hire"), or getting info about a specific system (say "where is P7?"). What would you like to do?` 
+                    };
                     handled = false;
 
                     // Log unhandled command
